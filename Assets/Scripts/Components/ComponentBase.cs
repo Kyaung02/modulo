@@ -90,4 +90,5 @@ public class ComponentBase : MonoBehaviour
             default: return Vector2Int.up;
         }
     }
+
 }

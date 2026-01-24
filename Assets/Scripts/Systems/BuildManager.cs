@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class BuildManager : MonoBehaviour
 {
+
     [Header("Settings")]
     [Header("Settings")]
     public ComponentBase[] availableComponents; // 0: Emitter, 1: Mover, etc.
@@ -11,21 +12,36 @@ public class BuildManager : MonoBehaviour
 
     private Camera _mainCamera;
     private ComponentBase[,] _components; // 2D array to track installed components
-
     
+    // Preview Manager Reference
+    public PreviewManager previewManager;
+
+    public int _currentRotationIndex = 0;
 
     private void Start()
     {
         _mainCamera = Camera.main;
         _components = new ComponentBase[ModuleManager.Instance.width, ModuleManager.Instance.height];
+        
+        if (previewManager == null)
+        {
+            previewManager = FindFirstObjectByType<PreviewManager>();
+        }
+
+        if (previewManager == null) Debug.LogError("BuildManager: Could not find PreviewManager in Scene!");
+        else Debug.Log("BuildManager: Successfully connected to PreviewManager.");
     }
 
     private void Update()
     {
         HandleInput();
+        if (previewManager != null)
+        {
+            if (selectedComponentPrefab != null)
+                 previewManager.UpdatePreview(selectedComponentPrefab, _currentRotationIndex);
+        }
     }
 
-    private int _currentRotationIndex = 0;
 
     private void HandleInput()
     {
