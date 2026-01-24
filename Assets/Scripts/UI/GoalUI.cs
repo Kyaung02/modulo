@@ -35,7 +35,7 @@ public class GoalUI : MonoBehaviour
             if (goal.targetWord != null)
             {
                 targetIcon.sprite = goal.targetWord.wordIcon;
-                targetIcon.color = goal.targetWord.wordColor;
+                targetIcon.color = Color.white;
                 targetIcon.enabled = true;
             }
             else
