@@ -17,10 +17,9 @@ public class WordVisualizer : MonoBehaviour
     {
         _renderer = GetComponent<SpriteRenderer>();
         _renderer.enabled = false; 
-        _renderer.sortingOrder = 10; 
+        _renderer.sortingOrder = 10;
         
-        // Auto-detect tick speed if possible? 
-        // For now default to 0.5s. Can be updated by ComponentBase.
+        // Auto-detect tick speed
         if (TickManager.Instance != null) _animDuration = TickManager.Instance.tickInterval;
     }
 
@@ -35,17 +34,9 @@ public class WordVisualizer : MonoBehaviour
         {
             _renderer.enabled = true;
             _renderer.sprite = word.wordIcon;
-            _renderer.color = word.wordColor;
+            _renderer.color = Color.white; // No tint for emojis
             transform.localScale = Vector3.one * 0.6f;
             
-            // Animation Setup
-            // entryDir is the direction the item CAME FROM (e.g. Up meaning it entered from top)
-            // Or is it the direction it Moved? 
-            // ComponentBase.AcceptWord passes 'direction' which is the direction of movement (e.g. Right).
-            // So if direction is Right (1,0), it came from the Left.
-            // Wait, AcceptWord direction is the direction the PREVIOUS component pushed.
-            // So if Pushed Right, it enters from Left.
-            // Actually, let's look at logic.
             // Main component: "targetComponent.AcceptWord(HeldWord, GetOutputDirection(), ...)"
             // GetOutputDirection() is effectively "Move Dir".
             // So if Move Dir is Right (1,0), items moves Right.

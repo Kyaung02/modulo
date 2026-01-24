@@ -98,10 +98,7 @@ public class ComponentBase : MonoBehaviour
             vizObj.transform.localPosition = Vector3.zero;
             _visualizer = vizObj.AddComponent<WordVisualizer>();
             
-            if (GetComponent<SpriteRenderer>())
-                _visualizer.GetComponent<SpriteRenderer>().sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1;
-            else
-                _visualizer.GetComponent<SpriteRenderer>().sortingOrder = 10;
+            // Sorting order is handled inside WordVisualizer.Awake() via Renderer
         }
         
         if (HeldWord != null) UpdateVisuals(); // Init state

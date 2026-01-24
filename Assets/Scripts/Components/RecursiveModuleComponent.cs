@@ -566,17 +566,7 @@ public class RecursiveModuleComponent : ComponentBase
         }
     }
 
-    // Helper: World <-> Local conversion copy from others
-    // Need to centralize this in ComponentBase really... 
-    // But overriding for now.
-    private Vector2Int WorldToLocalDirection(Vector2Int worldDir)
-    {
-        int r = (int)RotationIndex;
-        int x = worldDir.x;
-        int y = worldDir.y;
-        for (int i=0; i<r; i++) { int temp = x; x = -y; y = temp; }
-        return new Vector2Int(x, y);
-    }
+    // WorldToLocalDirection removed (Inherited)
     
     private Vector2Int LocalToWorldDirection(Vector2Int localDir)
     {

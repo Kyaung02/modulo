@@ -98,67 +98,7 @@ public class CombinerComponent : ComponentBase
         }
     }
     
-    // Helper: World Offset to Local Offset (Reverse Rotation)
-    private Vector2Int WorldToLocalOffset(Vector2Int worldOffset)
-    {
-        int r = (int)RotationIndex;
-        int x = worldOffset.x;
-        int y = worldOffset.y;
-        
-        // Undo rotation (CCW)
-        for (int i=0; i<r; i++)
-        {
-             // Inverse of (y, -x) is (-y, x)
-             int temp = x;
-             x = -y;
-             y = temp;
-        }
-        return new Vector2Int(x, y);
-    }
-    
-    // Helper: Rotate world direction to local
-    private Vector2Int WorldToLocalDirection(Vector2Int worldDir)
-    {
-        // Reverse rotation
-        // 0: 0, 1: -90, 2: -180, 3: -270
-        // We need to apply inverse of RotationIndex
-        
-        Vector2Int dir = worldDir;
-        for (int i=0; i< (4 - (int)RotationIndex) % 4; i++)
-        {
-            // Rotate -90 degrees (x,y) -> (y, -x) ? No.
-            // Rotate 90 CW: (x,y) -> (y, -x)
-            // We want to undo rotation.
-            // If Rotation is 1 (90 CW), we want to rotate -90 (CCW).
-            // CCW: (x,y) -> (-y, x)
-            
-            // Wait, let's stick to standard rotation loop of undoing
-            // Or simpler math.
-        }
-        
-        // Simpler: Just manual switch for inverse
-        // If Rotation 1 (Right): World Up (0,1) -> Local Left (-1,0)?
-        // Machine facing Right. Bottom is World Left. Input from Left (Right direction) enters Bottom.
-        
-        // Let's use standard helpers in ComponentBase if possible, but we don't have them yet.
-        // Implement locally.
-        
-        int r = (int)RotationIndex;
-        if (r == 0) return worldDir;
-        
-        int x = worldDir.x;
-        int y = worldDir.y;
-        
-        // Undo rotation (CCW)
-        for (int i=0; i<r; i++)
-        {
-             // Inverse of (y, -x) is (-y, x)
-             int temp = x;
-             x = -y;
-             y = temp;
-        }
-        return new Vector2Int(x, y);
-    }
+    // Helper methods WorldToLocalOffset and WorldToLocalDirection removed as they are now inherited from ComponentBase
 
     private Vector2Int LocalToWorldOffset(Vector2Int localOffset)
     {
