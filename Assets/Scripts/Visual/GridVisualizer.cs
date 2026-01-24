@@ -36,14 +36,21 @@ public class GridVisualizer : MonoBehaviour
 
     private void CreateGridLines()
     {
+        // Try to find local manager first (Important for Recursive Modules)
+        ModuleManager manager = GetComponent<ModuleManager>();
+        if (manager == null) manager = ModuleManager.Instance;
+        
+        if (manager == null) return;
+
         // Use LineRenderer for grid lines
         GameObject linesObj = new GameObject("GridLines");
         linesObj.transform.SetParent(transform);
+        linesObj.transform.localPosition = Vector3.zero; // Must be 0 relative to parent
         
-        int w = ModuleManager.Instance.width;
-        int h = ModuleManager.Instance.height;
-        float cell = ModuleManager.Instance.cellSize;
-        Vector2 origin = ModuleManager.Instance.originPosition;
+        int w = manager.width;
+        int h = manager.height;
+        float cell = manager.cellSize;
+        Vector2 origin = manager.originPosition;
         
         // Vertical Lines
         for (int x = 0; x <= w; x++)
@@ -71,9 +78,11 @@ public class GridVisualizer : MonoBehaviour
     {
         GameObject lineObj = new GameObject("Line");
         lineObj.transform.SetParent(parent);
+        lineObj.transform.localPosition = Vector3.zero;
+        lineObj.transform.localRotation = Quaternion.identity;
         
         LineRenderer lr = lineObj.AddComponent<LineRenderer>();
-        lr.useWorldSpace = true;
+        lr.useWorldSpace = false; // Must be false so lines move with the Inner World logic
         lr.positionCount = 2;
         lr.SetPosition(0, start);
         lr.SetPosition(1, end);

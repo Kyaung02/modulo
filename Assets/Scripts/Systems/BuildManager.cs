@@ -25,7 +25,13 @@ public class BuildManager : MonoBehaviour
     public PreviewManager previewManager;
 
     public int _currentRotationIndex = 0;
-    public ModuleManager activeManager; 
+    public ModuleManager activeManager;
+
+    /// <summary> RecursiveModule is never rotated; others use _currentRotationIndex. </summary>
+    private int GetEffectiveRotationIndex()
+    {
+        return (selectedComponentPrefab is RecursiveModuleComponent) ? 0 : _currentRotationIndex;
+    } 
 
 
     private void Start()
@@ -34,6 +40,12 @@ public class BuildManager : MonoBehaviour
         
         // Default to global instance
         if (activeManager == null) activeManager = ModuleManager.Instance;
+        
+        // Ensure CameraController exists
+        if (_mainCamera.GetComponent<CameraController>() == null)
+        {
+            _mainCamera.gameObject.AddComponent<CameraController>();
+        }
         
         // _components array in BuildManager is redundant if ModuleManager handles it.
         // We should rely on activeManager for logic.
@@ -62,12 +74,36 @@ public class BuildManager : MonoBehaviour
         if (activeManager != null && activeManager.parentManager != null)
         {
             Debug.Log("Exiting Module...");
-            SetActiveManager(activeManager.parentManager);
+            var parent = activeManager.parentManager;
             
-            // Move Camera back (Simple logic: center on parent grid)
-            // Or ideally store camera state. For now simplify:
-            Camera.main.transform.position = new Vector3(activeManager.originPosition.x + 3.5f, activeManager.originPosition.y + 3.5f, -10);
-            Camera.main.orthographicSize = 5;
+            // 1. Module Position (Start of Exit)
+            Vector3 modulePos = Vector3.zero;
+            if (activeManager.ownerComponent != null)
+            {
+               modulePos = activeManager.ownerComponent.transform.position;
+            }
+            else
+            {
+               // Fallback: Use parent center if owner not found (shouldn't happen for recursive modules)
+               modulePos = new Vector3(parent.originPosition.x + 3.5f, parent.originPosition.y + 3.5f, 0) + parent.transform.position;
+            }
+
+            // 2. Parent Center Position (End of Exit)
+            Vector3 parentCenter = new Vector3(parent.originPosition.x + 3.5f, parent.originPosition.y + 3.5f, -10) + parent.transform.position;
+            
+            if (CameraController.Instance != null)
+            {
+                StartCoroutine(CameraController.Instance.TransitionExitModule(modulePos, parentCenter, () => {
+                    SetActiveManager(parent);
+                }));
+            }
+            else
+            {
+                // Fallback
+                SetActiveManager(parent);
+                Camera.main.transform.position = parentCenter;
+                Camera.main.orthographicSize = 5;
+            }
         }
     }
 
@@ -77,28 +113,51 @@ public class BuildManager : MonoBehaviour
         if (previewManager != null)
         {
             if (selectedComponentPrefab != null)
-                 previewManager.UpdatePreview(selectedComponentPrefab, _currentRotationIndex);
+                 previewManager.UpdatePreview(selectedComponentPrefab, GetEffectiveRotationIndex());
         }
     }
 
 
     private void HandleInput()
     {
+        // Block input if camera is transitioning
+        if (CameraController.Instance != null && CameraController.Instance.IsTransitioning) return;
+
         if (Mouse.current == null) return;
 
-        if (Mouse.current.leftButton.wasPressedThisFrame) // Left Click: Build
+        if (selectedComponentPrefab != null)
         {
-            TryBuild();
+            // Preview logic could go here
+            if (Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                TryBuild();
+            }
+            if (Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                 // Deselect?
+                 selectedComponentPrefab = null;
+                 Debug.Log("Selection Cleared");
+            }
         }
-        else if (Mouse.current.rightButton.wasPressedThisFrame) // Right Click: Remove
+        else
         {
-            TryRemove();
+            // Interaction Mode (No tool selected)
+            if (Mouse.current.leftButton.wasPressedThisFrame)
+            {
+                TryInteract();
+            }
+            
+            // Removal Mode
+            if (Mouse.current.rightButton.wasPressedThisFrame)
+            {
+                TryRemove();
+            }
         }
 
         if (Keyboard.current != null)
         {
-            // Rotation
-            if (Keyboard.current.rKey.wasPressedThisFrame)
+            // Rotation (disabled for RecursiveModule)
+            if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
                 Debug.Log($"Rotation set to: {_currentRotationIndex}");
@@ -129,8 +188,9 @@ public class BuildManager : MonoBehaviour
     public bool CheckCollision(ComponentBase component, Vector2Int gridPos)
     {
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return true;
+        int rot = GetEffectiveRotationIndex();
         ComponentBase temp = Instantiate(component, Vector3.zero, Quaternion.identity);
-        for (int i=0; i< _currentRotationIndex; i++) temp.Rotate();
+        for (int i=0; i< rot; i++) temp.Rotate();
         
         int w = temp.GetWidth();
         int h = temp.GetHeight();
@@ -142,7 +202,7 @@ public class BuildManager : MonoBehaviour
             {
                 // Logic copy from ComponentBase (Create static helper later!)
                 Vector2Int offset = Vector2Int.zero;
-                switch (_currentRotationIndex)
+                switch (rot)
                 {
                     case 0: offset = new Vector2Int(x, y); break;
                     case 1: offset = new Vector2Int(y, -x); break;
@@ -170,8 +230,9 @@ public class BuildManager : MonoBehaviour
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
         // Check for validity using simulated footprint
+        int rot = GetEffectiveRotationIndex();
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
-        for (int i=0; i< _currentRotationIndex; i++) temp.Rotate();
+        for (int i=0; i< rot; i++) temp.Rotate();
         
         int w = temp.GetWidth();
         int h = temp.GetHeight();
@@ -183,7 +244,7 @@ public class BuildManager : MonoBehaviour
             {
                 // Logic copy from ComponentBase (Create static helper later!)
                 Vector2Int offset = Vector2Int.zero;
-                switch (_currentRotationIndex)
+                switch (rot)
                 {
                     case 0: offset = new Vector2Int(x, y); break;
                     case 1: offset = new Vector2Int(y, -x); break;
@@ -212,6 +273,33 @@ public class BuildManager : MonoBehaviour
         
         // Note: ComponentBase.Start() will run and register itself to GetComponentInParent<ModuleManager>().
         // Since we parented it to activeManager, it will find it!
+    }
+
+    private void TryInteract()
+    {
+        if (activeManager == null) return;
+        if (UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return; // Block UI
+
+        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+        Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
+
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
+
+        ComponentBase component = activeManager.GetComponentAt(gridPos);
+        if (component != null)
+        {
+            // Check if it is a RecursiveModule
+            if (component is RecursiveModuleComponent recursiveModule)
+            {
+                recursiveModule.EnterModule();
+            }
+            else
+            {
+                Debug.Log($"Clicked on {component.name}");
+                // Other interactions (Info panel?) could go here
+            }
+        }
     }
 
     private void TryRemove()

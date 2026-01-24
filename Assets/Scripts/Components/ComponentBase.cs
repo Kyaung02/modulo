@@ -17,6 +17,13 @@ public class ComponentBase : MonoBehaviour
 
     public WordData HeldWord { get; protected set; } // The word currently in this component
 
+    // Public method to clear held word (for external components)
+    public void ClearHeldWord()
+    {
+        HeldWord = null;
+        UpdateVisuals();
+    }
+
     public virtual int GetWidth() => 1;
     public virtual int GetHeight() => 1;
 
@@ -147,7 +154,7 @@ public class ComponentBase : MonoBehaviour
         }
     }
 
-    public void Rotate()
+    public virtual void Rotate()
     {
         RotationIndex = (Direction)(((int)RotationIndex + 1) % 4);
         UpdateRotationVisual();

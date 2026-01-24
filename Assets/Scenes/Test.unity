@@ -353,6 +353,7 @@ GameObject:
   - component: {fileID: 270331985}
   - component: {fileID: 270331984}
   - component: {fileID: 270331987}
+  - component: {fileID: 270331988}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -377,8 +378,8 @@ Camera:
   m_GameObject: {fileID: 270331983}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.6792453, g: 0.6792453, b: 0.6792453, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -478,6 +479,45 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &270331988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 270331983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76984e44a8e9302469eda8ee51e342d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  moveSmoothTime: 0.3
+  zoomSmoothTime: 0.3
+  transitionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  transitionDuration: 1
 --- !u!1 &356453178
 GameObject:
   m_ObjectHideFlags: 0
@@ -511,8 +551,10 @@ MonoBehaviour:
   - {fileID: 2470134602115535202, guid: 8a3eb3437fa4b5e4983146c647d188a1, type: 3}
   - {fileID: 5800738405480898224, guid: f4a7fce66cd4eb0468e8f511b74572e3, type: 3}
   - {fileID: 1587019432957339030, guid: 1412efe19e712b541a249c75eac3add4, type: 3}
+  - {fileID: 6113182914553514147, guid: b2f2ec0795d5f834c8d920e2241e2eeb, type: 3}
   selectedComponentPrefab: {fileID: 4853172142464227962, guid: 45af7e6fae79667499eac357fe33c8d5, type: 3}
   componentParent: {fileID: 1384956772}
+  activeManager: {fileID: 0}
 --- !u!4 &356453180
 Transform:
   m_ObjectHideFlags: 0
@@ -1129,6 +1171,8 @@ MonoBehaviour:
   height: 7
   cellSize: 1
   originPosition: {x: -3.5, y: -3.5}
+  parentManager: {fileID: 0}
+  ownerComponent: {fileID: 0}
 --- !u!4 &1662590328
 Transform:
   m_ObjectHideFlags: 0
@@ -1138,7 +1182,7 @@ Transform:
   m_GameObject: {fileID: 1662590326}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.433, y: -1.93361, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -17,6 +17,22 @@ public class PortComponent : ComponentBase
         // For now, simple box.
     }
 
+    protected override void Start()
+    {
+        // Do NOT call base.Start() because we are out of bounds (-1 or 7).
+        // We handle our own lifecycle or attached to InnerGrid transform manually.
+        
+        // Find manager for manual component lookup usage if needed
+        if (_assignedManager == null)
+            _assignedManager = GetComponentInParent<ModuleManager>();
+            
+        // Manually register to Tick system
+        if (TickManager.Instance != null)
+        {
+            TickManager.Instance.OnTick += OnTick;
+        }
+    }
+
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
         // When item arrives at Port from INSIDE the module:

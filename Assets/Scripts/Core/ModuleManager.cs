@@ -15,7 +15,8 @@ public class ModuleManager : MonoBehaviour
     public Vector2 originPosition = new Vector2(-3.5f, -3.5f); // Centers the 7x7 grid
 
     public ModuleManager parentManager; // Link to the outer world for recursion navigation
-
+    public ComponentBase ownerComponent; // The component (RecursiveModule) that owns this inner world
+    
     private void Awake()
     {
         // If this is the first manager (likely the main world), set it as Instance.
@@ -30,13 +31,18 @@ public class ModuleManager : MonoBehaviour
 
     public Vector3 GridToWorldPosition(int x, int y)
     {
-        return new Vector3(x * cellSize + originPosition.x + (cellSize * 0.5f), y * cellSize + originPosition.y + (cellSize * 0.5f), 0);
+        // Add transform.position to offset based on where this manager is located
+        Vector3 worldOffset = transform.position;
+        return worldOffset + new Vector3(x * cellSize + originPosition.x + (cellSize * 0.5f), y * cellSize + originPosition.y + (cellSize * 0.5f), 0);
     }
 
     public Vector2Int WorldToGridPosition(Vector3 worldPosition)
     {
-        int x = Mathf.FloorToInt((worldPosition.x - originPosition.x) / cellSize);
-        int y = Mathf.FloorToInt((worldPosition.y - originPosition.y) / cellSize);
+        // Subtract transform.position to get local pos relative to manager
+        Vector3 localPos = worldPosition - transform.position;
+        
+        int x = Mathf.FloorToInt((localPos.x - originPosition.x) / cellSize);
+        int y = Mathf.FloorToInt((localPos.y - originPosition.y) / cellSize);
         return new Vector2Int(x, y);
     }
 
@@ -94,20 +100,23 @@ public class ModuleManager : MonoBehaviour
     }
 
     // Debugging Gizmos
+    // Debugging Gizmos
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.gray;
+        Vector3 offset = transform.position; // Current world position
+        
         for (int x = 0; x <= width; x++)
         {
-            Vector3 start = new Vector3(x * cellSize + originPosition.x, originPosition.y, 0);
-            Vector3 end = new Vector3(x * cellSize + originPosition.x, originPosition.y + height * cellSize, 0);
+            Vector3 start = offset + new Vector3(x * cellSize + originPosition.x, originPosition.y, 0);
+            Vector3 end = offset + new Vector3(x * cellSize + originPosition.x, originPosition.y + height * cellSize, 0);
             Gizmos.DrawLine(start, end);
         }
 
         for (int y = 0; y <= height; y++)
         {
-            Vector3 start = new Vector3(originPosition.x, y * cellSize + originPosition.y, 0);
-            Vector3 end = new Vector3(originPosition.x + width * cellSize, y * cellSize + originPosition.y, 0);
+            Vector3 start = offset + new Vector3(originPosition.x, y * cellSize + originPosition.y, 0);
+            Vector3 end = offset + new Vector3(originPosition.x + width * cellSize, y * cellSize + originPosition.y, 0);
             Gizmos.DrawLine(start, end);
         }
     }

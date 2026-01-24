@@ -80,8 +80,8 @@ public class BuildUI : MonoBehaviour
 
     private void Update()
     {
-        // Check for Exit Input (Escape)
-        if (UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+        // Check for Exit Input (Q)
+        if (UnityEngine.InputSystem.Keyboard.current.qKey.wasPressedThisFrame)
         {
             _buildManager.ExitCurrentModule();
         }
