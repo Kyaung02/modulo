@@ -4,6 +4,13 @@ using System.Collections.Generic;
 
 public class BuildManager : MonoBehaviour
 {
+    public static BuildManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
 
     [Header("Settings")]
     [Header("Settings")]
@@ -117,6 +124,38 @@ public class BuildManager : MonoBehaviour
             
             OnComponentSelected?.Invoke(index);
         }
+    }
+
+    public bool CheckCollision(ComponentBase component, Vector2Int gridPos)
+    {
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return true;
+        ComponentBase temp = Instantiate(component, Vector3.zero, Quaternion.identity);
+        for (int i=0; i< _currentRotationIndex; i++) temp.Rotate();
+        
+        int w = temp.GetWidth();
+        int h = temp.GetHeight();
+        
+        List<Vector2Int> checkPositions = new List<Vector2Int>();
+         for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                // Logic copy from ComponentBase (Create static helper later!)
+                Vector2Int offset = Vector2Int.zero;
+                switch (_currentRotationIndex)
+                {
+                    case 0: offset = new Vector2Int(x, y); break;
+                    case 1: offset = new Vector2Int(y, -x); break;
+                    case 2: offset = new Vector2Int(-x, -y); break;
+                    case 3: offset = new Vector2Int(-y, x); break;
+                }
+                checkPositions.Add(gridPos + offset);
+            }
+        }
+
+        bool r_val=activeManager.IsAreaClear(checkPositions);
+        Destroy(temp.gameObject);
+        return !r_val;
     }
 
     private void TryBuild()

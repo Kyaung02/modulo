@@ -17,8 +17,8 @@ public class PreviewManager : MonoBehaviour
     {
         // 0. Safety Checks
         if (_mainCamera == null) _mainCamera = Camera.main;
-        if (_mainCamera == null) { Debug.LogWarning("PreviewManager: MainCamera is missing."); return; }
-        if (ModuleManager.Instance == null) { Debug.LogWarning("PreviewManager: ModuleManager is missing."); return; }
+        if (_mainCamera == null) return;
+        if (ModuleManager.Instance == null) return;
 
         // 1. Check if we have a selection
         if (selectedPrefab == null)
@@ -65,7 +65,7 @@ public class PreviewManager : MonoBehaviour
 
             // Update Color based on Occupancy
             // Use ModuleManager to check occupancy safely
-            if (ModuleManager.Instance.GetComponentAt(gridPos) != null)
+            if (BuildManager.Instance.CheckCollision(selectedPrefab, gridPos))
             {
                 SetPreviewColor(new Color(1f, 0f, 0f, 0.5f)); // Red
             }

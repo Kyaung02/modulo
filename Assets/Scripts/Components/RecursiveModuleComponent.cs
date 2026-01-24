@@ -40,9 +40,7 @@ public class RecursiveModuleComponent : ComponentBase
         CreateInternalPorts();
     }
         
-        // Create Ports
-        CreateInternalPorts();
-    }
+
 
     private void CreateInternalPorts()
     {
