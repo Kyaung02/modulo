@@ -18,7 +18,7 @@ public class BuildManager : MonoBehaviour
     public ComponentBase selectedComponentPrefab; // Currently selected component to build
     public Transform componentParent; // Parent object for organized hierarchy
 
-    private Camera _mainCamera;
+    public Camera _mainCamera;
     private ComponentBase[,] _components; // 2D array to track installed components
     
     // Preview Manager Reference
@@ -118,8 +118,7 @@ public class BuildManager : MonoBehaviour
         HandleInput();
         if (previewManager != null)
         {
-            if (selectedComponentPrefab != null)
-                 previewManager.UpdatePreview(selectedComponentPrefab, GetEffectiveRotationIndex());
+            if (selectedComponentPrefab != null)previewManager.UpdatePreview(this);
         }
     }
 
@@ -131,39 +130,21 @@ public class BuildManager : MonoBehaviour
 
         if (Mouse.current == null) return;
 
-        if (selectedComponentPrefab != null)
+        
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            // Preview logic could go here
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                TryBuild();
-            }
-            if (Mouse.current.rightButton.wasPressedThisFrame)
-            {
-                 // Deselect?
-                 selectedComponentPrefab = null;
-                 Debug.Log("Selection Cleared");
-            }
+            if (selectedComponentPrefab != null)TryBuild();
+            else TryInspect();
         }
-        else
+        if (Mouse.current.rightButton.wasPressedThisFrame)
         {
-            // Interaction Mode (No tool selected)
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                TryInteract();
-            }
-            
-            // Removal Mode
-            if (Mouse.current.rightButton.wasPressedThisFrame)
-            {
-                TryRemove();
-            }
+            TryRemove();
         }
 
         if (Keyboard.current != null)
         {
             // Rotation (disabled for RecursiveModule)
-            if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent))
+            if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
                 Debug.Log($"Rotation set to: {_currentRotationIndex}");
@@ -174,6 +155,14 @@ public class BuildManager : MonoBehaviour
             if (Keyboard.current.digit2Key.wasPressedThisFrame) SelectComponent(1);
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
+            
+            if(Keyboard.current.eKey.wasPressedThisFrame){
+                TryInteract();
+            }
+            if(Keyboard.current.xKey.wasPressedThisFrame){
+                selectedComponentPrefab = null;
+                Debug.Log("Selection Cleared");
+            }
         }
     }
 
@@ -181,6 +170,7 @@ public class BuildManager : MonoBehaviour
 
     private void SelectComponent(int index)
     {
+        _currentRotationIndex=0;
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
         {
             selectedComponentPrefab = availableComponents[index];
@@ -193,9 +183,14 @@ public class BuildManager : MonoBehaviour
 
     public bool CheckCollision(ComponentBase component, Vector2Int gridPos)
     {
+        if (selectedComponentPrefab == null) return true;
+        if (activeManager == null) return true;
+
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return true;
+        
+        // Check for validity using simulated footprint
         int rot = GetEffectiveRotationIndex();
-        ComponentBase temp = Instantiate(component, Vector3.zero, Quaternion.identity);
+        ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
         for (int i=0; i< rot; i++) temp.Rotate();
         
         int w = temp.GetWidth();
@@ -219,7 +214,7 @@ public class BuildManager : MonoBehaviour
             }
         }
 
-        bool r_val=activeManager.IsAreaClear(checkPositions);
+        bool r_val=activeManager.IsAreaClear(checkPositions);;
         Destroy(temp.gameObject);
         return !r_val;
     }
@@ -324,5 +319,10 @@ public class BuildManager : MonoBehaviour
             Destroy(component.gameObject);
             // Unregister handled in OnDestroy
         }
+    }
+
+    private void TryInspect()
+    {
+        //자세한 정보 보기. To be added...
     }
 }

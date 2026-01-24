@@ -6,34 +6,25 @@ public class PreviewManager : MonoBehaviour
     private GameObject _previewObject;
     private ComponentBase _currentPreviewPrefab;
     private int _lastRotationIndex = -1;
-    private Camera _mainCamera;
-
-    private void Start()
+    public void UpdatePreview(BuildManager buildManager)
     {
-        _mainCamera = Camera.main;
-    }
-
-    public void UpdatePreview(ComponentBase selectedPrefab, int rotationIndex)
-    {
-        // 0. Safety Checks
-        if (_mainCamera == null) _mainCamera = Camera.main;
-        if (_mainCamera == null) return;
-        if (ModuleManager.Instance == null) return;
-
+        if(buildManager==null)return;
+        if (buildManager._mainCamera == null) return;
+        
         // 1. Check if we have a selection
-        if (selectedPrefab == null)
+        if (buildManager.selectedComponentPrefab == null)
         {
             ClearPreview();
             return;
         }
 
         // 2. Re-create preview if selection changed
-        if (_currentPreviewPrefab != selectedPrefab)
+        if (_currentPreviewPrefab != buildManager.selectedComponentPrefab)
         {
             ClearPreview();
             
-            _previewObject = Instantiate(selectedPrefab.gameObject, Vector3.zero, Quaternion.identity);
-            _currentPreviewPrefab = selectedPrefab;
+            _previewObject = Instantiate(buildManager.selectedComponentPrefab.gameObject, Vector3.zero, Quaternion.identity);
+            _currentPreviewPrefab = buildManager.selectedComponentPrefab;
             _lastRotationIndex = -1; // Force rotation update
 
             // Disable logic components so it doesn't register to managers
@@ -43,29 +34,28 @@ public class PreviewManager : MonoBehaviour
 
         // 3. Update Position & Rotation
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
-        Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
-        Vector2Int gridPos = ModuleManager.Instance.WorldToGridPosition(mouseWorldPos);
+        Vector3 mouseWorldPos = buildManager._mainCamera.ScreenToWorldPoint(mouseScreenPos);
+        Vector2Int gridPos = buildManager.activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (ModuleManager.Instance.IsWithinBounds(gridPos.x, gridPos.y))
+        if (buildManager.activeManager.IsWithinBounds(gridPos.x, gridPos.y))
         {
             _previewObject.SetActive(true);
-            Vector3 worldPos = ModuleManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y);
+            Vector3 worldPos = buildManager.activeManager.GridToWorldPosition(gridPos.x, gridPos.y);
             _previewObject.transform.position = worldPos;
 
             // Update Rotation if needed
-            if (_lastRotationIndex != rotationIndex)
+            if (_lastRotationIndex != buildManager._currentRotationIndex)
             {
                 _previewObject.transform.rotation = Quaternion.identity;
-                for (int i = 0; i < rotationIndex; i++)
+                for (int i = 0; i < buildManager._currentRotationIndex; i++)
                 {
                     _previewObject.transform.Rotate(0, 0, -90);
                 }
-                _lastRotationIndex = rotationIndex;
+                _lastRotationIndex = buildManager._currentRotationIndex;
             }
 
             // Update Color based on Occupancy
-            // Use ModuleManager to check occupancy safely
-            if (BuildManager.Instance.CheckCollision(selectedPrefab, gridPos))
+            if (buildManager.CheckCollision(_currentPreviewPrefab, gridPos))
             {
                 SetPreviewColor(new Color(1f, 0f, 0f, 0.5f)); // Red
             }
