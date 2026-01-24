@@ -544,6 +544,7 @@ MonoBehaviour:
   - {fileID: 6113182914553514147, guid: b2f2ec0795d5f834c8d920e2241e2eeb, type: 3}
   selectedComponentPrefab: {fileID: 4853172142464227962, guid: 45af7e6fae79667499eac357fe33c8d5, type: 3}
   componentParent: {fileID: 1384956772}
+  _mainCamera: {fileID: 0}
   previewManager: {fileID: 0}
   _currentRotationIndex: 0
   activeManager: {fileID: 1662590327}
@@ -1178,7 +1179,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoalManager
   levels:
-  - targetWord: {fileID: 11400000, guid: 4908af0b43092f547af9e12d3aaaab9b, type: 2}
+  - targetWord: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}
     requiredCount: 10
   currentLevelIndex: 0
   currentDeliverCount: 0
