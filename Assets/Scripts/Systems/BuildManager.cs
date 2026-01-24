@@ -25,6 +25,7 @@ public class BuildManager : MonoBehaviour
     public PreviewManager previewManager;
 
     public int _currentRotationIndex = 0;
+    public int _currentFlipIndex = 0;
     public ModuleManager activeManager;
 
     /// <summary> RecursiveModule is never rotated; others use _currentRotationIndex. </summary>
@@ -148,7 +149,23 @@ public class BuildManager : MonoBehaviour
             if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
-                Debug.Log($"Rotation set to: {_currentRotationIndex}");
+                //Debug.Log($"Rotation set to: {_currentRotationIndex}");
+            }
+
+            // Interact
+            if(Keyboard.current.eKey.wasPressedThisFrame){
+                TryInteract();
+            }
+
+            // Flip (enabled only for CombinerComponents)
+            if(Keyboard.current.tKey.wasPressedThisFrame&&selectedComponentPrefab is CombinerComponent){
+                TryFlip();
+            }
+
+            // Clear Selection
+            if(Keyboard.current.xKey.wasPressedThisFrame){
+                selectedComponentPrefab = null;
+                Debug.Log("Selection Cleared");
             }
 
             // Component Selection
@@ -157,13 +174,6 @@ public class BuildManager : MonoBehaviour
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
             
-            if(Keyboard.current.eKey.wasPressedThisFrame){
-                TryInteract();
-            }
-            if(Keyboard.current.xKey.wasPressedThisFrame){
-                selectedComponentPrefab = null;
-                Debug.Log("Selection Cleared");
-            }
         }
     }
 
@@ -172,10 +182,10 @@ public class BuildManager : MonoBehaviour
     private void SelectComponent(int index)
     {
         _currentRotationIndex=0;
+        _currentFlipIndex=0;
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
         {
             selectedComponentPrefab = availableComponents[index];
-            // optional: reset rotation or keep it? Keeping it is usually better UX
             Debug.Log($"Selected Component: {selectedComponentPrefab.name}");
             
             OnComponentSelected?.Invoke(index);
@@ -328,5 +338,13 @@ public class BuildManager : MonoBehaviour
     private void TryInspect()
     {
         //자세한 정보 보기. To be added...
+    }
+
+    private void TryFlip()
+    {
+        if (selectedComponentPrefab == null) return;
+        if (selectedComponentPrefab is CombinerComponent) return;
+        _currentFlipIndex = (_currentFlipIndex + 1) % 2;
+        Debug.Log($"Flipped to: {_currentFlipIndex}");
     }
 }

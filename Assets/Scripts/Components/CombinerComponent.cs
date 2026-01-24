@@ -8,7 +8,8 @@ public class CombinerComponent : ComponentBase
     // 2x1 Size (Wide to accept 2 parallel inputs from bottom)
     public override int GetWidth() => 2;
     public override int GetHeight() => 1;
-    
+    public int isFlipped = 0;
+
     protected override void Start()
     {
         base.Start();
@@ -86,6 +87,8 @@ public class CombinerComponent : ComponentBase
             if (ModuleManager.Instance.recipeDatabase != null)
             {
                 WordData result = ModuleManager.Instance.recipeDatabase.GetOutput(_inputA, _inputB);
+                //if(result != null)Debug.Log("CombineResult: " + result.wordName);
+                //else Debug.Log("CombineResult: null");
                 if (result != null)
                 {
                     // Successful combination
