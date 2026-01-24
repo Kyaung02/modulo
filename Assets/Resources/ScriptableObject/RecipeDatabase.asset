@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94a21d93cf89fb94286738e39bb15381, type: 3}
+  m_Name: RecipeDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::RecipeDatabase
+  recipes:
+  - inputA: {fileID: 11400000, guid: 6ec5f2cda1c9974429fa85e10a2096a5, type: 2}
+    inputB: {fileID: 11400000, guid: 7939f5e26f6866545a436c70ced990b1, type: 2}
+    output: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}
+  - inputA: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}
+    inputB: {fileID: 11400000, guid: 6ec5f2cda1c9974429fa85e10a2096a5, type: 2}
+    output: {fileID: 11400000, guid: b3b49c55031851949a04a250165e0bcd, type: 2}
+  - inputA: {fileID: 11400000, guid: b3b49c55031851949a04a250165e0bcd, type: 2}
+    inputB: {fileID: 11400000, guid: 3a7f551f7dd34b045bc8621fb8579f4c, type: 2}
+    output: {fileID: 11400000, guid: 4f6bc38babc8a5a4ca378a9015879ce8, type: 2}
+  - inputA: {fileID: 11400000, guid: 0cdb7938c49fd414882a926121030a2c, type: 2}
+    inputB: {fileID: 11400000, guid: b3b49c55031851949a04a250165e0bcd, type: 2}
+    output: {fileID: 11400000, guid: a0e62a4e9d9015e41bd4e583ad6c3b0a, type: 2}
+  - inputA: {fileID: 11400000, guid: 0cdb7938c49fd414882a926121030a2c, type: 2}
+    inputB: {fileID: 11400000, guid: a0e62a4e9d9015e41bd4e583ad6c3b0a, type: 2}
+    output: {fileID: 11400000, guid: 516783f2b0015bf44946cccc010190ca, type: 2}
+  - inputA: {fileID: 11400000, guid: b3b49c55031851949a04a250165e0bcd, type: 2}
+    inputB: {fileID: 11400000, guid: 516783f2b0015bf44946cccc010190ca, type: 2}
+    output: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+  - inputA: {fileID: 11400000, guid: 0cdb7938c49fd414882a926121030a2c, type: 2}
+    inputB: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    output: {fileID: 11400000, guid: fbd58946835177147b064bdef7c9421a, type: 2}
+  - inputA: {fileID: 11400000, guid: fbd58946835177147b064bdef7c9421a, type: 2}
+    inputB: {fileID: 11400000, guid: 4f6bc38babc8a5a4ca378a9015879ce8, type: 2}
+    output: {fileID: 11400000, guid: 3b34fba2643e81149af6a497be0eef1d, type: 2}
+  - inputA: {fileID: 11400000, guid: fbd58946835177147b064bdef7c9421a, type: 2}
+    inputB: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    output: {fileID: 11400000, guid: c6546386bf486df4c9ad599ef1418a2f, type: 2}
+  - inputA: {fileID: 11400000, guid: 3b34fba2643e81149af6a497be0eef1d, type: 2}
+    inputB: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    output: {fileID: 11400000, guid: a155ade6e4f120f409f432605ebfecf3, type: 2}
+  - inputA: {fileID: 11400000, guid: c6546386bf486df4c9ad599ef1418a2f, type: 2}
+    inputB: {fileID: 11400000, guid: a155ade6e4f120f409f432605ebfecf3, type: 2}
+    output: {fileID: 11400000, guid: b67102a4c58efd64387a99dcd06dbfce, type: 2}

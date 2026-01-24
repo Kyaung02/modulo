@@ -1,0 +1,16 @@
+Name,Input1,Input2
+Earth,,
+Wind,,
+Fire,,
+Water,,
+Dust,Earth,Wind
+Planet,Dust,Earth
+Ocean,Planet,Water
+Sun,Fire,Planet
+Solar,Fire,Sun
+System,Planet,Solar
+Computer,Fire,System
+Submarine,Computer,Ocean
+Software,Computer,System
+Subsystem,Submarine,System
+Module,Software,Subsystem
