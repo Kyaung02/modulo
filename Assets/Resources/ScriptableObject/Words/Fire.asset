@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Fire
   wordName: Fire
-  emoji: "\U0001F525"
+  emoji: 
   wordColor: {r: 1, g: 0, b: 0, a: 1}
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: 21300000, guid: f60db3be751e92e488d37b53091d38c9, type: 3}
