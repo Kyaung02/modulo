@@ -13,6 +13,39 @@ MonoBehaviour:
   m_Name: RecipeDatabase
   m_EditorClassIdentifier: Assembly-CSharp::RecipeDatabase
   recipes:
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
+  - inputA: {fileID: 0}
+    inputB: {fileID: 0}
+    output: {fileID: 0}
   - inputA: {fileID: 11400000, guid: 6ec5f2cda1c9974429fa85e10a2096a5, type: 2}
     inputB: {fileID: 11400000, guid: 7939f5e26f6866545a436c70ced990b1, type: 2}
     output: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}

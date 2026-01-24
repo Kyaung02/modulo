@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Software
   wordName: Software
-  emoji: "\U0001F4BE"
+  emoji: 
   wordColor: {r: 0.9, g: 0.35999995, b: 0.70247936, a: 1}
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: 21300000, guid: 2201090ba4dceef4fa7272f49f8c3a42, type: 3}

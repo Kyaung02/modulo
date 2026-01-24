@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Water
   wordName: Water
-  emoji: "\U0001F4A7"
+  emoji: 
   wordColor: {r: 0, g: 0, b: 1, a: 1}
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: 21300000, guid: 57f8c25420fe14c4e8c453f7d89f1596, type: 3}

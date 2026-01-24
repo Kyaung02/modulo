@@ -317,6 +317,9 @@ public class BuildManager : MonoBehaviour
         ComponentBase component = activeManager.GetComponentAt(gridPos);
         if (component != null)
         {
+            // Cannot remove Collector
+            if (component is CollectorComponent) return;
+
             Destroy(component.gameObject);
             // Unregister handled in OnDestroy
         }
