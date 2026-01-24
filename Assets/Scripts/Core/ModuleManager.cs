@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class ModuleManager : MonoBehaviour
 {
@@ -48,19 +49,46 @@ public class ModuleManager : MonoBehaviour
     public void RegisterComponent(ComponentBase component)
     {
         if (_gridComponents == null) _gridComponents = new ComponentBase[width, height];
-        _gridComponents[component.GridPosition.x, component.GridPosition.y] = component;
+        
+        foreach (var pos in component.GetOccupiedPositions())
+        {
+            if (IsWithinBounds(pos.x, pos.y))
+            {
+                _gridComponents[pos.x, pos.y] = component;
+            }
+        }
     }
 
     public void UnregisterComponent(ComponentBase component)
     {
-        if (_gridComponents != null)
-            _gridComponents[component.GridPosition.x, component.GridPosition.y] = null;
+        if (_gridComponents == null) return;
+
+        foreach (var pos in component.GetOccupiedPositions())
+        {
+            if (IsWithinBounds(pos.x, pos.y) && _gridComponents[pos.x, pos.y] == component)
+            {
+                _gridComponents[pos.x, pos.y] = null;
+            }
+        }
     }
 
     public ComponentBase GetComponentAt(Vector2Int pos)
     {
         if (!IsWithinBounds(pos.x, pos.y) || _gridComponents == null) return null;
         return _gridComponents[pos.x, pos.y];
+    }
+    
+    // Check if an area is clear for building
+    public bool IsAreaClear(List<Vector2Int> positions)
+    {
+        foreach (var pos in positions)
+        {
+            if (!IsWithinBounds(pos.x, pos.y) || GetComponentAt(pos) != null)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     // Debugging Gizmos

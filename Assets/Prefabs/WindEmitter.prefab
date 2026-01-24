@@ -104,4 +104,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65d6cd7f6844d4a43890e0bbb9c1657d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EmitterComponent
-  wordToEmit: {fileID: 11400000, guid: 5944f93cdca2e8f4aa7aecd5bb5e591d, type: 2}
+  wordToEmit: {fileID: 11400000, guid: 2e8dc250c89d1664bab4e7db00d0383c, type: 2}
