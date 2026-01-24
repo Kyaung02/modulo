@@ -9,21 +9,14 @@ public class CombinerComponent : ComponentBase
     public override int GetWidth() => 2;
     public override int GetHeight() => 1;
     
-    private WordVisualizer _visualizer;
-
     protected override void Start()
     {
         base.Start();
         
-        _visualizer = GetComponentInChildren<WordVisualizer>();
-        if (_visualizer == null)
+        // Reposition Visualizer to center of 2x1 block
+        if (_visualizer != null)
         {
-            GameObject vizObj = new GameObject("WordVisualizer");
-            vizObj.transform.SetParent(transform);
-            // Center visualizer between (0,0) and (1,0) -> (0.5, 0)
-            vizObj.transform.localPosition = new Vector3(0.5f, 0, 0); 
-            _visualizer = vizObj.AddComponent<WordVisualizer>();
-            vizObj.GetComponent<SpriteRenderer>().sortingOrder = 10;
+            _visualizer.transform.localPosition = new Vector3(0.5f, 0, 0); 
         }
     }
 

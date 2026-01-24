@@ -70,8 +70,17 @@ public class PortComponent : ComponentBase
         return false;
     }
 
+    public WordData infiniteSourceWord; // If set, this port generates items infinitely (for Root World)
+
     protected override void OnTick(long tickCount)
     {
+        // Infinite Source Logic (Root World)
+        if (HeldWord == null && infiniteSourceWord != null && parentModule == null)
+        {
+            HeldWord = infiniteSourceWord;
+            UpdateVisuals();
+        }
+
         // Port is out of bounds, so we need special logic to push into inner grid
         if (HeldWord != null && _assignedManager != null)
         {

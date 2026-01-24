@@ -10,21 +10,15 @@ public class BalancerComponent : ComponentBase
     [SerializeField] private List<WordData> _buffer = new List<WordData>(); // Queue serialized for debug
     private int _nextOutputIndex = 0; // 0: Left Output, 1: Right Output
     
-    private WordVisualizer _visualizer;
-
     protected override void Start()
     {
         base.Start();
         
-        // Visualizer centered
-        _visualizer = GetComponentInChildren<WordVisualizer>();
-        if (_visualizer == null)
+        // Reposition Visualizer to center of 2x1 block
+        // Base creates it at (0,0), we want it at (0.5, 0)
+        if (_visualizer != null)
         {
-            GameObject vizObj = new GameObject("WordVisualizer");
-            vizObj.transform.SetParent(transform);
-            vizObj.transform.localPosition = new Vector3(0.5f, 0, 0); 
-            _visualizer = vizObj.AddComponent<WordVisualizer>();
-            vizObj.GetComponent<SpriteRenderer>().sortingOrder = 10;
+            _visualizer.transform.localPosition = new Vector3(0.5f, 0, 0); 
         }
     }
 
@@ -39,7 +33,16 @@ public class BalancerComponent : ComponentBase
             if (_buffer.Count < 2)
             {
                 _buffer.Add(word);
-                UpdateVisuals();
+                
+                // If this is the FIRST item (Visible one), animate it in
+                if (_buffer.Count == 1 && _visualizer != null)
+                {
+                    _visualizer.UpdateVisual(word, localDir);
+                }
+                else
+                {
+                    UpdateVisuals();
+                }
                 return true;
             }
         }

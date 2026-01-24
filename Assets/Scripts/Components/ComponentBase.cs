@@ -87,7 +87,27 @@ public class ComponentBase : MonoBehaviour
         {
             TickManager.Instance.OnTick += OnTick;
         }
+        
+        // Common Visualizer Init
+        _visualizer = GetComponentInChildren<WordVisualizer>();
+        if (_visualizer == null)
+        {
+            // Auto create if missing
+            GameObject vizObj = new GameObject("WordVisualizer");
+            vizObj.transform.SetParent(transform);
+            vizObj.transform.localPosition = Vector3.zero;
+            _visualizer = vizObj.AddComponent<WordVisualizer>();
+            
+            if (GetComponent<SpriteRenderer>())
+                _visualizer.GetComponent<SpriteRenderer>().sortingOrder = GetComponent<SpriteRenderer>().sortingOrder + 1;
+            else
+                _visualizer.GetComponent<SpriteRenderer>().sortingOrder = 10;
+        }
+        
+        if (HeldWord != null) UpdateVisuals(); // Init state
     }
+
+    protected WordVisualizer _visualizer;
 
     [ContextMenu("Snap to Grid")]
     public void SnapToGrid()
@@ -102,13 +122,27 @@ public class ComponentBase : MonoBehaviour
         }
     }
 
+    // Double Buffering: Prevent item from moving twice in the same tick if loop order hits downstream
+    protected long _lastReceivedTick = -1;
+
     // Returns true if the component successfully accepted the word
     public virtual bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
         if (HeldWord == null)
         {
             HeldWord = word;
-            UpdateVisuals();
+            
+            // Prevent immediate move
+            if (TickManager.Instance != null)
+                _lastReceivedTick = TickManager.Instance.CurrentTick;
+            
+            // Pass LOCAL direction for animation
+            // 'direction' is the World Direction of movement (e.g. World Right)
+            // Visualizer is child of this component, so it rotates with parent.
+            // We need to inverse transform the world direction to local.
+            Vector2Int localDir = WorldToLocalDirection(direction);
+            
+            if (_visualizer != null) _visualizer.UpdateVisual(HeldWord, localDir);
             return true;
         }
         return false;
@@ -116,6 +150,9 @@ public class ComponentBase : MonoBehaviour
 
     protected virtual void OnTick(long tickCount)
     {
+        // Block if we just received this item in THIS tick
+        if (_lastReceivedTick == tickCount) return;
+        
         // Default behavior: Try to push word to the next component
         if (HeldWord != null)
         {
@@ -129,7 +166,7 @@ public class ComponentBase : MonoBehaviour
                 if (targetComponent.AcceptWord(HeldWord, GetOutputDirection(), targetPos))
                 {
                     HeldWord = null; // Successfully passed the word
-                    UpdateVisuals();
+                    UpdateVisuals(); // Clear visual
                 }
             }
         }
@@ -137,7 +174,11 @@ public class ComponentBase : MonoBehaviour
 
     protected virtual void UpdateVisuals()
     {
-        // Override for visual updates
+        if (_visualizer != null)
+        {
+            // Default update (no anim logic / reset)
+            _visualizer.UpdateVisual(HeldWord);
+        }
     }
 
 
@@ -181,6 +222,30 @@ public class ComponentBase : MonoBehaviour
             case Direction.Left: return Vector2Int.left;
             default: return Vector2Int.up;
         }
+    }
+    
+    // Convert World Direction to Local Direction based on current rotation
+    // Effectively rotates vector by +90 * RotationIndex (Inverse of Component Rotation)
+    public Vector2Int WorldToLocalDirection(Vector2Int worldDir)
+    {
+        int r = (int)RotationIndex;
+        int x = worldDir.x;
+        int y = worldDir.y;
+        
+        // Rotate CCW r times
+        for (int i=0; i<r; i++) 
+        { 
+            int temp = x; 
+            x = -y; 
+            y = temp; 
+        }
+        return new Vector2Int(x, y);
+    }
+    
+    public Vector2Int WorldToLocalOffset(Vector2Int worldOffset)
+    {
+        // Same logic as Direction
+        return WorldToLocalDirection(worldOffset);
     }
 
 }
