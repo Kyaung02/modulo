@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f62d6b8454f29ad4da0fe0362e7abfa8, type: 3}
   m_Name: WordDatabase
   m_EditorClassIdentifier: Assembly-CSharp::WordDatabase
-  words: []
+  words:
+  - {fileID: 11400000, guid: 5944f93cdca2e8f4aa7aecd5bb5e591d, type: 2}
+  - {fileID: 11400000, guid: 581db72bd7dedfb46afbe9963f917724, type: 2}
+  - {fileID: 11400000, guid: 3d0657f761dbf0348af2160bcc307b26, type: 2}
