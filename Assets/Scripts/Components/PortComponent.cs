@@ -69,4 +69,34 @@ public class PortComponent : ComponentBase
         }
         return false;
     }
+
+    protected override void OnTick(long tickCount)
+    {
+        // Port is out of bounds, so we need special logic to push into inner grid
+        if (HeldWord != null && _assignedManager != null)
+        {
+            // Get output direction (should point inward into the grid)
+            Vector2Int outputDir = GetOutputDirection();
+            
+            // Port is out of bounds; compute grid pos from world position each tick
+            Vector2Int portGridPos = _assignedManager.WorldToGridPosition(transform.position);
+            Vector2Int targetPos = portGridPos + outputDir;
+            
+            // Check if target is within bounds
+            if (_assignedManager.IsWithinBounds(targetPos.x, targetPos.y))
+            {
+                ComponentBase targetComponent = _assignedManager.GetComponentAt(targetPos);
+                
+                if (targetComponent != null)
+                {
+                    // Try to give the word to the target
+                    if (targetComponent.AcceptWord(HeldWord, outputDir, targetPos))
+                    {
+                        HeldWord = null; // Successfully passed the word
+                        UpdateVisuals();
+                    }
+                }
+            }
+        }
+    }
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class RecursiveModuleComponent : ComponentBase
 {
@@ -284,19 +285,36 @@ public class RecursiveModuleComponent : ComponentBase
          }
          return Vector2Int.zero;
     }
+    private Dictionary<Direction, PortComponent> _ports = new Dictionary<Direction, PortComponent>();
+
     private void SpawnPort(Vector2Int gridPos, Direction wallDir, Direction facingDir)
     {
         GameObject portObj = new GameObject($"Port_{wallDir}");
         portObj.transform.SetParent(innerGrid.transform);
         PortComponent port = portObj.AddComponent<PortComponent>();
         
-        // Visuals
+        // Cache it for lookup
+        if (!_ports.ContainsKey(wallDir)) _ports.Add(wallDir, port);
+        
+        // Visuals - Thin Black Line on Wall
         GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Quad);
         vis.transform.SetParent(portObj.transform);
-        vis.transform.localPosition = Vector3.zero;
+        
+        // Scale: Wide but thinner (Strip)
+        vis.transform.localScale = new Vector3(1.0f, 0.15f, 1.0f);
+        // Position: Offset to the "Front" edge (Up, before rotation)
+        // Since Port rotates to face inward, this Up edge will rotate to touch the grid boundary.
+        vis.transform.localPosition = new Vector3(0, 0.425f, -0.01f);
+        
         Destroy(vis.GetComponent<Collider>()); // Visual only
-        if (vis.GetComponent<Renderer>()) 
-            vis.GetComponent<Renderer>().material.color = Color.magenta;
+        
+        var ren = vis.GetComponent<Renderer>();
+        if (ren) 
+        {
+            ren.material = new Material(Shader.Find("Sprites/Default")); // Use Sprite/Unlit shader for flat black
+            ren.material.color = Color.black; 
+            ren.sortingOrder = 5; // On top of grid
+        }
 
         // Position: Use valid GridToWorld even if out of bounds (Grid logic supports math)
         portObj.transform.position = innerGrid.GridToWorldPosition(gridPos.x, gridPos.y);
@@ -305,17 +323,18 @@ public class RecursiveModuleComponent : ComponentBase
         port.Configure(this, wallDir);
         
         // IMPORTANT: We do NOT register this to the Grid System because it's out of bounds.
-        // It's a "Wall Object", not a grid component.
-        // ComponentBase.Start will try to register. We need to disable that or handle it.
-        // RecursiveModuleComponent is the parent logic, so we can just let it exist.
-        // But ComponentBase.Start calls RegisterComponent.
-        // Let's manually set index to make visual correct?
         
         int targetRot = (int)facingDir;
         while ((int)port.RotationIndex != targetRot)
         {
             port.Rotate();
         }
+    }
+    
+    private PortComponent FindPort(Direction dir)
+    {
+        if (_ports.ContainsKey(dir)) return _ports[dir];
+        return null;
     }
 
     // --- IO Logic ---
@@ -381,22 +400,7 @@ public class RecursiveModuleComponent : ComponentBase
         return false;
     }
 
-    private PortComponent FindPort(Direction dir)
-    {
-        // Inefficient lookup, better cache
-        // Inner grid size 7x7.
-        Vector2Int targetPos = Vector2Int.zero;
-        switch(dir)
-        {
-             case Direction.Up: targetPos = new Vector2Int(3, 6); break;
-             case Direction.Down: targetPos = new Vector2Int(3, 0); break;
-             case Direction.Left: targetPos = new Vector2Int(0, 3); break;
-             case Direction.Right: targetPos = new Vector2Int(6, 3); break;
-        }
-        
-        ComponentBase c = innerGrid.GetComponentAt(targetPos);
-        return c as PortComponent;
-    }
+
     
     // --- Outer World Preview (Glass Floor) ---
     private Camera _outerCamera;
