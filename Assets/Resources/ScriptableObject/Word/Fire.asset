@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
   m_Name: Fire
   m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: 1
   wordName: Fire
   wordIcon: {fileID: 0}
+  wordColor: {r: 1, g: 0, b: 0, a: 1}

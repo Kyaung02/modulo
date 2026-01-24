@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
   m_Name: Earth
   m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: 0
   wordName: Earth
   wordIcon: {fileID: 0}
+  wordColor: {r: 0.6132076, g: 0.14267348, b: 0, a: 1}

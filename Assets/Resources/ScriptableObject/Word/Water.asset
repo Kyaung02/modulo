@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
   m_Name: Water
   m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: 2
   wordName: Water
   wordIcon: {fileID: 0}
+  wordColor: {r: 0, g: 0.14352083, b: 1, a: 1}
