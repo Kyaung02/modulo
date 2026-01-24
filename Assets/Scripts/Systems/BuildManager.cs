@@ -59,6 +59,7 @@ public class BuildManager : MonoBehaviour
 
         if (previewManager == null) Debug.LogError("BuildManager: Could not find PreviewManager in Scene!");
         else Debug.Log("BuildManager: Successfully connected to PreviewManager.");
+        SelectComponent(0);
     }
 
     // Call this when entering/exiting modules
