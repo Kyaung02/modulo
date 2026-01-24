@@ -12,6 +12,8 @@ public class BuildManager : MonoBehaviour
     private Camera _mainCamera;
     private ComponentBase[,] _components; // 2D array to track installed components
 
+    
+
     private void Start()
     {
         _mainCamera = Camera.main;
@@ -22,6 +24,8 @@ public class BuildManager : MonoBehaviour
     {
         HandleInput();
     }
+
+    private int _currentRotationIndex = 0;
 
     private void HandleInput()
     {
@@ -36,9 +40,16 @@ public class BuildManager : MonoBehaviour
             TryRemove();
         }
 
-        // Hotkeys for component selection
         if (Keyboard.current != null)
         {
+            // Rotation
+            if (Keyboard.current.rKey.wasPressedThisFrame)
+            {
+                _currentRotationIndex = (_currentRotationIndex + 1) % 4;
+                Debug.Log($"Rotation set to: {_currentRotationIndex}");
+            }
+
+            // Component Selection
             if (Keyboard.current.digit1Key.wasPressedThisFrame) SelectComponent(0);
             if (Keyboard.current.digit2Key.wasPressedThisFrame) SelectComponent(1);
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
@@ -51,6 +62,7 @@ public class BuildManager : MonoBehaviour
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
         {
             selectedComponentPrefab = availableComponents[index];
+            // optional: reset rotation or keep it? Keeping it is usually better UX
             Debug.Log($"Selected Component: {selectedComponentPrefab.name}");
         }
     }
@@ -70,6 +82,12 @@ public class BuildManager : MonoBehaviour
         Vector3 spawnPos = ModuleManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y);
         ComponentBase newComponent = Instantiate(selectedComponentPrefab, spawnPos, Quaternion.identity, componentParent);
         
+        // Apply Rotation
+        for (int i = 0; i < _currentRotationIndex; i++)
+        {
+            newComponent.Rotate();
+        }
+
         _components[gridPos.x, gridPos.y] = newComponent;
     }
 
