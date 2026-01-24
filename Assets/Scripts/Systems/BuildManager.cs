@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class BuildManager : MonoBehaviour
 {
@@ -17,11 +18,20 @@ public class BuildManager : MonoBehaviour
     public PreviewManager previewManager;
 
     public int _currentRotationIndex = 0;
+    public ModuleManager activeManager; 
+
 
     private void Start()
     {
         _mainCamera = Camera.main;
-        _components = new ComponentBase[ModuleManager.Instance.width, ModuleManager.Instance.height];
+        
+        // Default to global instance
+        if (activeManager == null) activeManager = ModuleManager.Instance;
+        
+        // _components array in BuildManager is redundant if ModuleManager handles it.
+        // We should rely on activeManager for logic.
+
+        _components = new ComponentBase[activeManager.width, activeManager.height];
         
         if (previewManager == null)
         {
@@ -30,6 +40,28 @@ public class BuildManager : MonoBehaviour
 
         if (previewManager == null) Debug.LogError("BuildManager: Could not find PreviewManager in Scene!");
         else Debug.Log("BuildManager: Successfully connected to PreviewManager.");
+    }
+
+    // Call this when entering/exiting modules
+    public void SetActiveManager(ModuleManager manager)
+    {
+        activeManager = manager;
+        // Notify UI or Camera to update?
+        // UI event could be useful here.
+    }
+
+    public void ExitCurrentModule()
+    {
+        if (activeManager != null && activeManager.parentManager != null)
+        {
+            Debug.Log("Exiting Module...");
+            SetActiveManager(activeManager.parentManager);
+            
+            // Move Camera back (Simple logic: center on parent grid)
+            // Or ideally store camera state. For now simplify:
+            Camera.main.transform.position = new Vector3(activeManager.originPosition.x + 3.5f, activeManager.originPosition.y + 3.5f, -10);
+            Camera.main.orthographicSize = 5;
+        }
     }
 
     private void Update()
@@ -73,6 +105,8 @@ public class BuildManager : MonoBehaviour
         }
     }
 
+    public event System.Action<int> OnComponentSelected;
+
     private void SelectComponent(int index)
     {
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
@@ -80,46 +114,82 @@ public class BuildManager : MonoBehaviour
             selectedComponentPrefab = availableComponents[index];
             // optional: reset rotation or keep it? Keeping it is usually better UX
             Debug.Log($"Selected Component: {selectedComponentPrefab.name}");
+            
+            OnComponentSelected?.Invoke(index);
         }
     }
 
     private void TryBuild()
     {
         if (selectedComponentPrefab == null) return;
+        if (activeManager == null) return;
 
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
-        Vector2Int gridPos = ModuleManager.Instance.WorldToGridPosition(mouseWorldPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (!ModuleManager.Instance.IsWithinBounds(gridPos.x, gridPos.y)) return;
-        if (_components[gridPos.x, gridPos.y] != null) return; // Already occupied
-
-        // Instantiate and place
-        Vector3 spawnPos = ModuleManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y);
-        ComponentBase newComponent = Instantiate(selectedComponentPrefab, spawnPos, Quaternion.identity, componentParent);
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
-        // Apply Rotation
-        for (int i = 0; i < _currentRotationIndex; i++)
+        // Check for validity using simulated footprint
+        ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
+        for (int i=0; i< _currentRotationIndex; i++) temp.Rotate();
+        
+        int w = temp.GetWidth();
+        int h = temp.GetHeight();
+        
+        List<Vector2Int> checkPositions = new List<Vector2Int>();
+         for (int x = 0; x < w; x++)
         {
-            newComponent.Rotate();
+            for (int y = 0; y < h; y++)
+            {
+                // Logic copy from ComponentBase (Create static helper later!)
+                Vector2Int offset = Vector2Int.zero;
+                switch (_currentRotationIndex)
+                {
+                    case 0: offset = new Vector2Int(x, y); break;
+                    case 1: offset = new Vector2Int(y, -x); break;
+                    case 2: offset = new Vector2Int(-x, -y); break;
+                    case 3: offset = new Vector2Int(-y, x); break;
+                }
+                checkPositions.Add(gridPos + offset);
+            }
         }
 
-        _components[gridPos.x, gridPos.y] = newComponent;
+        if (!activeManager.IsAreaClear(checkPositions))
+        {
+            Destroy(temp.gameObject);
+            return;
+        }
+
+        // Valid! Place it properly.
+        // We must set parent to the active manager's transform (or a container inside it)
+        // Optimization: ModuleManager should have a public Transform componentContainer
+        // For now, assume activeManager.transform is the parent.
+        temp.transform.SetParent(activeManager.transform);
+        
+        temp.transform.position = activeManager.GridToWorldPosition(gridPos.x, gridPos.y);
+        
+        // Rotation is already applied to temp.
+        
+        // Note: ComponentBase.Start() will run and register itself to GetComponentInParent<ModuleManager>().
+        // Since we parented it to activeManager, it will find it!
     }
 
     private void TryRemove()
     {
+        if (activeManager == null) return;
+
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
-        Vector2Int gridPos = ModuleManager.Instance.WorldToGridPosition(mouseWorldPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (!ModuleManager.Instance.IsWithinBounds(gridPos.x, gridPos.y)) return;
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
-        ComponentBase component = _components[gridPos.x, gridPos.y];
+        ComponentBase component = activeManager.GetComponentAt(gridPos);
         if (component != null)
         {
             Destroy(component.gameObject);
-            _components[gridPos.x, gridPos.y] = null;
+            // Unregister handled in OnDestroy
         }
     }
 }

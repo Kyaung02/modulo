@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
   m_Name: Wind
   m_EditorClassIdentifier: Assembly-CSharp::WordData
-  id: 
-  wordName: 
-  wordIcon: {fileID: 0}
-  wordColor: {r: 1, g: 1, b: 1, a: 1}
+  id: 3
+  wordName: Wind
+  wordIcon: {fileID: 21300000, guid: 7cd5f45f5d5712f48a6c92fac8b8c6af, type: 3}
+  wordColor: {r: 0, g: 1, b: 0.12997723, a: 1}

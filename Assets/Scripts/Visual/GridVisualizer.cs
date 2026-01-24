@@ -1,0 +1,99 @@
+using UnityEngine;
+
+public class GridVisualizer : MonoBehaviour
+{
+    [Header("Settings")]
+    public Material lineMaterial; // Assign a simple color material (Standard or Unlit/Color)
+    public int orderInLayer = -10; // Draw behind everything
+
+    private void Start()
+    {
+        // CreateBackground(); // Removing background as requested
+        CreateGridLines();
+        CreateBorder();
+    }
+
+    private void CreateBackground()
+    {
+        // One big quad for the background
+        GameObject bgInfo = new GameObject("GridBackground");
+        bgInfo.transform.SetParent(transform);
+        
+        // Size: 7x7
+        int w = ModuleManager.Instance.width;
+        int h = ModuleManager.Instance.height;
+        
+        bgInfo.transform.position = ModuleManager.Instance.originPosition + new Vector2(w * 0.5f * ModuleManager.Instance.cellSize, h * 0.5f * ModuleManager.Instance.cellSize);
+        bgInfo.transform.localScale = new Vector3(w * ModuleManager.Instance.cellSize, h * ModuleManager.Instance.cellSize, 1);
+        
+        SpriteRenderer sr = bgInfo.AddComponent<SpriteRenderer>();
+        // Create a 1x1 white sprite dynamically if none provided?
+        // Or assume we assign standard assets. Let's create a texture.
+        sr.sprite = CreateSolidSprite(Color.white);
+        sr.color = ColorPalette.BackgroundColor;
+        sr.sortingOrder = orderInLayer;
+    }
+
+    private void CreateGridLines()
+    {
+        // Use LineRenderer for grid lines
+        GameObject linesObj = new GameObject("GridLines");
+        linesObj.transform.SetParent(transform);
+        
+        int w = ModuleManager.Instance.width;
+        int h = ModuleManager.Instance.height;
+        float cell = ModuleManager.Instance.cellSize;
+        Vector2 origin = ModuleManager.Instance.originPosition;
+        
+        // Vertical Lines
+        for (int x = 0; x <= w; x++)
+        {
+            DrawLine(linesObj.transform, 
+                new Vector3(origin.x + x * cell, origin.y, 0),
+                new Vector3(origin.x + x * cell, origin.y + h * cell, 0));
+        }
+        
+        // Horizontal Lines
+        for (int y = 0; y <= h; y++)
+        {
+            DrawLine(linesObj.transform, 
+                new Vector3(origin.x, origin.y + y * cell, 0),
+                new Vector3(origin.x + w * cell, origin.y + y * cell, 0));
+        }
+    }
+    
+    private void CreateBorder()
+    {
+        // TODO: Thicker border later. For now, lines cover it.
+    }
+
+    private void DrawLine(Transform parent, Vector3 start, Vector3 end)
+    {
+        GameObject lineObj = new GameObject("Line");
+        lineObj.transform.SetParent(parent);
+        
+        LineRenderer lr = lineObj.AddComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+        lr.positionCount = 2;
+        lr.SetPosition(0, start);
+        lr.SetPosition(1, end);
+        
+        lr.startWidth = ColorPalette.GridLineWidth;
+        lr.endWidth = ColorPalette.GridLineWidth;
+        
+        if (lineMaterial != null) lr.material = lineMaterial;
+        lr.startColor = ColorPalette.GridLineColor;
+        lr.endColor = ColorPalette.GridLineColor;
+        
+        lr.sortingOrder = orderInLayer + 1; // Above background
+    }
+
+    // Utility to create a white 1x1 sprite
+    private Sprite CreateSolidSprite(Color color)
+    {
+        Texture2D texture = new Texture2D(1, 1);
+        texture.SetPixel(0, 0, color);
+        texture.Apply();
+        return Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+    }
+}
