@@ -118,7 +118,7 @@ public class BuildManager : MonoBehaviour
         HandleInput();
         if (previewManager != null)
         {
-            if (selectedComponentPrefab != null)previewManager.UpdatePreview(this);
+            previewManager.UpdatePreview(this);
         }
     }
 
