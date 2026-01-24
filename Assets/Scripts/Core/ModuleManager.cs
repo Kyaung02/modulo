@@ -4,6 +4,9 @@ public class ModuleManager : MonoBehaviour
 {
     public static ModuleManager Instance { get; private set; }
 
+    [Header("Resources")]
+    public RecipeDatabase recipeDatabase; // Assign in Inspector
+
     [Header("Grid Settings")]
     public int width = 7;
     public int height = 7;
