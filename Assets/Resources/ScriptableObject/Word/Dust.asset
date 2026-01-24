@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: 4
   wordName: Dust
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: 21300000, guid: f8dd3b512e3dfed4a8fcf8c4adb30a57, type: 3}
   wordColor: {r: 1, g: 0.8226364, b: 0.21226418, a: 1}

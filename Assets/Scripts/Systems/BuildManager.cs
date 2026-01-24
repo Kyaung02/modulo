@@ -11,14 +11,40 @@ public class BuildManager : MonoBehaviour
     public Transform componentParent; // Parent object for organized hierarchy
 
     private Camera _mainCamera;
-    private ComponentBase[,] _components; // 2D array to track installed components
-
     
+    // Dynamic Manager Reference
+    public ModuleManager activeManager; 
 
     private void Start()
     {
         _mainCamera = Camera.main;
-        _components = new ComponentBase[ModuleManager.Instance.width, ModuleManager.Instance.height];
+        // Default to global instance
+        if (activeManager == null) activeManager = ModuleManager.Instance;
+        
+        // _components array in BuildManager is redundant if ModuleManager handles it.
+        // We should rely on activeManager for logic.
+    }
+
+    // Call this when entering/exiting modules
+    public void SetActiveManager(ModuleManager manager)
+    {
+        activeManager = manager;
+        // Notify UI or Camera to update?
+        // UI event could be useful here.
+    }
+
+    public void ExitCurrentModule()
+    {
+        if (activeManager != null && activeManager.parentManager != null)
+        {
+            Debug.Log("Exiting Module...");
+            SetActiveManager(activeManager.parentManager);
+            
+            // Move Camera back (Simple logic: center on parent grid)
+            // Or ideally store camera state. For now simplify:
+            Camera.main.transform.position = new Vector3(activeManager.originPosition.x + 3.5f, activeManager.originPosition.y + 3.5f, -10);
+            Camera.main.orthographicSize = 5;
+        }
     }
 
     private void Update()
@@ -58,6 +84,8 @@ public class BuildManager : MonoBehaviour
         }
     }
 
+    public event System.Action<int> OnComponentSelected;
+
     private void SelectComponent(int index)
     {
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
@@ -65,66 +93,35 @@ public class BuildManager : MonoBehaviour
             selectedComponentPrefab = availableComponents[index];
             // optional: reset rotation or keep it? Keeping it is usually better UX
             Debug.Log($"Selected Component: {selectedComponentPrefab.name}");
+            
+            OnComponentSelected?.Invoke(index);
         }
     }
 
     private void TryBuild()
     {
         if (selectedComponentPrefab == null) return;
+        if (activeManager == null) return;
 
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
-        Vector2Int gridPos = ModuleManager.Instance.WorldToGridPosition(mouseWorldPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (!ModuleManager.Instance.IsWithinBounds(gridPos.x, gridPos.y)) return;
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
-        // Create a temporary instance to check footprint (Optimization: Use a static method or ghost)
-        // For now, simpler approach: Instantiate, check, destroy if invalid? Too heavy.
-        // Better: We know the prefab's dimensions. We can simulate it. 
-        // But BuildManager doesn't know component's dimension logic without instance.
-        // Let's instantiate deactivated first.
-
+        // Check for validity using simulated footprint
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
-        // Apply rotation to temp to get correct occupied positions
         for (int i=0; i< _currentRotationIndex; i++) temp.Rotate();
         
-        // Manually set grid pos to check (since Start hasn't run)
-        // We need a helper or public property setter for this simulation, 
-        // OR we just calculate it manually if we knew the size.
-        // Since GetOccupiedPositions depends on GridPosition which is set in Start,
-        // we can't easily query it before placement without refactoring.
-        // Workaround: Instantiate, set position, check, if fail destroy.
-        
-        temp.transform.position = ModuleManager.Instance.GridToWorldPosition(gridPos.x, gridPos.y);
-        // We need to force update its GridPosition internal logic or make GetOccupiedPositions take parameters.
-        // Let's refactor ComponentBase later to be cleaner. For now:
-        
-        // ACTUALLY: Let's assume 1x1 for everything EXCEPT Combiner for now in this function?
-        // No, we should support generic.
-        // Let's use the instantiated object (it's fine to instantiate one per click).
-        
-        // START is not called yet. We need to manually initialize for check.
-        // This is getting messy. 
-        // SIMPLIFICATION: Proceed with instantiate, IF collision -> Destroy.
-        
-        // Note: Start() runs AFTER this frame typically or instantly?
-        // Instantiate calls Awake. Start is next frame or end of frame.
-        // We can manually call a Setup method?
-        
-        // Let's rely on the fact that we can check collision AFTER instantiation if we want, 
-        // but removing it is cleaner.
-        
-        // Let's try to calculate occupied positions MANUALLY for the check.
-        // We need the size of the prefab.
         int w = temp.GetWidth();
         int h = temp.GetHeight();
         
-        // Calculate manually (duplicate logic from ComponentBase temporarily)
         List<Vector2Int> checkPositions = new List<Vector2Int>();
          for (int x = 0; x < w; x++)
         {
             for (int y = 0; y < h; y++)
             {
+                // Logic copy from ComponentBase (Create static helper later!)
                 Vector2Int offset = Vector2Int.zero;
                 switch (_currentRotationIndex)
                 {
@@ -137,49 +134,41 @@ public class BuildManager : MonoBehaviour
             }
         }
 
-        if (!ModuleManager.Instance.IsAreaClear(checkPositions))
+        if (!activeManager.IsAreaClear(checkPositions))
         {
             Destroy(temp.gameObject);
             return;
         }
 
         // Valid! Place it properly.
-        temp.transform.SetParent(componentParent);
-        // Rotation is already applied one by one above? No, I applied to temp.
-        // temp IS the new component.
+        // We must set parent to the active manager's transform (or a container inside it)
+        // Optimization: ModuleManager should have a public Transform componentContainer
+        // For now, assume activeManager.transform is the parent.
+        temp.transform.SetParent(activeManager.transform);
         
-        // We just need to ensure Start() picks up the correct position provided by transform.
-        // transform is already set.
+        temp.transform.position = activeManager.GridToWorldPosition(gridPos.x, gridPos.y);
         
-        // Register is done in Start().
+        // Rotation is already applied to temp.
         
-        // We need to update our _components array? 
-        // ModuleManager manages the grid data now (`_gridComponents`).
-        // BuiltManager doesn't need `_components` array if ModuleManager does it.
-        // The old _components array in BuildManager is now redundant and conflicting.
-        // We should REMOVE _components usage from BuildManager and rely on ModuleManager.
-        
-        // Let's finish this block first.
-        
-        // newComponent is temp.
-         _components[gridPos.x, gridPos.y] = temp; // This is only marking pivot. 
-         // But ModuleManager.RegisterComponent will mark all spots in Start().
-         
+        // Note: ComponentBase.Start() will run and register itself to GetComponentInParent<ModuleManager>().
+        // Since we parented it to activeManager, it will find it!
     }
 
     private void TryRemove()
     {
+        if (activeManager == null) return;
+
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
-        Vector2Int gridPos = ModuleManager.Instance.WorldToGridPosition(mouseWorldPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (!ModuleManager.Instance.IsWithinBounds(gridPos.x, gridPos.y)) return;
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
-        ComponentBase component = _components[gridPos.x, gridPos.y];
+        ComponentBase component = activeManager.GetComponentAt(gridPos);
         if (component != null)
         {
             Destroy(component.gameObject);
-            _components[gridPos.x, gridPos.y] = null;
+            // Unregister handled in OnDestroy
         }
     }
 }

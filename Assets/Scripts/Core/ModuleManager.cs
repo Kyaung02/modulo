@@ -14,16 +14,18 @@ public class ModuleManager : MonoBehaviour
     public float cellSize = 1.0f;
     public Vector2 originPosition = new Vector2(-3.5f, -3.5f); // Centers the 7x7 grid
 
+    public ModuleManager parentManager; // Link to the outer world for recursion navigation
+
     private void Awake()
     {
+        // If this is the first manager (likely the main world), set it as Instance.
+        // But do NOT destroy other instances, as they will be inner worlds.
         if (Instance == null)
         {
             Instance = this;
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+        
+        // Initialize other things if needed
     }
 
     public Vector3 GridToWorldPosition(int x, int y)

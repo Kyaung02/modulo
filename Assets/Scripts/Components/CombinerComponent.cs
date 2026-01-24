@@ -108,7 +108,7 @@ public class CombinerComponent : ComponentBase
     // Helper: World Offset to Local Offset (Reverse Rotation)
     private Vector2Int WorldToLocalOffset(Vector2Int worldOffset)
     {
-        int r = RotationIndex;
+        int r = (int)RotationIndex;
         int x = worldOffset.x;
         int y = worldOffset.y;
         
@@ -131,7 +131,7 @@ public class CombinerComponent : ComponentBase
         // We need to apply inverse of RotationIndex
         
         Vector2Int dir = worldDir;
-        for (int i=0; i< (4 - RotationIndex) % 4; i++)
+        for (int i=0; i< (4 - (int)RotationIndex) % 4; i++)
         {
             // Rotate -90 degrees (x,y) -> (y, -x) ? No.
             // Rotate 90 CW: (x,y) -> (y, -x)
@@ -150,7 +150,7 @@ public class CombinerComponent : ComponentBase
         // Let's use standard helpers in ComponentBase if possible, but we don't have them yet.
         // Implement locally.
         
-        int r = RotationIndex;
+        int r = (int)RotationIndex;
         if (r == 0) return worldDir;
         
         int x = worldDir.x;
@@ -173,7 +173,7 @@ public class CombinerComponent : ComponentBase
          int y = localOffset.y;
          
          // Apply Rotation (CW)
-         for (int i=0; i<RotationIndex; i++)
+         for (int i=0; i<(int)RotationIndex; i++)
          {
              // CW: (x,y) -> (y, -x)
              int temp = x;
