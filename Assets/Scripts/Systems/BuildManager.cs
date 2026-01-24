@@ -81,6 +81,12 @@ public class BuildManager : MonoBehaviour
             if (activeManager.ownerComponent != null)
             {
                modulePos = activeManager.ownerComponent.transform.position;
+               
+               // Hook for cleanup (Disable Outer Preview)
+               if (activeManager.ownerComponent is RecursiveModuleComponent rm)
+               {
+                   rm.ExitModule();
+               }
             }
             else
             {

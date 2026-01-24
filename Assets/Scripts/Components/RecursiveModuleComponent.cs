@@ -148,13 +148,15 @@ public class RecursiveModuleComponent : ComponentBase
         
         // Exclude UI layer if needed? For now default mask.
         
+        CreateInnerBackground();
+        
         // 3. Create Display Quad on the Module (Outside)
         _previewDisplay = GameObject.CreatePrimitive(PrimitiveType.Quad);
         _previewDisplay.name = "Preview_Display";
         _previewDisplay.transform.SetParent(transform);
         _previewDisplay.transform.localPosition = Vector3.zero; // Center top
         _previewDisplay.transform.localRotation = Quaternion.identity;
-        _previewDisplay.transform.localScale = new Vector3(0.9f, 0.9f, 1f); // Slightly smaller than 1x1
+        _previewDisplay.transform.localScale = new Vector3(0.95f, 0.95f, 1f); // 0.95x0.95 to match requested scale
         
         // Scale to match aspect ratio if needed, but 1x1 is square.
         
@@ -169,15 +171,6 @@ public class RecursiveModuleComponent : ComponentBase
         // Layering
         // Ensure the display is slightly above key visual so it doesn't z-fight
         _previewDisplay.transform.localPosition = new Vector3(0, 0, -0.1f);
-    }
-    
-    protected override void OnDestroy()
-    {
-        base.OnDestroy();
-        if (_previewTexture != null)
-        {
-            _previewTexture.Release();
-        }
     }
 
     private void CreateInternalPorts()
@@ -405,8 +398,92 @@ public class RecursiveModuleComponent : ComponentBase
         return c as PortComponent;
     }
     
-    // --- Interaction ---
+    // --- Outer World Preview (Glass Floor) ---
+    private Camera _outerCamera;
+    private RenderTexture _outerTexture;
+    private GameObject _innerBackgroundQuad;
     
+    // Called inside InitializeInnerWorld
+    private void CreateInnerBackground()
+    {
+        // Create a large quad behind the inner world to display the outer world
+        _innerBackgroundQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        _innerBackgroundQuad.name = "Background_OuterWorld";
+        _innerBackgroundQuad.transform.SetParent(innerWorldRoot);
+        
+        // Center of 7x7 grid is (3.5, 3.5). 
+        // We want it slightly behind everything (z = 10)
+        Vector3 center = innerGrid.originPosition + new Vector2(3.5f, 3.5f);
+        _innerBackgroundQuad.transform.localPosition = new Vector3(center.x, center.y, 10f);
+        
+        // Size: 21x21 (3x the grid size to match the 3x Outer Camera view)
+        _innerBackgroundQuad.transform.localScale = new Vector3(21f, 21f, 1f);
+        _innerBackgroundQuad.transform.localRotation = Quaternion.identity; 
+        
+        Destroy(_innerBackgroundQuad.GetComponent<Collider>());
+        
+        // Ensure it renders behind everything
+        var ren = _innerBackgroundQuad.GetComponent<Renderer>();
+        ren.sortingOrder = -100;
+        
+        // Material setup delayed until texture is created
+        _innerBackgroundQuad.SetActive(false); // Hidden by default
+    }
+
+    private void ToggleOuterPreview(bool active)
+    {
+        if (active)
+        {
+            if (_outerTexture == null)
+            {
+                _outerTexture = new RenderTexture(512, 512, 16);
+                _outerTexture.Create();
+            }
+            
+            if (_outerCamera == null)
+            {
+                GameObject camObj = new GameObject("Outer_Watcher_Cam");
+                camObj.transform.SetParent(transform); 
+                camObj.transform.localPosition = new Vector3(0, 0, -10f); 
+                
+                _outerCamera = camObj.AddComponent<Camera>();
+                _outerCamera.orthographic = true;
+                _outerCamera.targetTexture = _outerTexture;
+                _outerCamera.clearFlags = CameraClearFlags.SolidColor;
+                
+                // Match Main Camera styling
+                if (Camera.main != null)
+                    _outerCamera.backgroundColor = Camera.main.backgroundColor;
+                else
+                    _outerCamera.backgroundColor = new Color(0.1f, 0.1f, 0.1f); 
+                    
+                _outerCamera.orthographicSize = 1.5f; // 3x3 area (Radius 1.5)
+            }
+            _outerCamera.gameObject.SetActive(true);
+            
+            if (_innerBackgroundQuad != null)
+            {
+                _innerBackgroundQuad.SetActive(true);
+                var ren = _innerBackgroundQuad.GetComponent<Renderer>();
+                if (ren.material.name != "OuterPreviewMat") 
+                {
+                    Material mat = new Material(Shader.Find("Unlit/Texture"));
+                    mat.name = "OuterPreviewMat";
+                    mat.mainTexture = _outerTexture;
+                    ren.material = mat;
+                }
+            }
+            
+            // PreviewDisplay logic moved to EnterModule callback to prevend black-screen during zoom
+        }
+        else
+        {
+            if (_outerCamera != null) _outerCamera.gameObject.SetActive(false);
+            if (_innerBackgroundQuad != null) _innerBackgroundQuad.SetActive(false);
+            // PreviewDisplay logic moved to ExitModule
+        }
+    }
+
     // Allow entering the module
     // Public method called by BuildManager
     public void EnterModule()
@@ -418,57 +495,73 @@ public class RecursiveModuleComponent : ComponentBase
             return;
         }
         
-        // Using BuildManager to switch context
         BuildManager bm = FindFirstObjectByType<BuildManager>();
         if (bm == null)
         {
             Debug.LogError("[RecursiveModule] Cannot find BuildManager!");
             return;
         }
+
+        // ENABLE OUTER PREVIEW
+        ToggleOuterPreview(true);
+        
+        // Freeze local CCTV immediately to prevent visual feedback loop / weirdness during zoom
+        if (_previewCamera != null) _previewCamera.enabled = false;
         
         Debug.Log($"[RecursiveModule] Entering Module {name}...");
-        Debug.Log($"[RecursiveModule] InnerGrid position: {innerGrid.transform.position}");
-        Debug.Log($"[RecursiveModule] InnerGrid origin: {innerGrid.originPosition}");
         
         // Target Inner Position - use the actual world position of innerGrid center
-        // innerGrid.originPosition is relative to innerGrid.transform.position
         Vector3 innerCenter = new Vector3(
             innerGrid.transform.position.x + innerGrid.originPosition.x + (innerGrid.width * innerGrid.cellSize * 0.5f),
             innerGrid.transform.position.y + innerGrid.originPosition.y + (innerGrid.height * innerGrid.cellSize * 0.5f),
             Camera.main.transform.position.z
         );
         
-        Debug.Log($"[RecursiveModule] Target camera position: {innerCenter}");
-        
         if (CameraController.Instance != null)
         {
-            Debug.Log($"[RecursiveModule] Using CameraController transition");
             StartCoroutine(CameraController.Instance.TransitionEnterModule(transform.position, innerCenter, () => {
-                Debug.Log("[RecursiveModule] Transition Complete. Switching Context.");
                 bm.SetActiveManager(innerGrid);
+                if (_previewDisplay != null) _previewDisplay.SetActive(false); // Hide only after transition
             }));
         }
         else
         {
-            Debug.LogWarning("[RecursiveModule] No CameraController found! Using direct teleport.");
-            // Fallback - direct teleport
-            if (Camera.main != null)
-            {
-                Camera.main.transform.position = innerCenter;
-                Camera.main.orthographicSize = 5; // Reset zoom
-                Debug.Log($"[RecursiveModule] Camera teleported to {innerCenter}");
-            }
-            else
-            {
-                Debug.LogError("[RecursiveModule] Camera.main is null!");
-            }
+            // Fallback
+            Camera.main.transform.position = innerCenter;
+            Camera.main.orthographicSize = 5; 
             bm.SetActiveManager(innerGrid);
+            if (_previewDisplay != null) _previewDisplay.SetActive(false);
         }
+    }
+
+    public void ExitModule()
+    {
+        // DISABLE OUTER PREVIEW
+        ToggleOuterPreview(false);
+        
+        if (_previewDisplay != null) _previewDisplay.SetActive(true); // Show immediately on exit start
+        // Unfreeze local CCTV
+        if (_previewCamera != null) _previewCamera.enabled = true;
     }
 
     // Deprecated: Interaction is now handled by BuildManager
     // void OnMouseDown() { ... }
     
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        
+        if (_previewTexture != null)
+        {
+            _previewTexture.Release();
+        }
+        
+        if (innerWorldRoot != null)
+        {
+            Destroy(innerWorldRoot.gameObject);
+        }
+    }
+
     // Helper: World <-> Local conversion copy from others
     // Need to centralize this in ComponentBase really... 
     // But overriding for now.
