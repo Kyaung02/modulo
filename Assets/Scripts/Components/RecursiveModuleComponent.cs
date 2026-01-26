@@ -195,7 +195,8 @@ public class RecursiveModuleComponent : ComponentBase
         // Cache it for lookup
         if (!_ports.ContainsKey(wallDir)) _ports.Add(wallDir, port);
         
-        // Position: Use valid GridToWorld even if out of bounds (Grid logic supports math)
+        // Position: Use valid GridToWorld even if out of bounds.
+        // Now using Port prefab local offset (1.0f) combined with rotation to align with wall.
         portObj.transform.position = innerGrid.GridToWorldPosition(gridPos.x, gridPos.y);
 
         // Configure Logic

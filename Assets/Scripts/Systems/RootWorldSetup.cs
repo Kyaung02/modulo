@@ -127,6 +127,7 @@ public class RootWorldSetup : MonoBehaviour
         // Let's rely on Port default visual for now to ensure functionality.
         
         // Position
+        // Now using Port prefab local offset (1.0f) combined with rotation to stick to wall.
         portObj.transform.position = grid.GridToWorldPosition(gridPos.x, gridPos.y);
 
         // Rotation via NetworkVariable (fixed in ComponentBase)
