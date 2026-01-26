@@ -20,8 +20,21 @@ public class ModuleManager : MonoBehaviour
     public WordData FindWordById(string id)
     {
         if (string.IsNullOrEmpty(id)) return null;
-        if (allKnownWords == null) allKnownWords = new List<WordData>();
-        return allKnownWords.Find(w => w.id == id);
+        
+        // 1. 자신의 리스트에서 확인
+        if (allKnownWords != null)
+        {
+            var word = allKnownWords.Find(w => w.id == id);
+            if (word != null) return word;
+        }
+        
+        // 2. 전역 인스턴스(루트 매니저)에서 확인
+        if (Instance != null && Instance != this && Instance.allKnownWords != null)
+        {
+            return Instance.allKnownWords.Find(w => w.id == id);
+        }
+        
+        return null;
     }
     
     public void RegisterWord(WordData word)
@@ -50,14 +63,11 @@ public class ModuleManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Optional: Keep root across scene loads if needed
         }
         else
         {
             // If Instance already exists, this is an Inner World manager.
             // Do NOT overwrite Instance.
-            // If this manager needs word data, it should reference Instance.allKnownWords or copy it.
-            // For now, simpler to just let Instance be the global lookup.
         }
         
         // Initialize other things if needed

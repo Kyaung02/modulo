@@ -8,7 +8,8 @@ using TMPro;
 public class NetworkMenuUI : MonoBehaviour
 {
     [Header("UI References")]
-    public Button hostButton;
+    public Button newGameButton; // Host 버튼 대신 사용
+    public Button loadGameButton; // 저장된 게임 로드
     public Button joinButton;
     public TMP_InputField ipInputField;
     public TMP_InputField portInputField; // New
@@ -19,8 +20,18 @@ public class NetworkMenuUI : MonoBehaviour
 
     private void Start()
     {
-        hostButton.onClick.AddListener(StartHost);
-        joinButton.onClick.AddListener(StartClient);
+        if (newGameButton != null)
+            newGameButton.onClick.AddListener(StartNewGame);
+        
+        if (loadGameButton != null)
+        {
+            loadGameButton.onClick.AddListener(StartLoadGame);
+            // 저장 파일이 있을 때만 활성화
+            loadGameButton.interactable = SaveSystem.SaveFileExists();
+        }
+        
+        if (joinButton != null)
+            joinButton.onClick.AddListener(StartClient);
         
         // Default IP
         if (ipInputField) ipInputField.text = "127.0.0.1";
@@ -29,9 +40,31 @@ public class NetworkMenuUI : MonoBehaviour
         UpdateStatus("Ready");
     }
 
-    private void StartHost()
+    private void StartNewGame()
     {
-        UpdateStatus("Starting Host...");
+        UpdateStatus("Starting New Game...");
+        SaveSystem.PendingLoadData = null; // 새 게임이므로 로드 데이터 없음
+        StartHostInternal();
+    }
+    
+    private void StartLoadGame()
+    {
+        UpdateStatus("Loading Save File...");
+        
+        // 저장 파일 로드
+        if (SaveSystem.LoadSaveFile())
+        {
+            UpdateStatus("Save File Loaded. Starting Host...");
+            StartHostInternal();
+        }
+        else
+        {
+            UpdateStatus("Failed to Load Save File!");
+        }
+    }
+    
+    private void StartHostInternal()
+    {
         if (ConfigureTransport())
         {
             if (NetworkManager.Singleton.StartHost())

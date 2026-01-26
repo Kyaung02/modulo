@@ -146,6 +146,9 @@ public class ComponentBase : NetworkBehaviour
 
     protected ModuleManager _assignedManager;
     
+    // Public accessor for SaveSystem
+    public ModuleManager AssignedManager => _assignedManager;
+    
     // Helper to modify registry cleanly
     protected void UpdateRegistration(Vector2Int oldPos, Direction oldRot, int oldFlip, Vector2Int newPos, Direction newRot, int newFlip)
     {

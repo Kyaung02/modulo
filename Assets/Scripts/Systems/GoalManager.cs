@@ -94,5 +94,21 @@ public class GoalManager : NetworkBehaviour
     {
         OnLevelComplete?.Invoke();
     }
+    
+    /// <summary>
+    /// 저장된 상태 복원 (서버 전용)
+    /// </summary>
+    public void SetState(int levelIndex, int deliverCount)
+    {
+        if (!IsServer)
+        {
+            Debug.LogWarning("[GoalManager] SetState can only be called on Server!");
+            return;
+        }
+        
+        _netLevelIndex.Value = levelIndex;
+        _netDeliverCount.Value = deliverCount;
+        Debug.Log($"[GoalManager] State restored: Level {levelIndex}, Count {deliverCount}");
+    }
 
 }

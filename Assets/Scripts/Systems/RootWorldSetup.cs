@@ -35,7 +35,30 @@ public class RootWorldSetup : MonoBehaviour
         ModuleManager rootManager = ModuleManager.Instance;
         if (rootManager == null || rootManager.ownerComponent != null) return;
         
-        SetupRootPorts(rootManager);
+        // 저장된 게임이 있으면 로드
+        if (SaveSystem.Instance != null)
+        {
+            SaveSystem.Instance.ApplyLoadedGame();
+        }
+        
+        // Root Port가 없으면 생성 (새 게임이거나 로드 오류 시)
+        // 모든 PortComponent를 찾아서 parentModule이 null인 것이 있는지 확인
+        PortComponent[] allPorts = FindObjectsOfType<PortComponent>();
+        bool hasRootPort = false;
+        foreach (var port in allPorts)
+        {
+            if (port.parentModule == null)
+            {
+                hasRootPort = true;
+                break;
+            }
+        }
+        
+        if (!hasRootPort)
+        {
+            Debug.Log("[RootWorldSetup] No root ports found, creating default ports...");
+            SetupRootPorts(rootManager);
+        }
     }
     
     private void RegisterAllWords()
