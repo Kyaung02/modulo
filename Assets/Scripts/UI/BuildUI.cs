@@ -42,6 +42,8 @@ public class BuildUI : MonoBehaviour
         {
             ComponentBase comp = _buildManager.availableComponents[i];
             
+            if (comp == null) continue;
+
             GameObject slot = Instantiate(slotPrefab, slotContainer);
             
             // Setup Icon
