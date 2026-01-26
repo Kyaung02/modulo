@@ -225,7 +225,7 @@ public class BuildManager : MonoBehaviour
             }
         }
 
-        bool r_val=activeManager.IsAreaClear(checkPositions);;
+        bool r_val=activeManager.IsAreaClear(checkPositions);
         Destroy(temp.gameObject);
         return !r_val;
     }
@@ -250,16 +250,20 @@ public class BuildManager : MonoBehaviour
         for (int i=0; i< rot; i++) temp.Rotate();
         
         if(_currentFlipIndex==1){
-            float scaleX = (_currentFlipIndex == 1) ? -1f : 1f;
-            Vector3 s = temp.transform.localScale;
-            temp.transform.localScale = new Vector3(scaleX, s.y, s.z);
-            if (w > 1)
-            {
-                // Remove cellSize usage as gridPos is integer coordinate
-                Vector3 worldOffset = temp.transform.rotation * Vector3.right * (w-1);
-                Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
-                gridPos += gridOffset;
+            if(temp is CombinerComponent newcombiner){
+                //Debug.Log("Flipping Combiner");
+                newcombiner.isFlipped=1;
+                Vector3 s = temp.transform.localScale;
+                temp.transform.localScale = new Vector3(-1f*s.x, s.y, s.z);
+                if (w > 1)
+                {
+                    // Remove cellSize usage as gridPos is integer coordinate
+                    Vector3 worldOffset = temp.transform.rotation * Vector3.right * (w-1);
+                    Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
+                    gridPos += gridOffset;
+                }
             }
+            else return;
         }
 
         List<Vector2Int> checkPositions = new List<Vector2Int>();

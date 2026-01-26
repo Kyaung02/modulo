@@ -40,14 +40,18 @@ public class ComponentBase : MonoBehaviour
         {
             for (int y = 0; y < h; y++)
             {
+                int newx=x,newy=y;
+                if(this is CombinerComponent newcombiner && newcombiner.isFlipped==1){
+                    newx=-newx;
+                }
                 // Simple rotation logic
                 Vector2Int offset = Vector2Int.zero;
                 switch (RotationIndex)
                 {
-                    case Direction.Up: offset = new Vector2Int(x, y); break;
-                    case Direction.Right: offset = new Vector2Int(y, -x); break; // x becomes y, y becomes -x
-                    case Direction.Down: offset = new Vector2Int(-x, -y); break;
-                    case Direction.Left: offset = new Vector2Int(-y, x); break;
+                    case Direction.Up: offset = new Vector2Int(newx, newy); break;
+                    case Direction.Right: offset = new Vector2Int(newy, -newx); break; // x becomes y, y becomes -x
+                    case Direction.Down: offset = new Vector2Int(-newx, -newy); break;
+                    case Direction.Left: offset = new Vector2Int(-newy, newx); break;
                 }
                 positions.Add(GridPosition + offset);
             }
@@ -223,6 +227,7 @@ public class ComponentBase : MonoBehaviour
     
     // Convert World Direction to Local Direction based on current rotation
     // Effectively rotates vector by +90 * RotationIndex (Inverse of Component Rotation)
+    // If flipped, inverts X direction
     public Vector2Int WorldToLocalDirection(Vector2Int worldDir)
     {
         int r = (int)RotationIndex;
@@ -235,6 +240,9 @@ public class ComponentBase : MonoBehaviour
             int temp = x; 
             x = -y; 
             y = temp; 
+        }
+        if(this is CombinerComponent newcombiner && newcombiner.isFlipped==1){
+            x=-x;
         }
         return new Vector2Int(x, y);
     }
