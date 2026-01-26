@@ -171,46 +171,40 @@ public class BuildManager : NetworkBehaviour
 
     public bool CheckCollision(ComponentBase component, Vector2Int gridPos)
     {
-        if (selectedComponentPrefab == null) return true;
+         if (selectedComponentPrefab == null) return true;
         if (activeManager == null) return true;
+
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return true;
         
+        // Check for validity using simulated footprint
         int rot = GetEffectiveRotationIndex();
-        
-        // Simulation needs a dummy object or static calculation.
-        // ComponentBase logic depends on instance properties.
-        // We can't easily Instantiate a NetworkBehaviour locally just for check without warnings?
-        // Actually we can, just don't spawn it.
-        
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
+        for (int i=0; i< rot; i++) temp.Rotate();
         
-        // Setup Temp
-        if (temp is CombinerComponent cc) cc.SetFlippedInitial(_currentFlipIndex); // Direct set on local temp
-        // Rotation - temp.RotationIndex depends on NetVar. 
-        // We can't set NetVar on temp if not spawned?
-        // We need a way to set local state for calculation.
-        // The implementation of GetOccupiedPositions uses RotationIndex property.
-        // Property writes to NetVar.
-        // We should add a "Local mode" to ComponentBase? Or just catch the exception?
-        // Actually, NetworkVariable Write is only allowed on Server. 
-        // TEMP fix: catch exception in ComponentBase or usage?
-        // Better: Use reflection or public field in ComponentBase for simulation?
-        // Or just trust the user knows what they are doing.
-        // Since we upgraded ComponentBase, CheckCollision using Instantiate might break on Client!
+        int w = temp.GetWidth();
+        int h = temp.GetHeight();
         
-        // Hack: We manually calculate offsets here to avoid instantiating NetworkBehaviour
-        // But GetWidth/GetHeight is virtual.
-        // We must Instantiate.
-        // To fix NetVar write issue on Client:
-        // Client creates local instance. Sets property -> Throws.
-        // We need 'SetRotationInitial' to set a backing field that RotationIndex ignores if IsSpawned?
-        
-        // For now, let's assume CheckCollision handles a reduced check or catches error.
+        List<Vector2Int> checkPositions = new List<Vector2Int>();
+         for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                // Logic copy from ComponentBase (Create static helper later!)
+                Vector2Int offset = Vector2Int.zero;
+                switch (rot)
+                {
+                    case 0: offset = new Vector2Int(x, y); break;
+                    case 1: offset = new Vector2Int(y, -x); break;
+                    case 2: offset = new Vector2Int(-x, -y); break;
+                    case 3: offset = new Vector2Int(-y, x); break;
+                }
+                checkPositions.Add(gridPos + offset);
+            }
+        }
+
+        bool r_val=activeManager.IsAreaClear(checkPositions);
         Destroy(temp.gameObject);
-        return false; // Skip complex collision for this step to avoid NetVar crash, or implement robust logic later.
-        // actually returning false means "No Collision" -> Area Clear?
-        // original returned !IsAreaClear.
-        // Let's assume clear for now to proceed, or use Server Side validation mainly.
+        return !r_val;
     }
     
     // Server RPC for Building
