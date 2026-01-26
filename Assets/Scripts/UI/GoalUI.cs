@@ -5,7 +5,7 @@ using TMPro; // Add Namespace
 public class GoalUI : MonoBehaviour
 {
     [Header("UI Elements")]
-    public Image targetIcon;
+    public ItemIconUI targetIcon;
     public TMP_Text progressText; // Changed to TMP_Text for TextMeshPro support
     public GameObject levelCompletePanel; // Optional: Show when level is done
 
@@ -32,17 +32,7 @@ public class GoalUI : MonoBehaviour
         // Update Icon
         if (targetIcon != null)
         {
-            if (goal.targetWord != null)
-            {
-                targetIcon.sprite = goal.targetWord.wordIcon;
-                targetIcon.color = Color.white;
-                targetIcon.enabled = true;
-            }
-            else
-            {
-                // No goal or finished
-                targetIcon.enabled = false; 
-            }
+            targetIcon.SetWord(goal.targetWord);
         }
 
         // Update Text
