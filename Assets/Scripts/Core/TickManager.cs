@@ -1,12 +1,31 @@
 using System;
 using UnityEngine;
 
-public class TickManager : MonoBehaviour
+using Unity.Netcode;
+
+public class TickManager : NetworkBehaviour
 {
     public static TickManager Instance { get; private set; }
 
     [Header("Tick Settings")]
-    public float tickInterval = 0.5f; // Seconds per tick
+    // Synced Interval
+    private NetworkVariable<float> _netTickInterval = new NetworkVariable<float>(0.5f);
+    
+    public float tickInterval 
+    {
+        get 
+        {
+            // Safety: If not networked/spawned yet, return default
+            // This prevents crash in WordVisualizer.Awake/Update
+            try 
+            {
+                if (IsSpawned) return _netTickInterval.Value;
+            }
+            catch {} 
+            return 0.5f; 
+        }
+    }
+    
     public bool isPaused = false;
 
     private float _timer;
@@ -27,6 +46,9 @@ public class TickManager : MonoBehaviour
 
     private void Update()
     {
+        // Only Server drives the tick
+        if (!IsServer) return;
+
         if (isPaused) return;
 
         _timer += Time.deltaTime;
@@ -36,11 +58,23 @@ public class TickManager : MonoBehaviour
             _timer -= tickInterval;
             CurrentTick++;
             OnTick?.Invoke(CurrentTick);
+            NotifyTickClientRpc(CurrentTick);
         }
+    }
+    
+    [ClientRpc]
+    private void NotifyTickClientRpc(long tick)
+    {
+        if (IsServer) return; // Avoid double invoke on Host
+        CurrentTick = tick;
+        OnTick?.Invoke(CurrentTick);
     }
 
     public void SetSpeed(float newInterval)
     {
-        tickInterval = Mathf.Max(0.01f, newInterval);
+        if (IsServer)
+        {
+            _netTickInterval.Value = Mathf.Max(0.01f, newInterval);
+        }
     }
 }

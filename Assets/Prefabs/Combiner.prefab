@@ -100,6 +100,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1307975665845154685}
+  - component: {fileID: -3882121271637284981}
   - component: {fileID: 5800738405480898224}
   m_Layer: 0
   m_Name: Combiner
@@ -124,6 +125,31 @@ Transform:
   - {fileID: 2138638767789781671}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-3882121271637284981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3605396211723682722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1452490754
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &5800738405480898224
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -136,7 +162,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a6eee4b09b41884ea87ab910d027d4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombinerComponent
-  _rotationIndex: 0
-  _inputA: {fileID: 0}
-  _inputB: {fileID: 0}
-  isFlipped: 0
+  ShowTopMostFoldoutHeaderGroup: 1

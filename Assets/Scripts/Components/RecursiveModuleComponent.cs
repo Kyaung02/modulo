@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+using Unity.Netcode;
+
 public class RecursiveModuleComponent : ComponentBase
 {
     // 1x1 External Size
@@ -14,49 +16,91 @@ public class RecursiveModuleComponent : ComponentBase
     [HideInInspector] public ModuleManager innerGrid; // Auto-generated
     private Transform innerWorldRoot; 
 
-    protected override void Start()
+    // Networked Inner World Position
+    private NetworkVariable<Vector3> _netInnerWorldPos = new NetworkVariable<Vector3>(Vector3.zero);
+
+    public override void OnNetworkSpawn()
     {
-        base.Start(); // Important for registration
+        base.OnNetworkSpawn(); // Important for registration
         
+        // Listen for Inner World Position
+        _netInnerWorldPos.OnValueChanged += OnInnerWorldPosChanged;
+
         // Ensure we have a collider for clikcing
         BoxCollider2D col = GetComponent<BoxCollider2D>();
         if (col == null) col = gameObject.AddComponent<BoxCollider2D>();
         
-        // Size it to the cell (1.0f default)
-        col.size = new Vector2(GetWidth() * ModuleManager.Instance.cellSize, GetHeight() * ModuleManager.Instance.cellSize);
-        // Pivot is bottom-left (0,0) usually? Or center?
-        // Sprite is usually centered. ComponentBase pivot is Grid Position (Bottom Left of logical cell).
-        // If Visual is centered at (0.5, 0.5), Collider should be there too.
-        // Assuming Visual is Child(0).
-        col.offset = new Vector2(0.5f, 0.5f); 
-        
-        // Prevent creating inner worlds for prefabs or preview objects
-        // Simple check: if we are not in a valid scene or don't have a manager yet (though base.Start tries to find one)
-        if (gameObject.scene.rootCount != 0) 
+        if (ModuleManager.Instance != null)
         {
-            InitializeInnerWorld();
+             // Size it to the cell (1.0f default)
+             col.size = new Vector2(GetWidth() * ModuleManager.Instance.cellSize, GetHeight() * ModuleManager.Instance.cellSize);
+             col.offset = new Vector2(0.5f, 0.5f); 
+        }
+
+        // Cleanup Legacy/Ghost Ports that might exist on the Prefab to prevent duplicates
+        var existingPorts = GetComponentsInChildren<PortComponent>();
+        foreach(var p in existingPorts)
+        {
+            if (p.transform.parent == transform) // Only direct children
+            {
+                Destroy(p.gameObject);
+            }
+        }
+        
+        if (IsServer) 
+        {
+            // Server initializes inner world immediately
+            Vector3 randomPos = new Vector3(Random.Range(10000, 90000), Random.Range(10000, 90000), 0);
+            _netInnerWorldPos.Value = randomPos; // Triggers Client callback
+            InitializeInnerWorld(randomPos);
+        }
+        else
+        {
+            // Client checks if already set
+            if (_netInnerWorldPos.Value != Vector3.zero)
+            {
+                InitializeInnerWorld(_netInnerWorldPos.Value);
+            }
+        }
+    }
+    
+    public override void OnNetworkDespawn()
+    {
+        _netInnerWorldPos.OnValueChanged -= OnInnerWorldPosChanged;
+        
+        // Cleanup inner world
+        if (innerWorldRoot != null)
+        {
+             Destroy(innerWorldRoot.gameObject);
+        }
+        
+        // Cleanup Ports (Server Only)
+        if (IsServer)
+        {
+            foreach(var p in _spawnedPorts)
+            {
+                if (p != null && p.IsSpawned) p.Despawn();
+            }
+            _spawnedPorts.Clear();
+        }
+
+        base.OnNetworkDespawn();
+    }
+    
+    private void OnInnerWorldPosChanged(Vector3 oldPos, Vector3 newPos)
+    {
+        if (newPos != Vector3.zero && innerWorldRoot == null)
+        {
+            InitializeInnerWorld(newPos);
         }
     }
 
-    private void InitializeInnerWorld()
+    private void InitializeInnerWorld(Vector3 position)
     {
-        // ... (Existing code) ...
-        // Create a completely NEW Object. Do NOT use Instantiate logic if it carries children.
-        // Wait, 'new GameObject' creates an empty one.
-        // But if the user put children under 'innerWorldRoot' in the PREFAB inspector, they might be copied?
-        // Ah, innerWorldRoot is a private field, initialized here.
-        // But what if 'this.transform' has children? 
-        // The issue: Maybe the user is seeing the *outer* module's children (like Visuals based on prefab) inside the inner world?
-        // No, innerWorldRoot is moved 1000 units away.
-        
-        // Let's make sure we are destroying children of the NEW innerWorldRoot (which should be empty usually).
-        // But if the issue is that "InnerWorld" logic is somehow referencing existing objects?
-        
-        innerWorldRoot = new GameObject($"InnerWorld_{System.Guid.NewGuid()}").transform;
-        
-        // Move VERY far away to avoid collisions or visual overlap with other modules
-        // Use a random or hashed offset
-        innerWorldRoot.position = new Vector3(Random.Range(10000, 90000), Random.Range(10000, 90000), 0);
+        if (innerWorldRoot != null) return; // Already init
+
+        innerWorldRoot = new GameObject($"InnerWorld_{name}_{NetworkObjectId}").transform;
+        innerWorldRoot.position = position;
         
         innerGrid = innerWorldRoot.gameObject.AddComponent<ModuleManager>();
         innerGrid.width = 7;
@@ -64,12 +108,7 @@ public class RecursiveModuleComponent : ComponentBase
         innerGrid.cellSize = 1.0f;
         innerGrid.originPosition = new Vector2(-3.5f, -3.5f);
         
-        // Ensure no children exist (e.g. if we instantiated a prefab that had stuff)
-        // Ensure no children exist (e.g. if we instantiated a prefab that had stuff)
-        // Note: new GameObject shouldn't have children.
-        // But IF innerGrid logic somehow attached things?
-        // Let's clear aggressively just in case any visualizers auto-attached.
-        
+        // Clean children
         int childCount = innerGrid.transform.childCount;
         for (int i = childCount - 1; i >= 0; i--)
         {
@@ -77,13 +116,18 @@ public class RecursiveModuleComponent : ComponentBase
         }
         
         // Link parent
-        innerGrid.parentManager = _assignedManager;
-        innerGrid.ownerComponent = this; // Back-link for navigation
+        // Note: _assignedManager might be null on Client if parent module isn't found yet, 
+        // but finding by position in ComponentBase fixes that. 
+        // RecursiveModule's _assignedManager logic assumes it's registered.
+        // We set innerGrid's parentManager to our _assignedManager later or now?
+        // Since we are creating innerGrid, we know it's "us".
+        innerGrid.parentManager = _assignedManager; 
+        innerGrid.ownerComponent = this; 
         
-        // Auto-add Visualizer so we can see the grid
+        // Auto-add Visualizer
         var viz = innerWorldRoot.gameObject.AddComponent<GridVisualizer>();
         
-        // Inherit visual settings from parent or global visualizer to maintain style
+        // Inherit style
         GridVisualizer parentViz = null;
         if (_assignedManager != null) parentViz = _assignedManager.GetComponentInChildren<GridVisualizer>();
         if (parentViz == null) parentViz = FindFirstObjectByType<GridVisualizer>();
@@ -91,13 +135,16 @@ public class RecursiveModuleComponent : ComponentBase
         if (parentViz != null)
         {
             viz.lineMaterial = parentViz.lineMaterial;
-            // viz.orderInLayer = parentViz.orderInLayer; // Keep default or copy if needed
         }
         
-        CreateInternalPorts();
+        // Ports Logic: Spawn on Server, Logic on Both
+        if (IsServer)
+        {
+            CreateInternalPorts();
+        }
         
-        // Depth Check: Only create preview if depth < 2 (Optimization)
-        // We need to know current depth. We can crawl up parents.
+        // Depth Check (Optimization)
+        // ... (Depth logic same) ...
         int depth = 0;
         ModuleManager current = _assignedManager;
         while (current != null && current.parentManager != null)
@@ -110,6 +157,60 @@ public class RecursiveModuleComponent : ComponentBase
         {
             CreatePreview();
         }
+    }
+    // ... (CreatePreview same)
+    
+    // ...
+
+    private List<NetworkObject> _spawnedPorts = new List<NetworkObject>();
+
+    private void SpawnPort(Vector2Int gridPos, Direction wallDir, Direction facingDir)
+    {
+        // Networked Spawn version
+        // We need a Prefab for Port? Or Instantiate ScriptableObject?
+        // Or create empty and AddComponent(NetworkObject)?
+        // Netcode requires NetworkObject to be prefab for dynamic spawn usually? No.
+        // But dynamic NO must be registered in prefab list? 
+        // Actually, best way is to have a "PortPrefab" registered.
+        // If user hasn't created one, we can fail.
+        // Or: Construct it dynamically and simply rely on Dynamic spawning (might fail if not registered prefab).
+        // Let's assume user has a "Port" prefab or we use a fallback?
+        
+        // Load Prefab (Requires NetworkAutoSetup to have run)
+        GameObject prefab = Resources.Load<GameObject>("NetworkPrefabs/PortComponent");
+        if (prefab == null)
+        {
+            Debug.LogError("Missing PortComponent prefab! Please run Modulo > Setup Network Prefabs in menu.");
+            return;
+        }
+
+        GameObject portObj = Instantiate(prefab);
+        portObj.name = $"Port_{wallDir}";
+        
+        // Do NOT parent NetworkObject to non-NetworkObject. Leave at root.
+        // We track it manually for cleanup.
+
+        PortComponent port = portObj.GetComponent<PortComponent>();
+        
+        // Cache it for lookup
+        if (!_ports.ContainsKey(wallDir)) _ports.Add(wallDir, port);
+        
+        // Position: Use valid GridToWorld even if out of bounds (Grid logic supports math)
+        portObj.transform.position = innerGrid.GridToWorldPosition(gridPos.x, gridPos.y);
+
+        // Configure Logic
+        port.Configure(this, wallDir);
+        
+        // Direct set to target rotation
+        port.RotationIndex = facingDir;
+        
+        var no = portObj.GetComponent<NetworkObject>();
+        no.Spawn();
+        _spawnedPorts.Add(no);
+        
+        // Manual Link (Since we are at root)
+        port.SetManager(innerGrid); // Set on Server immediately
+        port.SetParentModule(this); // Share via NetworkVariable for Client
     }
     
     [Header("Preview Config")]
@@ -287,49 +388,7 @@ public class RecursiveModuleComponent : ComponentBase
     }
     private Dictionary<Direction, PortComponent> _ports = new Dictionary<Direction, PortComponent>();
 
-    private void SpawnPort(Vector2Int gridPos, Direction wallDir, Direction facingDir)
-    {
-        GameObject portObj = new GameObject($"Port_{wallDir}");
-        portObj.transform.SetParent(innerGrid.transform);
-        PortComponent port = portObj.AddComponent<PortComponent>();
-        
-        // Cache it for lookup
-        if (!_ports.ContainsKey(wallDir)) _ports.Add(wallDir, port);
-        
-        // Visuals - Thin Black Line on Wall
-        GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        vis.transform.SetParent(portObj.transform);
-        
-        // Scale: Wide but thinner (Strip)
-        vis.transform.localScale = new Vector3(1.0f, 0.15f, 1.0f);
-        // Position: Offset to the "Front" edge (Up, before rotation)
-        // Since Port rotates to face inward, this Up edge will rotate to touch the grid boundary.
-        vis.transform.localPosition = new Vector3(0, 0.425f, -0.01f);
-        
-        Destroy(vis.GetComponent<Collider>()); // Visual only
-        
-        var ren = vis.GetComponent<Renderer>();
-        if (ren) 
-        {
-            ren.material = new Material(Shader.Find("Sprites/Default")); // Use Sprite/Unlit shader for flat black
-            ren.material.color = Color.black; 
-            ren.sortingOrder = 5; // On top of grid
-        }
 
-        // Position: Use valid GridToWorld even if out of bounds (Grid logic supports math)
-        portObj.transform.position = innerGrid.GridToWorldPosition(gridPos.x, gridPos.y);
-
-        // Configure Logic
-        port.Configure(this, wallDir);
-        
-        // IMPORTANT: We do NOT register this to the Grid System because it's out of bounds.
-        
-        int targetRot = (int)facingDir;
-        while ((int)port.RotationIndex != targetRot)
-        {
-            port.Rotate();
-        }
-    }
     
     private PortComponent FindPort(Direction dir)
     {
@@ -361,7 +420,14 @@ public class RecursiveModuleComponent : ComponentBase
         PortComponent port = FindPort(targetWall);
         if (port != null)
         {
-            return port.ImportItem(word);
+            // Debug.Log($"[RecursiveModule] Importing item to Port {targetWall}");
+            bool result = port.ImportItem(word);
+            if (!result) Debug.LogWarning($"[RecursiveModule] Port {targetWall} rejected item.");
+            return result;
+        }
+        else
+        {
+            Debug.LogError($"[RecursiveModule] Could not find Port for Wall {targetWall}! (Dir: {direction}, Local: {localDir})");
         }
         
         return false;
@@ -490,13 +556,20 @@ public class RecursiveModuleComponent : ComponentBase
 
     // Allow entering the module
     // Public method called by BuildManager
+    // Public method called by BuildManager
     public void EnterModule()
     {
-        // Check if innerGrid is initialized
+        // Debug Init Status
         if (innerGrid == null)
         {
-            Debug.LogError($"[RecursiveModule] Cannot enter module {name}: innerGrid is null!");
-            return;
+            Debug.LogError($"[RecursiveModule] Cannot enter module {name}: innerGrid is null! IsServer={IsServer}, NetPos={_netInnerWorldPos.Value}");
+            // Attempt Late Init if possible
+            if (_netInnerWorldPos.Value != Vector3.zero)
+            {
+                 Debug.LogWarning("[RecursiveModule] Attempting late lazy-init...");
+                 InitializeInnerWorld(_netInnerWorldPos.Value);
+            }
+            if (innerGrid == null) return;
         }
         
         BuildManager bm = FindFirstObjectByType<BuildManager>();
@@ -551,7 +624,7 @@ public class RecursiveModuleComponent : ComponentBase
     // Deprecated: Interaction is now handled by BuildManager
     // void OnMouseDown() { ... }
     
-    protected override void OnDestroy()
+    public override void OnDestroy()
     {
         base.OnDestroy();
         

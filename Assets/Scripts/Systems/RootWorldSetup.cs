@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public class RootWorldSetup : MonoBehaviour
 {
@@ -9,78 +10,112 @@ public class RootWorldSetup : MonoBehaviour
     public WordData earthWord;
     public WordData windWord;
 
-    private void Start()
+    // Use NetworkManager to wait for Server start
+    public void Start()
     {
-        // Ensure we are operating on the Root ModuleManager
+        // 1. Common Setup (Word Registration) - Run on EVERYONE
+        // We can run this immediately or wait for manager.
+        // ModuleManager is a singleton, likely in scene.
+        RegisterAllWords();
+        
+        // 2. Server Setup (Ports)
+        NetworkManager.Singleton.OnServerStarted += OnServerStarted;
+        if (NetworkManager.Singleton.IsServer) OnServerStarted();
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnServerStarted -= OnServerStarted;
+    }
+    
+    // Server Only
+    private void OnServerStarted()
+    {
         ModuleManager rootManager = ModuleManager.Instance;
-        if (rootManager == null)
-        {
-            Debug.LogError("RootWorldSetup: No ModuleManager found!");
-            return;
-        }
-
-        // Only setup if this manager has NO owner component (meaning it IS the root)
-        if (rootManager.ownerComponent != null)
-        {
-            Debug.LogWarning("RootWorldSetup: ModuleManager has owner, seemingly not root. Skipping.");
-            return;
-        }
-
+        if (rootManager == null || rootManager.ownerComponent != null) return;
+        
         SetupRootPorts(rootManager);
+    }
+    
+    private void RegisterAllWords()
+    {
+        ModuleManager rootManager = ModuleManager.Instance;
+        if (rootManager == null) return;
+
+        // 1. Auto-Find Base Words
+        if (fireWord == null) fireWord = rootManager.FindWordById("Fire");
+        if (waterWord == null) waterWord = rootManager.FindWordById("Water");
+        if (earthWord == null) earthWord = rootManager.FindWordById("Earth");
+        if (windWord == null) windWord = rootManager.FindWordById("Wind"); 
+        
+        // 2. Register Base Words
+        if (fireWord != null) rootManager.RegisterWord(fireWord);
+        if (waterWord != null) rootManager.RegisterWord(waterWord);
+        if (earthWord != null) rootManager.RegisterWord(earthWord);
+        if (windWord != null) rootManager.RegisterWord(windWord);
+        
+        // 3. Register Recipe Output Words (Combiner Results)
+        if (rootManager.recipeDatabase != null)
+        {
+            foreach(var recipe in rootManager.recipeDatabase.recipes)
+            {
+                if (recipe != null && recipe.output != null)
+                {
+                    rootManager.RegisterWord(recipe.output);
+                }
+            }
+        }
+        
+        Debug.Log("[RootWorldSetup] Registered all base and recipe words.");
     }
 
     private void SetupRootPorts(ModuleManager grid)
     {
-        // Top Wall (Up) -> Fire
         SpawnSourcePort(grid, new Vector2Int(3, 7), Direction.Up, Direction.Down, fireWord, Color.red);
-        
-        // Right Wall -> Water
         SpawnSourcePort(grid, new Vector2Int(7, 3), Direction.Right, Direction.Left, waterWord, Color.blue);
-        
-        // Bottom Wall (Down) -> Earth
         SpawnSourcePort(grid, new Vector2Int(3, -1), Direction.Down, Direction.Up, earthWord, new Color(0.6f, 0.4f, 0.2f));
-        
-        // Left Wall -> Wind
         SpawnSourcePort(grid, new Vector2Int(-1, 3), Direction.Left, Direction.Right, windWord, Color.cyan);
     }
 
     private void SpawnSourcePort(ModuleManager grid, Vector2Int gridPos, Direction wallDir, Direction facingDir, WordData word, Color col)
     {
-        GameObject portObj = new GameObject($"RootSource_{wallDir}_{word?.name}");
-        portObj.transform.SetParent(grid.transform);
-        PortComponent port = portObj.AddComponent<PortComponent>();
-        
-        // Visuals - Thin Colored Line on Wall (Source Style)
-        GameObject vis = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        vis.transform.SetParent(portObj.transform);
-        
-        // Scale: Wide but thinner 
-        vis.transform.localScale = new Vector3(1.0f, 0.2f, 1.0f);
-        vis.transform.localPosition = new Vector3(0, 0.4f, -0.01f);
-        
-        Destroy(vis.GetComponent<Collider>()); 
-        
-        var ren = vis.GetComponent<Renderer>();
-        if (ren) 
-        {
-            ren.material = new Material(Shader.Find("Sprites/Default")); 
-            ren.material.color = col; 
-            ren.sortingOrder = 5; 
-        }
+        // Load Registered Prefab
+        GameObject prefab = Resources.Load<GameObject>("NetworkPrefabs/PortComponent");
+        if (prefab == null) { Debug.LogError("RootWorldSetup: Missing Prefab!"); return; }
 
-        // Position
-        portObj.transform.position = grid.GridToWorldPosition(gridPos.x, gridPos.y);
-
-        // Configure Logic
-        port.parentModule = null; // No parent for Root
+        GameObject portObj = Instantiate(prefab);
+        portObj.name = $"RootSource_{wallDir}_{word?.name ?? "None"}";
+        
+        // Setup Logic BEFORE Spawn
+        PortComponent port = portObj.GetComponent<PortComponent>();
+        port.parentModule = null; // Root
         port.wallDirection = wallDir;
         port.infiniteSourceWord = word;
         
-        // Rotation
-        int targetRot = (int)facingDir;
-        while ((int)port.RotationIndex != targetRot)
-        {
-            port.Rotate();
-        }
+        // Setup Visuals Customization (Color) - requires NetworkVariable or RPC usually?
+        // Basic Port is black. We want colored for Source.
+        // Quick visual hack: local modification will only spawn on Server? 
+        // No, we modify the instantiated object.
+        // BUT visual changes are NOT synced unless we use NetworkVariable for Color or separate Prefabs.
+        // For now, let's just make it work logic-wise. Color can be ignored or handled later.
+        // Or we spawn a visual quad separately? 
+        // PortComponent has its own visual. We can add a "SourceVisual" on top?
+        // Let's rely on Port default visual for now to ensure functionality.
+        
+        // Position
+        portObj.transform.position = grid.GridToWorldPosition(gridPos.x, gridPos.y);
+
+        // Rotation via NetworkVariable (fixed in ComponentBase)
+        port.SetRotationInitial(facingDir);
+        
+        var no = portObj.GetComponent<NetworkObject>();
+        no.Spawn();
+        
+        // Manual Link (Important)
+        port.SetManager(grid);
+        
+        // Set Color
+        port.SetBodyColor(col);
     }
 }

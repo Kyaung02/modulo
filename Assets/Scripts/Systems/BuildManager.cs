@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
+using Unity.Netcode;
 
-public class BuildManager : MonoBehaviour
+public class BuildManager : NetworkBehaviour
 {
     public static BuildManager Instance { get; private set; }
 
@@ -13,15 +14,14 @@ public class BuildManager : MonoBehaviour
     }
 
     [Header("Settings")]
-    [Header("Settings")]
     public ComponentBase[] availableComponents; // 0: Emitter, 1: Mover, etc.
     public ComponentBase selectedComponentPrefab; // Currently selected component to build
-    public Transform componentParent; // Parent object for organized hierarchy
+    
+    // We don't really use this parent for NetworkObjects unless we use NetworkTransform parenting
+    public Transform componentParent; 
 
     public Camera _mainCamera;
-    private ComponentBase[,] _components; // 2D array to track installed components
     
-    // Preview Manager Reference
     public PreviewManager previewManager;
 
     public int _currentRotationIndex = 0;
@@ -33,7 +33,6 @@ public class BuildManager : MonoBehaviour
     {
         return (selectedComponentPrefab is RecursiveModuleComponent) ? 0 : _currentRotationIndex;
     } 
-
 
     private void Start()
     {
@@ -48,34 +47,24 @@ public class BuildManager : MonoBehaviour
             _mainCamera.gameObject.AddComponent<CameraController>();
         }
         
-        // _components array in BuildManager is redundant if ModuleManager handles it.
-        // We should rely on activeManager for logic.
-
-        _components = new ComponentBase[activeManager.width, activeManager.height];
-        
         if (previewManager == null)
         {
             previewManager = FindFirstObjectByType<PreviewManager>();
         }
 
         if (previewManager == null) Debug.LogError("BuildManager: Could not find PreviewManager in Scene!");
-        else Debug.Log("BuildManager: Successfully connected to PreviewManager.");
         SelectComponent(0);
     }
 
-    // Call this when entering/exiting modules
     public void SetActiveManager(ModuleManager manager)
     {
         activeManager = manager;
-        // Notify UI or Camera to update?
-        // UI event could be useful here.
     }
 
     public void ExitCurrentModule()
     {
         if (activeManager != null && activeManager.parentManager != null)
         {
-            Debug.Log("Exiting Module...");
             var parent = activeManager.parentManager;
             
             // 1. Module Position (Start of Exit)
@@ -83,20 +72,16 @@ public class BuildManager : MonoBehaviour
             if (activeManager.ownerComponent != null)
             {
                modulePos = activeManager.ownerComponent.transform.position;
-               
-               // Hook for cleanup (Disable Outer Preview)
                if (activeManager.ownerComponent is RecursiveModuleComponent rm)
                {
-                   rm.ExitModule();
+                    rm.ExitModule(); 
                }
             }
             else
             {
-               // Fallback: Use parent center if owner not found (shouldn't happen for recursive modules)
                modulePos = new Vector3(parent.originPosition.x + 3.5f, parent.originPosition.y + 3.5f, 0) + parent.transform.position;
             }
 
-            // 2. Parent Center Position (End of Exit)
             Vector3 parentCenter = new Vector3(parent.originPosition.x + 3.5f, parent.originPosition.y + 3.5f, -10) + parent.transform.position;
             
             if (CameraController.Instance != null)
@@ -107,7 +92,6 @@ public class BuildManager : MonoBehaviour
             }
             else
             {
-                // Fallback
                 SetActiveManager(parent);
                 Camera.main.transform.position = parentCenter;
                 Camera.main.orthographicSize = 5;
@@ -117,6 +101,11 @@ public class BuildManager : MonoBehaviour
 
     private void Update()
     {
+        if (!IsClient && !IsServer) return; // Wait for connection? Or local valid?
+        // Actually, if we are not connected, we might want local play?
+        // But ComponentBase is now NetworkBehaviour. It won't work without Netcode.
+        // So we assume connected.
+        
         HandleInput();
         if (previewManager != null)
         {
@@ -124,18 +113,14 @@ public class BuildManager : MonoBehaviour
         }
     }
 
-
     private void HandleInput()
     {
-        // Block input if camera is transitioning
         if (CameraController.Instance != null && CameraController.Instance.IsTransitioning) return;
-
         if (Mouse.current == null) return;
-
         
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            if (selectedComponentPrefab != null)TryBuild();
+            if (selectedComponentPrefab != null) TryBuild();
             else TryInspect();
         }
         if (Mouse.current.rightButton.wasPressedThisFrame)
@@ -145,35 +130,27 @@ public class BuildManager : MonoBehaviour
 
         if (Keyboard.current != null)
         {
-            // Rotation (disabled for RecursiveModule)
             if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
-                //Debug.Log($"Rotation set to: {_currentRotationIndex}");
             }
 
-            // Interact
             if(Keyboard.current.eKey.wasPressedThisFrame){
                 TryInteract();
             }
 
-            // Flip (enabled only for CombinerComponents)
-            if(Keyboard.current.tKey.wasPressedThisFrame&&selectedComponentPrefab is CombinerComponent){
+            if(Keyboard.current.tKey.wasPressedThisFrame && selectedComponentPrefab is CombinerComponent){
                 TryFlip();
             }
 
-            // Clear Selection
             if(Keyboard.current.xKey.wasPressedThisFrame){
                 selectedComponentPrefab = null;
-                Debug.Log("Selection Cleared");
             }
 
-            // Component Selection
             if (Keyboard.current.digit1Key.wasPressedThisFrame) SelectComponent(0);
             if (Keyboard.current.digit2Key.wasPressedThisFrame) SelectComponent(1);
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
-            
         }
     }
 
@@ -186,8 +163,6 @@ public class BuildManager : MonoBehaviour
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
         {
             selectedComponentPrefab = availableComponents[index];
-            Debug.Log($"Selected Component: {selectedComponentPrefab.name}");
-            
             OnComponentSelected?.Invoke(index);
         }
     }
@@ -196,38 +171,125 @@ public class BuildManager : MonoBehaviour
     {
         if (selectedComponentPrefab == null) return true;
         if (activeManager == null) return true;
-
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return true;
         
-        // Check for validity using simulated footprint
         int rot = GetEffectiveRotationIndex();
+        
+        // Simulation needs a dummy object or static calculation.
+        // ComponentBase logic depends on instance properties.
+        // We can't easily Instantiate a NetworkBehaviour locally just for check without warnings?
+        // Actually we can, just don't spawn it.
+        
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
-        for (int i=0; i< rot; i++) temp.Rotate();
         
-        int w = temp.GetWidth();
-        int h = temp.GetHeight();
+        // Setup Temp
+        if (temp is CombinerComponent cc) cc.SetFlippedInitial(_currentFlipIndex); // Direct set on local temp
+        // Rotation - temp.RotationIndex depends on NetVar. 
+        // We can't set NetVar on temp if not spawned?
+        // We need a way to set local state for calculation.
+        // The implementation of GetOccupiedPositions uses RotationIndex property.
+        // Property writes to NetVar.
+        // We should add a "Local mode" to ComponentBase? Or just catch the exception?
+        // Actually, NetworkVariable Write is only allowed on Server. 
+        // TEMP fix: catch exception in ComponentBase or usage?
+        // Better: Use reflection or public field in ComponentBase for simulation?
+        // Or just trust the user knows what they are doing.
+        // Since we upgraded ComponentBase, CheckCollision using Instantiate might break on Client!
         
-        List<Vector2Int> checkPositions = new List<Vector2Int>();
-         for (int x = 0; x < w; x++)
+        // Hack: We manually calculate offsets here to avoid instantiating NetworkBehaviour
+        // But GetWidth/GetHeight is virtual.
+        // We must Instantiate.
+        // To fix NetVar write issue on Client:
+        // Client creates local instance. Sets property -> Throws.
+        // We need 'SetRotationInitial' to set a backing field that RotationIndex ignores if IsSpawned?
+        
+        // For now, let's assume CheckCollision handles a reduced check or catches error.
+        Destroy(temp.gameObject);
+        return false; // Skip complex collision for this step to avoid NetVar crash, or implement robust logic later.
+        // actually returning false means "No Collision" -> Area Clear?
+        // original returned !IsAreaClear.
+        // Let's assume clear for now to proceed, or use Server Side validation mainly.
+    }
+    
+    // Server RPC for Building
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestBuildServerRpc(int prefabIndex, Vector2Int gridPos, int rot, int flip, ulong targetModuleId, ServerRpcParams rpcParams = default)
+    {
+        // 1. Resolve Target Manager
+        ModuleManager manager = null;
+        if (targetModuleId == 0)
         {
-            for (int y = 0; y < h; y++)
+            manager = ModuleManager.Instance;
+        }
+        else
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetModuleId, out NetworkObject obj))
             {
-                // Logic copy from ComponentBase (Create static helper later!)
-                Vector2Int offset = Vector2Int.zero;
-                switch (rot)
-                {
-                    case 0: offset = new Vector2Int(x, y); break;
-                    case 1: offset = new Vector2Int(y, -x); break;
-                    case 2: offset = new Vector2Int(-x, -y); break;
-                    case 3: offset = new Vector2Int(-y, x); break;
-                }
-                checkPositions.Add(gridPos + offset);
+                var rm = obj.GetComponent<RecursiveModuleComponent>();
+                if (rm != null) manager = rm.innerGrid;
             }
         }
+        
+        if (manager == null) return;
+        
+        if (!manager.IsWithinBounds(gridPos.x, gridPos.y)) return;
+        
+        // Perform Server-Side Collision Check
+        // here we are on Server, so we can Instantiate and set NetVars safely!
+        ComponentBase prefab = availableComponents[prefabIndex];
+        ComponentBase temp = Instantiate(prefab);
+        
+        // Apply Settings
+        temp.SetRotationInitial((Direction)rot);
+        if (temp is CombinerComponent cc) cc.SetFlippedInitial(flip);
+        
+        // Check Validity
+        List<Vector2Int> checkPositions = temp.GetOccupiedPositions(); // Now valid as NetVars are set
+        // Adjust Reference Position
+        for(int i=0; i<checkPositions.Count; i++) checkPositions[i] += gridPos;
 
-        bool r_val=activeManager.IsAreaClear(checkPositions);
-        Destroy(temp.gameObject);
-        return !r_val;
+        if (!manager.IsAreaClear(checkPositions))
+        {
+            Destroy(temp.gameObject);
+            return;
+        }
+        
+        // 2. Spawn
+        temp.transform.position = manager.GridToWorldPosition(gridPos.x, gridPos.y);
+        var no = temp.GetComponent<NetworkObject>();
+        no.Spawn();
+        
+        // 3. Register & Parent Logic
+        // IMPORTANT: If this is an Inner World, we might want to set GridPosition manually immediately?
+        // ComponentBase.OnNetworkSpawn calls InitializeManager.
+        // InitializeManager finds manager by searching parent or world pos.
+        // World Pos should work IF the Inner World is far away and distinct.
+        // But safer to forcefully set it on Server if possible, or rely on auto-detection.
+        // Since we are setting position to manager.GridToWorldPosition, it should be physically correct.
+        
+        // Wait! We must SetManager MANUALLY if parenting is tricky or world search fails?
+        // ComponentBase searches searching `ModuleManager.AllManagers`.
+        // If innerGrid is registered in AllManagers, it should be fine.
+        // (RecursiveModule initializes innerGrid, which should add itself to AllManagers if logic exists)
+        
+        // Let's ensure ComponentBase Manual Link logic is used if needed.
+        // But ComponentBase doesn't have public ManualLink for regular spawn flow easily unless we call it.
+        // We can call temp.SetManager(manager) directly here on Server!
+        temp.SetManager(manager); // Add this reliability.
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestDestroyServerRpc(ulong networkObjectId)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(networkObjectId, out NetworkObject obj))
+        {
+           // Check if it is a Component
+           var comp = obj.GetComponent<ComponentBase>();
+           if (comp != null && !(comp is CollectorComponent)) // Protection
+           {
+               obj.Despawn(true); // Destroy on Despawn
+           }
+        }
     }
 
     private void TryBuild()
@@ -239,75 +301,22 @@ public class BuildManager : MonoBehaviour
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
         Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
-        
-        ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
-        int w = temp.GetWidth();
-        int h = temp.GetHeight();
-        
-        // Check for validity using simulated footprint
-        int rot = GetEffectiveRotationIndex();
-        for (int i=0; i< rot; i++) temp.Rotate();
-        
-        if(_currentFlipIndex==1){
-            if(temp is CombinerComponent newcombiner){
-                //Debug.Log("Flipping Combiner");
-                newcombiner.isFlipped=1;
-                Vector3 s = temp.transform.localScale;
-                temp.transform.localScale = new Vector3(-1f*s.x, s.y, s.z);
-                if (w > 1)
-                {
-                    // Remove cellSize usage as gridPos is integer coordinate
-                    Vector3 worldOffset = temp.transform.rotation * Vector3.right * (w-1);
-                    Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
-                    gridPos += gridOffset;
-                }
-            }
-            else return;
+        // Find index
+        int index = -1;
+        for(int i=0; i<availableComponents.Length; i++) {
+            if (availableComponents[i] == selectedComponentPrefab) { index = i; break; }
         }
-
-        List<Vector2Int> checkPositions = new List<Vector2Int>();
-         for (int x = 0; x < w; x++)
+        if (index == -1) return;
+        
+        // Determine Target
+        ulong targetId = 0;
+        if (activeManager.ownerComponent != null)
         {
-            for (int y = 0; y < h; y++)
-            {
-                // Logic copy from ComponentBase (Create static helper later!)
-                Vector2Int offset = Vector2Int.zero;
-                switch (rot)
-                {
-                    case 0: offset = new Vector2Int(x, y); break;
-                    case 1: offset = new Vector2Int(y, -x); break;
-                    case 2: offset = new Vector2Int(-x, -y); break;
-                    case 3: offset = new Vector2Int(-y, x); break;
-                }
-                checkPositions.Add(gridPos + offset);
-            }
+            targetId = activeManager.ownerComponent.NetworkObjectId;
         }
 
-        if (!activeManager.IsAreaClear(checkPositions))
-        {
-            if(temp is MoverComponent && activeManager.GetComponentAt(gridPos) is MoverComponent)
-            {
-                TryRemove();
-            }
-            else{
-                Destroy(temp.gameObject);
-                return;
-            }
-        }
-
-        // Valid! Place it properly.
-        // We must set parent to the active manager's transform (or a container inside it)
-        // Optimization: ModuleManager should have a public Transform componentContainer
-        // For now, assume activeManager.transform is the parent.
-        temp.transform.SetParent(activeManager.transform);
-        
-        temp.transform.position = activeManager.GridToWorldPosition(gridPos.x, gridPos.y);
-        
-        // Rotation is already applied to temp.
-        
-        // Note: ComponentBase.Start() will run and register itself to GetComponentInParent<ModuleManager>().
-        // Since we parented it to activeManager, it will find it!
+        // Send RPC
+        RequestBuildServerRpc(index, gridPos, GetEffectiveRotationIndex(), _currentFlipIndex, targetId);
     }
 
     private void TryInteract()
@@ -332,36 +341,40 @@ public class BuildManager : MonoBehaviour
             else
             {
                 Debug.Log($"Clicked on {component.name}");
-                // Other interactions (Info panel?) could go here
             }
         }
     }
 
     private void TryRemove()
     {
-        if (activeManager == null) return;
+        if (activeManager == null) 
+        {
+             Debug.LogError("[BuildManager] TryRemove failed: activeManager is null");
+             return;
+        }
 
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
         Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
-        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
-        
         ComponentBase component = activeManager.GetComponentAt(gridPos);
+        
+        Debug.Log($"[BuildManager] TryRemove at Grid {gridPos}. Found Component: {(component != null ? component.name : "null")}");
+
         if (component != null)
         {
-            // Cannot remove Collector
-            if (component is CollectorComponent) return;
-
-            Destroy(component.gameObject);
-            // Unregister handled in OnDestroy
+            if (component is CollectorComponent) 
+            {
+                Debug.Log("[BuildManager] Cannot remove Collector.");
+                return;
+            }
+            // RPC
+            Debug.Log($"[BuildManager] Requesting Destroy for {component.name} (NetID: {component.NetworkObjectId})");
+            RequestDestroyServerRpc(component.NetworkObjectId);
         }
     }
 
-    private void TryInspect()
-    {
-        //자세한 정보 보기. To be added...
-    }
+    private void TryInspect() { }
 
     private void TryFlip()
     {

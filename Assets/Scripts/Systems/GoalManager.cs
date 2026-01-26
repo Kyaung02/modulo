@@ -1,7 +1,8 @@
 using UnityEngine;
 using System;
+using Unity.Netcode;
 
-public class GoalManager : MonoBehaviour
+public class GoalManager : NetworkBehaviour
 {
     public static GoalManager Instance { get; private set; }
 
@@ -16,8 +17,11 @@ public class GoalManager : MonoBehaviour
     public LevelGoal[] levels; // Define levels in Inspector
 
     [Header("State")]
-    public int currentLevelIndex = 0;
-    public int currentDeliverCount = 0;
+    private NetworkVariable<int> _netLevelIndex = new NetworkVariable<int>(0);
+    private NetworkVariable<int> _netDeliverCount = new NetworkVariable<int>(0);
+
+    public int currentLevelIndex => _netLevelIndex.Value;
+    public int currentDeliverCount => _netDeliverCount.Value;
 
     public event Action OnGoalUpdated; // UI update event
     public event Action OnLevelComplete;
@@ -27,9 +31,22 @@ public class GoalManager : MonoBehaviour
         if (Instance == null) Instance = this;
     }
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
-        // Initial Update
+        _netLevelIndex.OnValueChanged += OnStateChanged;
+        _netDeliverCount.OnValueChanged += OnStateChanged;
+        
+        OnGoalUpdated?.Invoke(); // Initial sync
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        _netLevelIndex.OnValueChanged -= OnStateChanged;
+        _netDeliverCount.OnValueChanged -= OnStateChanged;
+    }
+
+    private void OnStateChanged(int oldVal, int newVal)
+    {
         OnGoalUpdated?.Invoke();
     }
 
@@ -44,15 +61,17 @@ public class GoalManager : MonoBehaviour
 
     public void SubmitWord(WordData word)
     {
+        if (!IsServer) return; // Only Server verifies goals
+
         LevelGoal goal = GetCurrentGoal();
         
         // Check if submitted word matches target
         if (word == goal.targetWord)
         {
-            currentDeliverCount++;
-            OnGoalUpdated?.Invoke();
+            _netDeliverCount.Value++;
+            // OnGoalUpdated invoked via NetworkVariable callback
 
-            if (currentDeliverCount >= goal.requiredCount)
+            if (_netDeliverCount.Value >= goal.requiredCount)
             {
                 CompleteLevel();
             }
@@ -61,17 +80,19 @@ public class GoalManager : MonoBehaviour
 
     private void CompleteLevel()
     {
+        // Server Only logic calling this
         Debug.Log($"Level {currentLevelIndex} Complete!");
         
-        currentLevelIndex++;
-        currentDeliverCount = 0;
+        _netLevelIndex.Value++;
+        _netDeliverCount.Value = 0;
         
-        OnLevelComplete?.Invoke();
-        OnGoalUpdated?.Invoke();
-        
-        if (currentLevelIndex >= levels.Length)
-        {
-            Debug.Log("All Levels Completed! You are a master of words.");
-        }
+        NotifyLevelCompleteClientRpc();
     }
+    
+    [ClientRpc]
+    private void NotifyLevelCompleteClientRpc()
+    {
+        OnLevelComplete?.Invoke();
+    }
+
 }

@@ -1,38 +1,110 @@
 using UnityEngine;
+using Unity.Netcode;
+using Unity.Collections;
 
 public class CombinerComponent : ComponentBase
 {
-    [SerializeField] private WordData _inputA;
-    [SerializeField] private WordData _inputB;
+    // Networked State
+    private NetworkVariable<int> _netIsFlipped = new NetworkVariable<int>(0);
+    private NetworkVariable<FixedString64Bytes> _netInputAId = new NetworkVariable<FixedString64Bytes>("");
+    private NetworkVariable<FixedString64Bytes> _netInputBId = new NetworkVariable<FixedString64Bytes>("");
+
+    private int _localIsFlipped = 0; // Local backing field
+
+    public int IsFlipped
+    {
+        get => IsSpawned ? _netIsFlipped.Value : _localIsFlipped;
+        set 
+        { 
+            if (IsSpawned && IsServer) 
+            {
+                _netIsFlipped.Value = value;
+            }
+            else if (!IsSpawned)
+            {
+                _localIsFlipped = value;
+                UpdateFlipVisual();
+            }
+        }
+    }
     
+    public void SetFlippedInitial(int flip)
+    {
+        _localIsFlipped = flip;
+        if(IsSpawned && IsServer) _netIsFlipped.Value = flip;
+        UpdateFlipVisual();
+    }
+
+    private WordData _inputA; // Local cache (Server & Client)
+    private WordData _inputB; // Local cache (Server & Client)
+
     // 2x1 Size (Wide to accept 2 parallel inputs from bottom)
     public override int GetWidth() => 2;
     public override int GetHeight() => 1;
-    public int isFlipped = 0;
 
-    protected override void Start()
+    public override void OnNetworkSpawn()
     {
-        base.Start();
+        base.OnNetworkSpawn();
+        _netIsFlipped.OnValueChanged += OnFlipChanged;
+        _netInputAId.OnValueChanged += OnInputAChanged;
+        _netInputBId.OnValueChanged += OnInputBChanged;
         
-        // Reposition Visualizer to center of 2x1 block
+        // Initial Sync
+        SyncInputs();
+        UpdateFlipVisual();
+        
         if (_visualizer != null)
         {
             _visualizer.transform.localPosition = new Vector3(0.5f, 0, 0); 
         }
     }
+    
+    public override void OnNetworkDespawn()
+    {
+        _netIsFlipped.OnValueChanged -= OnFlipChanged;
+        _netInputAId.OnValueChanged -= OnInputAChanged;
+        _netInputBId.OnValueChanged -= OnInputBChanged;
+        base.OnNetworkDespawn();
+    }
+    
+    private void OnFlipChanged(int oldVal, int newVal) { UpdateFlipVisual(); }
+    
+    private void UpdateFlipVisual()
+    {
+        // Visual Flip
+        Vector3 s = transform.localScale;
+        // If flipped (1), x is negative? Or relative to base?
+        // Assuming base scale is (1,1,1).
+        // Check BuildManager logic: it flipped scale.x
+        float targetX = (IsFlipped == 1) ? -Mathf.Abs(s.x) : Mathf.Abs(s.x);
+        transform.localScale = new Vector3(targetX, s.y, s.z);
+    }
+    
+    private void OnInputAChanged(FixedString64Bytes o, FixedString64Bytes n) { SyncInputs(); }
+    private void OnInputBChanged(FixedString64Bytes o, FixedString64Bytes n) { SyncInputs(); }
 
+    private void SyncInputs()
+    {
+        if (ModuleManager.Instance == null) return;
+        
+        string idA = _netInputAId.Value.ToString();
+        _inputA = string.IsNullOrEmpty(idA) ? null : ModuleManager.Instance.FindWordById(idA);
+        
+        string idB = _netInputBId.Value.ToString();
+        _inputB = string.IsNullOrEmpty(idB) ? null : ModuleManager.Instance.FindWordById(idB);
+    }
+
+    // SERVER ONLY
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
+        if (!IsServer) return false;
+
         // Inputs from Bottom (Local UP direction)
-        //Debug.Log("Item: "+word.wordName);
         Vector2Int localDir = WorldToLocalDirection(direction);
         if (localDir == Vector2Int.up)
         {
-            // Calculate which cell is being hit in local space
             Vector2Int worldOffset = targetPos - GridPosition;
-            //Debug.Log("worldOffset: " + worldOffset);
             Vector2Int localPos = WorldToLocalOffset(worldOffset);
-            //Debug.Log("localPos: " + localPos);
 
             // Cell (0,0) is Left -> Input A
             if (localPos == Vector2Int.zero) 
@@ -40,6 +112,7 @@ public class CombinerComponent : ComponentBase
                 if (_inputA == null)
                 {
                     _inputA = word;
+                    _netInputAId.Value = word.id;
                     return true;
                 }
             }
@@ -49,6 +122,7 @@ public class CombinerComponent : ComponentBase
                 if (_inputB == null)
                 {
                     _inputB = word;
+                    _netInputBId.Value = word.id;
                     return true;
                 }
             }
@@ -59,6 +133,8 @@ public class CombinerComponent : ComponentBase
 
     protected override void OnTick(long tickCount)
     {
+        if (!IsServer) return;
+
         // 1. Try to push existing result
         if (HeldWord != null)
         {
@@ -66,7 +142,6 @@ public class CombinerComponent : ComponentBase
             Vector2Int localOutputOffset = new Vector2Int(0, 1);
             Vector2Int worldOutputOffset = LocalToWorldOffset(localOutputOffset);
             Vector2Int targetPos = GridPosition + worldOutputOffset;
-            Debug.Log("targetPos: "+targetPos);
             
             ComponentBase targetComponent = ModuleManager.Instance.GetComponentAt(targetPos);
 
@@ -78,7 +153,7 @@ public class CombinerComponent : ComponentBase
 
                 if (targetComponent.AcceptWord(HeldWord, worldFlowDir, targetPos))
                 {
-                    HeldWord = null;
+                    ClearHeldWord(); // Base component syncs this
                     UpdateVisuals();
                 }
             }
@@ -90,53 +165,62 @@ public class CombinerComponent : ComponentBase
             if (ModuleManager.Instance.recipeDatabase != null)
             {
                 WordData result = ModuleManager.Instance.recipeDatabase.GetOutput(_inputA, _inputB);
-                //if(result != null)Debug.Log("CombineResult: " + result.wordName);
-                //else Debug.Log("CombineResult: null");
                 if (result != null)
                 {
                     // Successful combination
-                    HeldWord = result;
+                    SetHeldWordServer(result);
+                    
                     _inputA = null;
+                    _netInputAId.Value = "";
                     _inputB = null;
+                    _netInputBId.Value = "";
+                    
                     UpdateVisuals();
                 }
             }
         }
     }
     
-    // Helper methods WorldToLocalOffset and WorldToLocalDirection removed as they are now inherited from ComponentBase
-
+    // Legacy helper: LocalToWorldOffset was manual but now we can use WorldToLocal inverted?
+    // Or just implement it. ComponentBase has WorldToLocal. Parent does NOT have LocalToWorld.
+    // We need LocalToWorld for Output Direction calculation.
+    
     private Vector2Int LocalToWorldOffset(Vector2Int localOffset)
     {
          int x = localOffset.x;
          int y = localOffset.y;
-         //flip: x->-x
-         if(isFlipped==1){
+         
+         // Invert Flip: x -> -x if flipped
+         if(IsFlipped==1){
             x=-x;
          }
-         // Apply Rotation (CW)
+         
+         // Invert Rotation (CCW -> CW or reversed??)
+         // WorldToLocal rotates CCW (Counter Clockwise) by RotationIndex.
+         // So LocalToWorld should rotate CW by RotationIndex.
+         // (x,y) -> (y, -x) for CW 90
+         
          for (int i=0; i<(int)RotationIndex; i++)
          {
-             // CW: (x,y) -> (y, -x)
              int temp = x;
              x = y;
              y = -temp;
          }
-         Debug.Log("before flip: " + x + ", " + y);
-         Debug.Log("after flip: " + x + ", " + y);
          return new Vector2Int(x, y);
     }
     
     private Vector2Int LocalToWorldDirection(Vector2Int localDir)
     {
-        return LocalToWorldOffset(localDir); // Same logic for vectors
+        return LocalToWorldOffset(localDir); 
     }
 
     protected override void UpdateVisuals()
     {
+        // We can visualizer inputs too if we want?
+        // For now just output.
         if (_visualizer != null)
         {
-            _visualizer.UpdateVisual(HeldWord);
+            _visualizer.UpdateVisual(HeldWord, LastInputDir);
         }
     }
 }

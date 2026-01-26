@@ -13,9 +13,7 @@ public class EmitterComponent : ComponentBase
         // 2. If empty and has emission definition, spawn new word
         if (HeldWord == null && wordToEmit != null)
         {
-            HeldWord = wordToEmit;
-            // Spawn animation: maybe pop in? For now standard update
-            UpdateVisuals();
+            SetHeldWordServer(wordToEmit);
         }
     }
 }

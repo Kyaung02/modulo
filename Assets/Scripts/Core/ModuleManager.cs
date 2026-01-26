@@ -14,19 +14,58 @@ public class ModuleManager : MonoBehaviour
     public float cellSize = 1.0f;
     public Vector2 originPosition = new Vector2(-3.5f, -3.5f); // Centers the 7x7 grid
 
+    [Header("Word Registry")]
+    public List<WordData> allKnownWords; // Assign all possible words here for network lookup
+
+    public WordData FindWordById(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+        if (allKnownWords == null) allKnownWords = new List<WordData>();
+        return allKnownWords.Find(w => w.id == id);
+    }
+    
+    public void RegisterWord(WordData word)
+    {
+        if (word == null) return;
+        if (allKnownWords == null) allKnownWords = new List<WordData>();
+        if (!allKnownWords.Exists(w => w.id == word.id))
+        {
+            allKnownWords.Add(word);
+            // Debug.Log($"[ModuleManager] Registered Word: {word.id}");
+        }
+    }
+
     public ModuleManager parentManager; // Link to the outer world for recursion navigation
     public ComponentBase ownerComponent; // The component (RecursiveModule) that owns this inner world
     
+    public static List<ModuleManager> AllManagers = new List<ModuleManager>();
+
     private void Awake()
     {
+        AllManagers.Add(this); // Register global
+        
         // If this is the first manager (likely the main world), set it as Instance.
         // But do NOT destroy other instances, as they will be inner worlds.
+        // FIX: Ensure only the ROOT manager (or first loaded) becomes the Singleton for global lookups.
         if (Instance == null)
         {
             Instance = this;
+            DontDestroyOnLoad(gameObject); // Optional: Keep root across scene loads if needed
+        }
+        else
+        {
+            // If Instance already exists, this is an Inner World manager.
+            // Do NOT overwrite Instance.
+            // If this manager needs word data, it should reference Instance.allKnownWords or copy it.
+            // For now, simpler to just let Instance be the global lookup.
         }
         
         // Initialize other things if needed
+    }
+
+    private void OnDestroy()
+    {
+        if (AllManagers.Contains(this)) AllManagers.Remove(this);
     }
 
     public Vector3 GridToWorldPosition(int x, int y)
