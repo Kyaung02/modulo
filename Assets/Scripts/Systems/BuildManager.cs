@@ -259,8 +259,14 @@ public class BuildManager : MonoBehaviour
 
         if (!activeManager.IsAreaClear(checkPositions))
         {
-            Destroy(temp.gameObject);
-            return;
+            if(temp is MoverComponent && activeManager.GetComponentAt(gridPos) is MoverComponent)
+            {
+                TryRemove();
+            }
+            else{
+                Destroy(temp.gameObject);
+                return;
+            }
         }
 
         // Valid! Place it properly.
