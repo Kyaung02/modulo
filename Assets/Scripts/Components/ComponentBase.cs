@@ -59,8 +59,15 @@ public class ComponentBase : NetworkBehaviour
     {
         // For unspawned objects, set local
         _localRotation = dir;
-        // If spawned (Server), set netvar
-        if (IsSpawned && IsServer) _netRotationIndex.Value = dir;
+    }
+    
+    // IMPORTANT: Call this on the new instance BEFORE Spawn()
+    public void PrepareForSpawn(Vector2Int pos, Direction rot)
+    {
+        // Set local backups only. Server OnNetworkSpawn will sync these to NetVars.
+        // This avoids "Written to but doesn't know Behaviour" warnings.
+        _localGridPosition = pos;
+        _localRotation = rot;
     }
 
     private NetworkVariable<FixedString64Bytes> _netHeldWordId = new NetworkVariable<FixedString64Bytes>("");
@@ -102,39 +109,58 @@ public class ComponentBase : NetworkBehaviour
 
     public List<Vector2Int> GetOccupiedPositions()
     {
+         // Use current state
+         int isFlipped = 0;
+         if(this is CombinerComponent cc) isFlipped = cc.IsFlipped;
+         return GetOccupiedPositions(GridPosition, RotationIndex, isFlipped);
+    }
+    
+    public List<Vector2Int> GetOccupiedPositions(Vector2Int gridPos, Direction rot, int isFlipped)
+    {
         List<Vector2Int> positions = new List<Vector2Int>();
         int w = GetWidth();
         int h = GetHeight();
 
-        // 0: Up (Normal), 1: Right (90 deg CW), 2: Down, 3: Left
-        // Need to rotate the local footprint (0,0) to (w-1, h-1) based on RotationIndex
-        
         for (int x = 0; x < w; x++)
         {
             for (int y = 0; y < h; y++)
             {
                 int newx=x,newy=y;
-                if(this is CombinerComponent newcombiner && newcombiner.IsFlipped == 1){
+                if(isFlipped == 1){
                     newx=-newx;
                 }
-                // Simple rotation logic
+                
                 Vector2Int offset = Vector2Int.zero;
-                switch (RotationIndex)
+                switch (rot)
                 {
                     case Direction.Up: offset = new Vector2Int(newx, newy); break;
-                    case Direction.Right: offset = new Vector2Int(newy, -newx); break; // x becomes y, y becomes -x
+                    case Direction.Right: offset = new Vector2Int(newy, -newx); break; 
                     case Direction.Down: offset = new Vector2Int(-newx, -newy); break;
                     case Direction.Left: offset = new Vector2Int(-newy, newx); break;
                 }
-                positions.Add(GridPosition + offset);
+                positions.Add(gridPos + offset);
             }
         }
         return positions;
     }
 
     protected ModuleManager _assignedManager;
+    
+    // Helper to modify registry cleanly
+    protected void UpdateRegistration(Vector2Int oldPos, Direction oldRot, int oldFlip, Vector2Int newPos, Direction newRot, int newFlip)
+    {
+        if (_assignedManager == null) return;
+        
+        // Unregister Old
+        var oldFootprint = GetOccupiedPositions(oldPos, oldRot, oldFlip);
+        _assignedManager.UnregisterAtPositions(oldFootprint, this);
+        
+        // Register New (Calling RegisterComponent works because it uses CURRENT state properties, 
+        // ASSUMING properties are already updated by NetVar by the time this is called?)
+        // Yes, OnValueChanged fires AFTER value update.
+        _assignedManager.RegisterComponent(this);
+    }
 
-    // Replace Start with OnNetworkSpawn for networked init
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -142,25 +168,78 @@ public class ComponentBase : NetworkBehaviour
         // Listeners
         _netRotationIndex.OnValueChanged += OnRotationChanged;
         _netHeldWordId.OnValueChanged += OnHeldWordIdChanged;
-        _netLastInputDir.OnValueChanged += OnInputDirChanged; // Fix: Listen for anim dir changes
+        _netLastInputDir.OnValueChanged += OnInputDirChanged;
         _netGridPosition.OnValueChanged += OnGridPositionChanged;
         
-        InitializeManager();
-        SnapToGrid(); // Uses current GridPosition value
-        UpdateRotationVisual();
-        
-        // Sync initial HeldWord state for late joiners
-        SyncHeldWordFromId();
-        UpdateVisuals();
-
-        // Register to TickManager - SERVER ONLY logic
         if (IsServer)
         {
-            // Apply initial rotation from build phase to NetworkVariable
+            // Sync Initial Local -> NetVar (Do this FIRST so InitializeManager sees correct value on Server)
             _netRotationIndex.Value = _localRotation;
+            _netGridPosition.Value = _localGridPosition;
             
             if (TickManager.Instance != null)
                 TickManager.Instance.OnTick += OnTick;
+        }
+
+        InitializeManager();
+        SnapToGrid();
+        UpdateRotationVisual();
+        
+        SyncHeldWordFromId();
+        UpdateVisuals();
+    }
+    public override void OnNetworkDespawn()
+    {
+        _netRotationIndex.OnValueChanged -= OnRotationChanged;
+        _netHeldWordId.OnValueChanged -= OnHeldWordIdChanged;
+        _netLastInputDir.OnValueChanged -= OnInputDirChanged;
+        _netGridPosition.OnValueChanged -= OnGridPositionChanged;
+
+        if (_assignedManager != null)
+        {
+            _assignedManager.UnregisterComponent(this);
+        }
+
+        if (IsServer && TickManager.Instance != null)
+        {
+            TickManager.Instance.OnTick -= OnTick;
+        }
+        base.OnNetworkDespawn();
+    }
+    
+    private void OnRotationChanged(Direction oldVal, Direction newVal)
+    {
+         UpdateRotationVisual();
+         
+         // Update Registry
+         int flip = 0;
+         if(this is CombinerComponent cc) flip = cc.IsFlipped;
+         // Note: GridPosition hasn't changed.
+         UpdateRegistration(GridPosition, oldVal, flip, GridPosition, newVal, flip);
+    }
+
+    private void OnHeldWordIdChanged(FixedString64Bytes oldVal, FixedString64Bytes newVal)
+    {
+        SyncHeldWordFromId();
+        UpdateVisuals();
+    }
+    
+    private void OnInputDirChanged(Vector2Int oldVal, Vector2Int newVal)
+    {
+        UpdateVisuals();
+    }
+    
+    private void OnGridPositionChanged(Vector2Int oldVal, Vector2Int newVal)
+    {
+        // Re-register at new position
+        if (_assignedManager != null)
+        {
+             int flip = 0;
+             if(this is CombinerComponent cc) flip = cc.IsFlipped;
+             
+             UpdateRegistration(oldVal, RotationIndex, flip, newVal, RotationIndex, flip);
+             
+             transform.position = _assignedManager.GridToWorldPosition(newVal.x, newVal.y);
         }
     }
     
@@ -219,57 +298,6 @@ public class ComponentBase : NetworkBehaviour
         if (_assignedManager != null && IsServer)
         {
             _assignedManager.RegisterComponent(this);
-        }
-    }
-
-    public override void OnNetworkDespawn()
-    {
-        _netRotationIndex.OnValueChanged -= OnRotationChanged;
-        _netHeldWordId.OnValueChanged -= OnHeldWordIdChanged;
-        _netLastInputDir.OnValueChanged -= OnInputDirChanged; // Fix: Unsubscribe
-
-        if (_assignedManager != null)
-        {
-            _assignedManager.UnregisterComponent(this);
-        }
-
-        if (IsServer && TickManager.Instance != null)
-        {
-            TickManager.Instance.OnTick -= OnTick;
-        }
-        base.OnNetworkDespawn();
-    }
-    
-    private void OnRotationChanged(Direction oldVal, Direction newVal)
-    {
-         UpdateRotationVisual();
-    }
-
-    private void OnHeldWordIdChanged(FixedString64Bytes oldVal, FixedString64Bytes newVal)
-    {
-        SyncHeldWordFromId();
-        UpdateVisuals();
-    }
-    
-    // Fix: Trigger visual update when input direction arrives (might be after word id)
-    private void OnInputDirChanged(Vector2Int oldVal, Vector2Int newVal)
-    {
-        UpdateVisuals();
-    }
-    
-    private void OnGridPositionChanged(Vector2Int oldVal, Vector2Int newVal)
-    {
-        // Re-register at new position
-        if (_assignedManager != null)
-        {
-            // Note: We can't easily 'unregister' from old pos if we don't know it (oldVal provided!)
-            // Unregister manually? Manager.Unregister(this, oldVal)? 
-            // Current Manager.Unregister uses GetOccupiedPositions which uses CURRENT pos.
-            // So we need to handle this carefully. Use internal update or brute force.
-            // Simplest: Just Register again (Overwrite).
-            _assignedManager.RegisterComponent(this);
-            transform.position = _assignedManager.GridToWorldPosition(newVal.x, newVal.y);
-            // Debug.Log($"[ComponentBase] {name} moved to {newVal} on Client");
         }
     }
 

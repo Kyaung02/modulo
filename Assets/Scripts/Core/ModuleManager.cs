@@ -119,6 +119,19 @@ public class ModuleManager : MonoBehaviour
         }
     }
 
+    public void UnregisterAtPositions(List<Vector2Int> positions, ComponentBase owner)
+    {
+        if (_gridComponents == null) return;
+        foreach (var pos in positions)
+        {
+            if (IsWithinBounds(pos.x, pos.y) && _gridComponents[pos.x, pos.y] == owner)
+            {
+                _gridComponents[pos.x, pos.y] = null;
+            }
+        }
+    }
+
+
     public ComponentBase GetComponentAt(Vector2Int pos)
     {
         if (!IsWithinBounds(pos.x, pos.y) || _gridComponents == null) return null;

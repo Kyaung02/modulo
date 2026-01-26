@@ -34,6 +34,12 @@ public class CombinerComponent : ComponentBase
         if(IsSpawned && IsServer) _netIsFlipped.Value = flip;
         UpdateFlipVisual();
     }
+    
+    public void PrepareFlip(int flip)
+    {
+        // Safe: Set local only. Server OnNetworkSpawn will sync to NetVar.
+        _localIsFlipped = flip;
+    }
 
     private WordData _inputA; // Local cache (Server & Client)
     private WordData _inputB; // Local cache (Server & Client)
@@ -53,6 +59,11 @@ public class CombinerComponent : ComponentBase
         SyncInputs();
         UpdateFlipVisual();
         
+        if (IsServer)
+        {
+            _netIsFlipped.Value = _localIsFlipped;
+        }
+
         if (_visualizer != null)
         {
             _visualizer.transform.localPosition = new Vector3(0.5f, 0, 0); 
@@ -67,7 +78,13 @@ public class CombinerComponent : ComponentBase
         base.OnNetworkDespawn();
     }
     
-    private void OnFlipChanged(int oldVal, int newVal) { UpdateFlipVisual(); }
+    private void OnFlipChanged(int oldVal, int newVal) 
+    { 
+        UpdateFlipVisual(); 
+        
+        // Update Registry (Footprint changes with Flip)
+        UpdateRegistration(GridPosition, RotationIndex, oldVal, GridPosition, RotationIndex, newVal);
+    }
     
     private void UpdateFlipVisual()
     {

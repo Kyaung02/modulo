@@ -240,13 +240,30 @@ public class BuildManager : NetworkBehaviour
         ComponentBase temp = Instantiate(prefab);
         
         // Apply Settings
-        temp.SetRotationInitial((Direction)rot);
-        if (temp is CombinerComponent cc) cc.SetFlippedInitial(flip);
+        // temp.SetRotationInitial((Direction)rot); // Legacy
+        if (temp is CombinerComponent cc) cc.PrepareFlip(flip);
+        
+        // Prepare NetworkVariables BEFORE validation (Validation uses properties which read NetVars if Spawned... 
+        // but here it is NOT spawned. Properties read Local backing fields if !IsSpawned.
+        // Wait, PrepareForSpawn sets BOTH NetVar and Local. So Validation works.
+        temp.PrepareForSpawn(gridPos, (Direction)rot);
         
         // Check Validity
-        List<Vector2Int> checkPositions = temp.GetOccupiedPositions(); // Now valid as NetVars are set
-        // Adjust Reference Position
-        for(int i=0; i<checkPositions.Count; i++) checkPositions[i] += gridPos;
+        List<Vector2Int> checkPositions = temp.GetOccupiedPositions(); // Now valid (uses Local/NetVar)
+        // Adjust Reference Position?
+        // GetOccupiedPositions uses GridPosition. 
+        // PrepareForSpawn set GridPosition to `gridPos`.
+        // So GetOccupiedPositions returns ABSOLUTE grid coords.
+        // We do NOT need to add gridPos again!
+        // Previous code: checkPositions[i] += gridPos; creates double offset!
+        // Debug: GridPosition is (2,1). Offset is (0,0). Result (2,1).
+        // Plus gridPos (2,1) -> (4,2). WRONG.
+        
+        // FIX: Remove manual offset addition since ComponentBase now knows its position.
+        // for(int i=0; i<checkPositions.Count; i++) checkPositions[i] += gridPos;
+        
+        // Validation log?
+        // Debug.Log($"Checking {temp.name} at {gridPos}. Occupied: {string.Join(",", checkPositions)}");
 
         if (!manager.IsAreaClear(checkPositions))
         {
@@ -255,6 +272,7 @@ public class BuildManager : NetworkBehaviour
         }
         
         // 2. Spawn
+        // temp.SetGridPositionServer(gridPos); // Handled by PrepareForSpawn
         temp.transform.position = manager.GridToWorldPosition(gridPos.x, gridPos.y);
         var no = temp.GetComponent<NetworkObject>();
         no.Spawn();
@@ -359,8 +377,6 @@ public class BuildManager : NetworkBehaviour
 
         ComponentBase component = activeManager.GetComponentAt(gridPos);
         
-        Debug.Log($"[BuildManager] TryRemove at Grid {gridPos}. Found Component: {(component != null ? component.name : "null")}");
-
         if (component != null)
         {
             if (component is CollectorComponent) 
@@ -369,7 +385,6 @@ public class BuildManager : NetworkBehaviour
                 return;
             }
             // RPC
-            Debug.Log($"[BuildManager] Requesting Destroy for {component.name} (NetID: {component.NetworkObjectId})");
             RequestDestroyServerRpc(component.NetworkObjectId);
         }
     }
