@@ -241,14 +241,27 @@ public class BuildManager : MonoBehaviour
 
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
-        // Check for validity using simulated footprint
-        int rot = GetEffectiveRotationIndex();
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
-        for (int i=0; i< rot; i++) temp.Rotate();
-        
         int w = temp.GetWidth();
         int h = temp.GetHeight();
         
+        // Check for validity using simulated footprint
+        int rot = GetEffectiveRotationIndex();
+        for (int i=0; i< rot; i++) temp.Rotate();
+        
+        if(_currentFlipIndex==1){
+            float scaleX = (_currentFlipIndex == 1) ? -1f : 1f;
+            Vector3 s = temp.transform.localScale;
+            temp.transform.localScale = new Vector3(scaleX, s.y, s.z);
+            if (w > 1)
+            {
+                // Remove cellSize usage as gridPos is integer coordinate
+                Vector3 worldOffset = temp.transform.rotation * Vector3.right * (w-1);
+                Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
+                gridPos += gridOffset;
+            }
+        }
+
         List<Vector2Int> checkPositions = new List<Vector2Int>();
          for (int x = 0; x < w; x++)
         {
@@ -343,7 +356,7 @@ public class BuildManager : MonoBehaviour
     private void TryFlip()
     {
         if (selectedComponentPrefab == null) return;
-        if (selectedComponentPrefab is CombinerComponent) return;
+        if (selectedComponentPrefab is not CombinerComponent) return;
         _currentFlipIndex = (_currentFlipIndex + 1) % 2;
         Debug.Log($"Flipped to: {_currentFlipIndex}");
     }
