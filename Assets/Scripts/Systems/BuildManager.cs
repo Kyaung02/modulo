@@ -13,7 +13,6 @@ public class BuildManager : MonoBehaviour
     }
 
     [Header("Settings")]
-    [Header("Settings")]
     public ComponentBase[] availableComponents; // 0: Emitter, 1: Mover, etc.
     public ComponentBase selectedComponentPrefab; // Currently selected component to build
     public Transform componentParent; // Parent object for organized hierarchy
@@ -157,8 +156,8 @@ public class BuildManager : MonoBehaviour
                 TryInteract();
             }
 
-            // Flip (enabled only for IFlippable components)
-            if(Keyboard.current.tKey.wasPressedThisFrame && selectedComponentPrefab is IFlippable){
+            // Flip (enabled only for CombinerComponents)
+            if(Keyboard.current.tKey.wasPressedThisFrame&&(selectedComponentPrefab is CombinerComponent||selectedComponentPrefab is DistributerComponent)){
                 TryFlip();
             }
 
@@ -231,12 +230,16 @@ public class BuildManager : MonoBehaviour
         return !r_val;
     }
 
-    private bool TryBuild(Vector2Int gridPos)
+    private void TryBuild()
     {
-        if (selectedComponentPrefab == null) return false;
-        if (activeManager == null) return false;
+        if (selectedComponentPrefab == null) return;
+        if (activeManager == null) return;
 
-        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return false;
+        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+        Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
+
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
         int w = temp.GetWidth();
@@ -247,9 +250,9 @@ public class BuildManager : MonoBehaviour
         for (int i=0; i< rot; i++) temp.Rotate();
         
         if(_currentFlipIndex==1){
-            if(temp is IFlippable flippable){
-                //Debug.Log("Flipping Component");
-                flippable.isFlipped=1;
+            if(temp is CombinerComponent newcombiner){
+                //Debug.Log("Flipping Combiner");
+                newcombiner.isFlipped=1;
                 Vector3 s = temp.transform.localScale;
                 temp.transform.localScale = new Vector3(-1f*s.x, s.y, s.z);
                 if (w > 1)
@@ -260,22 +263,41 @@ public class BuildManager : MonoBehaviour
                     gridPos += gridOffset;
                 }
             }
-            else {
+            else if(temp is DistributerComponent newdistributer){
+                //Debug.Log("Flipping Combiner");
+                newdistributer.isFlipped=1;
+                Vector3 s = temp.transform.localScale;
+                temp.transform.localScale = new Vector3(-1f*s.x, s.y, s.z);
+                if (w > 1)
+                {
+                    // Remove cellSize usage as gridPos is integer coordinate
+                    Vector3 worldOffset = temp.transform.rotation * Vector3.right * (w-1);
+                    Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
+                    gridPos += gridOffset;
+                }
+            }
+            else{
                 Destroy(temp.gameObject);
-                return false; 
+                return;
             }
         }
 
-        List<Vector2Int> checkPositions = temp.GetOccupiedPositions();
-        
-        // Use temp's GridPosition logic simulation? 
-        // ComponentBase's grid position is not set yet.
-        // We need to shift "checkPositions" (which are local relative to pivot) by gridPos
-        
-        // Wait, GetOccupiedPositions uses GridPosition property which is 0,0 right now.
-        // So we add gridPos to each.
-        for(int i=0; i<checkPositions.Count; i++){
-            checkPositions[i] += gridPos;
+        List<Vector2Int> checkPositions = new List<Vector2Int>();
+         for (int x = 0; x < w; x++)
+        {
+            for (int y = 0; y < h; y++)
+            {
+                // Logic copy from ComponentBase (Create static helper later!)
+                Vector2Int offset = Vector2Int.zero;
+                switch (rot)
+                {
+                    case 0: offset = new Vector2Int(x, y); break;
+                    case 1: offset = new Vector2Int(y, -x); break;
+                    case 2: offset = new Vector2Int(-x, -y); break;
+                    case 3: offset = new Vector2Int(-y, x); break;
+                }
+                checkPositions.Add(gridPos + offset);
+            }
         }
 
         if (!activeManager.IsAreaClear(checkPositions))

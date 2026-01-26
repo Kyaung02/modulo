@@ -66,18 +66,16 @@ public class CombinerComponent : ComponentBase
             Vector2Int localOutputOffset = new Vector2Int(0, 1);
             Vector2Int worldOutputOffset = LocalToWorldOffset(localOutputOffset);
             Vector2Int targetPos = GridPosition + worldOutputOffset;
-            Debug.Log("targetPos: "+targetPos);
+           // Debug.Log("targetPos: "+targetPos);
             
-            ComponentBase targetComponent = ModuleManager.Instance.GetComponentAt(targetPos);
+            ComponentBase targetComponent = _assignedManager.GetComponentAt(targetPos);
 
             if (targetComponent != null)
             {
-                // Flow Direction: UP relative to us (Local 0,1)
-                Vector2Int localFlowDir = Vector2Int.up; 
-                Vector2Int worldFlowDir = LocalToWorldDirection(localFlowDir);
-
-                if (targetComponent.AcceptWord(HeldWord, worldFlowDir, targetPos))
+                //Debug.Log("target Found");
+                if (targetComponent.AcceptWord(HeldWord, GetOutputDirection(), targetPos))
                 {
+                    //Debug.Log("target Accepted");
                     HeldWord = null;
                     UpdateVisuals();
                 }
@@ -85,6 +83,7 @@ public class CombinerComponent : ComponentBase
         }
 
         // 2. Combine Logic
+        //여기서 쓰는 ModuleManager.Instance는 첫번째 모듈매니저지만, 딱히 짜피 다른 매니저는 레시피 없으니까 걍 이렇게 둘게요~~
         if (HeldWord == null && _inputA != null && _inputB != null)
         {
             if (ModuleManager.Instance.recipeDatabase != null)

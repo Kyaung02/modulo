@@ -15,6 +15,7 @@ public class ComponentBase : MonoBehaviour
         private set => _rotationIndex = value; 
     }
 
+    [field: SerializeField]
     public WordData HeldWord { get; protected set; } // The word currently in this component
 
     // Public method to clear held word (for external components)
