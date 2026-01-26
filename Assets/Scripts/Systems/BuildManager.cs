@@ -173,6 +173,7 @@ public class BuildManager : MonoBehaviour
             if (Keyboard.current.digit2Key.wasPressedThisFrame) SelectComponent(1);
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
+            if (Keyboard.current.digit5Key.wasPressedThisFrame) SelectComponent(4);
             
         }
     }
