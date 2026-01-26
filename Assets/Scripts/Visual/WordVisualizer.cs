@@ -74,6 +74,9 @@ public class WordVisualizer : MonoBehaviour
 
     private void Update()
     {
+        // Keep word upright regardless of parent rotation (world space)
+        transform.rotation = Quaternion.identity;
+        
         if (_isAnimating)
         {
             _animTimer += Time.deltaTime;
