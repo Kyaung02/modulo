@@ -235,9 +235,8 @@ public class BuildManager : NetworkBehaviour
         ComponentBase prefab = availableComponents[prefabIndex];
         ComponentBase temp = Instantiate(prefab);
         
-        // Apply Settings
-        // temp.SetRotationInitial((Direction)rot); // Legacy
         if (temp is CombinerComponent cc) cc.PrepareFlip(flip);
+        if (temp is DistributerComponent dc) dc.PrepareFlip(flip);
         
         // Prepare NetworkVariables BEFORE validation (Validation uses properties which read NetVars if Spawned... 
         // but here it is NOT spawned. Properties read Local backing fields if !IsSpawned.
@@ -246,14 +245,6 @@ public class BuildManager : NetworkBehaviour
         
         // Check Validity
         List<Vector2Int> checkPositions = temp.GetOccupiedPositions(); // Now valid (uses Local/NetVar)
-        // Adjust Reference Position?
-        // GetOccupiedPositions uses GridPosition. 
-        // PrepareForSpawn set GridPosition to `gridPos`.
-        // So GetOccupiedPositions returns ABSOLUTE grid coords.
-        // We do NOT need to add gridPos again!
-        // Previous code: checkPositions[i] += gridPos; creates double offset!
-        // Debug: GridPosition is (2,1). Offset is (0,0). Result (2,1).
-        // Plus gridPos (2,1) -> (4,2). WRONG.
         
         // FIX: Remove manual offset addition since ComponentBase now knows its position.
         // for(int i=0; i<checkPositions.Count; i++) checkPositions[i] += gridPos;
@@ -273,22 +264,6 @@ public class BuildManager : NetworkBehaviour
         var no = temp.GetComponent<NetworkObject>();
         no.Spawn();
         
-        // 3. Register & Parent Logic
-        // IMPORTANT: If this is an Inner World, we might want to set GridPosition manually immediately?
-        // ComponentBase.OnNetworkSpawn calls InitializeManager.
-        // InitializeManager finds manager by searching parent or world pos.
-        // World Pos should work IF the Inner World is far away and distinct.
-        // But safer to forcefully set it on Server if possible, or rely on auto-detection.
-        // Since we are setting position to manager.GridToWorldPosition, it should be physically correct.
-        
-        // Wait! We must SetManager MANUALLY if parenting is tricky or world search fails?
-        // ComponentBase searches searching `ModuleManager.AllManagers`.
-        // If innerGrid is registered in AllManagers, it should be fine.
-        // (RecursiveModule initializes innerGrid, which should add itself to AllManagers if logic exists)
-        
-        // Let's ensure ComponentBase Manual Link logic is used if needed.
-        // But ComponentBase doesn't have public ManualLink for regular spawn flow easily unless we call it.
-        // We can call temp.SetManager(manager) directly here on Server!
         temp.SetManager(manager); // Add this reliability.
     }
 

@@ -1,11 +1,37 @@
 using UnityEngine;
+using Unity.Netcode;
 using System.Collections.Generic;
 
 public class DistributerComponent : ComponentBase
 {
-    public int isFlipped = 0;
-
     public int _nextOutputIndex = 0; // 0: Left Output, 1: Right Output
+
+    private NetworkVariable<int> _netIsFlipped = new NetworkVariable<int>(0);
+    private int _localIsFlipped = 0; // Local backing field
+
+    public int IsFlipped
+    {
+        get => IsSpawned ? _netIsFlipped.Value : _localIsFlipped;
+        set 
+        { 
+            if (IsSpawned && IsServer) 
+            {
+                _netIsFlipped.Value = value;
+            }
+            else if (!IsSpawned)
+            {
+                 _localIsFlipped = value;
+                 UpdateFlipVisual();
+            }
+        }
+    }
+
+    public void SetFlippedInitial(int flip)
+    {
+        _localIsFlipped = flip;
+        if(IsSpawned && IsServer) _netIsFlipped.Value = flip;
+        UpdateFlipVisual();
+    }
 
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
@@ -74,17 +100,61 @@ public class DistributerComponent : ComponentBase
         return false;
     }
 
-    // Helper: Need these repeated from Combiner? 
-    // Ideally should be in ComponentBase, but for now duplicate to avoid base refactor risk.
-    // Actually, let's just create protected helpers in ComponentBase in next pass.
-    // For now, local duplicate.
+    public void PrepareFlip(int flip)
+    {
+        // Safe: Set local only. Server OnNetworkSpawn will sync to NetVar.
+        _localIsFlipped = flip;
+    }
+
+    private void UpdateFlipVisual()
+    {
+        // Visual Flip
+        Vector3 s = transform.localScale;
+        // If flipped (1), x is negative? Or relative to base?
+        // Assuming base scale is (1,1,1).
+        // Check BuildManager logic: it flipped scale.x
+        float targetX = (_netIsFlipped.Value == 1) ? -Mathf.Abs(s.x) : Mathf.Abs(s.x);
+        transform.localScale = new Vector3(targetX, s.y, s.z);
+    }
+    
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        _netIsFlipped.OnValueChanged += OnFlipChanged;
+        
+        UpdateFlipVisual();
+        
+        if (IsServer)
+        {
+            _netIsFlipped.Value = _localIsFlipped;
+        }
+
+        if (_visualizer != null)
+        {
+            _visualizer.transform.localPosition = new Vector3(0.5f, 0, 0); 
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        _netIsFlipped.OnValueChanged -= OnFlipChanged;
+        base.OnNetworkDespawn();
+    }
+
+    private void OnFlipChanged(int oldVal, int newVal) 
+    { 
+        UpdateFlipVisual(); 
+        
+        // Update Registry (Footprint changes with Flip)
+        UpdateRegistration(GridPosition, RotationIndex, oldVal, GridPosition, RotationIndex, newVal);
+    }
     
     private Vector2Int LocalToWorldOffset(Vector2Int localOffset)
     {
          int x = localOffset.x;
          int y = localOffset.y;
          //flip: x->-x
-         if(isFlipped==1){
+         if(_netIsFlipped.Value==1){
             x=-x;
          }
          // Apply Rotation (CW)
