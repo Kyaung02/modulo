@@ -89,7 +89,7 @@ public class BalancerComponent : ComponentBase
         Vector2Int worldOutputOffset = LocalToWorldOffset(localOutputOffset);
         Vector2Int targetPos = GridPosition + worldOutputOffset;
 
-        ComponentBase targetComponent = ModuleManager.Instance.GetComponentAt(targetPos);
+        ComponentBase targetComponent = _assignedManager.GetComponentAt(targetPos);
         
         if (targetComponent != null)
         {

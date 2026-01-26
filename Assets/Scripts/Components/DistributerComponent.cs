@@ -29,13 +29,13 @@ public class DistributerComponent : ComponentBase
         if (_lastReceivedTick == tickCount) return;
         if(HeldWord == null) return;
         if(_nextOutputIndex==1){
-            if(TryOutput(HeldWord,GetOutputDirection())){
+            if(TryOutput(HeldWord,Vector2Int.up)){
                 HeldWord = null;
                 UpdateVisuals();
                 _nextOutputIndex=0;
                 return;
             }
-            else if(TryOutput(HeldWord,DirectionUtility.CW(GetOutputDirection()))){
+            else if(TryOutput(HeldWord,Vector2Int.right)){
                 HeldWord = null;
                 UpdateVisuals();
                 _nextOutputIndex=1;
@@ -43,13 +43,13 @@ public class DistributerComponent : ComponentBase
             }
         }
         else{   
-            if(TryOutput(HeldWord,DirectionUtility.CW(GetOutputDirection()))){
+            if(TryOutput(HeldWord,Vector2Int.right)){
                 HeldWord = null;
                 UpdateVisuals();
                 _nextOutputIndex=1;
                 return;
             }
-            else if(TryOutput(HeldWord,GetOutputDirection())){
+            else if(TryOutput(HeldWord,Vector2Int.up)){
                 HeldWord = null;
                 UpdateVisuals();
                 _nextOutputIndex=0;
