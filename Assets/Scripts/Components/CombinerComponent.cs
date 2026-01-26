@@ -8,7 +8,8 @@ public class CombinerComponent : ComponentBase
     // 2x1 Size (Wide to accept 2 parallel inputs from bottom)
     public override int GetWidth() => 2;
     public override int GetHeight() => 1;
-    
+    public int isFlipped = 0;
+
     protected override void Start()
     {
         base.Start();
@@ -23,13 +24,15 @@ public class CombinerComponent : ComponentBase
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
         // Inputs from Bottom (Local UP direction)
+        //Debug.Log("Item: "+word.wordName);
         Vector2Int localDir = WorldToLocalDirection(direction);
-
         if (localDir == Vector2Int.up)
         {
             // Calculate which cell is being hit in local space
             Vector2Int worldOffset = targetPos - GridPosition;
+            //Debug.Log("worldOffset: " + worldOffset);
             Vector2Int localPos = WorldToLocalOffset(worldOffset);
+            //Debug.Log("localPos: " + localPos);
 
             // Cell (0,0) is Left -> Input A
             if (localPos == Vector2Int.zero) 
@@ -63,6 +66,7 @@ public class CombinerComponent : ComponentBase
             Vector2Int localOutputOffset = new Vector2Int(0, 1);
             Vector2Int worldOutputOffset = LocalToWorldOffset(localOutputOffset);
             Vector2Int targetPos = GridPosition + worldOutputOffset;
+            Debug.Log("targetPos: "+targetPos);
             
             ComponentBase targetComponent = ModuleManager.Instance.GetComponentAt(targetPos);
 
@@ -86,6 +90,8 @@ public class CombinerComponent : ComponentBase
             if (ModuleManager.Instance.recipeDatabase != null)
             {
                 WordData result = ModuleManager.Instance.recipeDatabase.GetOutput(_inputA, _inputB);
+                //if(result != null)Debug.Log("CombineResult: " + result.wordName);
+                //else Debug.Log("CombineResult: null");
                 if (result != null)
                 {
                     // Successful combination
@@ -104,7 +110,10 @@ public class CombinerComponent : ComponentBase
     {
          int x = localOffset.x;
          int y = localOffset.y;
-         
+         //flip: x->-x
+         if(isFlipped==1){
+            x=-x;
+         }
          // Apply Rotation (CW)
          for (int i=0; i<(int)RotationIndex; i++)
          {
@@ -113,6 +122,8 @@ public class CombinerComponent : ComponentBase
              x = y;
              y = -temp;
          }
+         Debug.Log("before flip: " + x + ", " + y);
+         Debug.Log("after flip: " + x + ", " + y);
          return new Vector2Int(x, y);
     }
     

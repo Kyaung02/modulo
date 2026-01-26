@@ -25,6 +25,7 @@ public class BuildManager : MonoBehaviour
     public PreviewManager previewManager;
 
     public int _currentRotationIndex = 0;
+    public int _currentFlipIndex = 0;
     public ModuleManager activeManager;
 
     /// <summary> RecursiveModule is never rotated; others use _currentRotationIndex. </summary>
@@ -148,7 +149,23 @@ public class BuildManager : MonoBehaviour
             if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
-                Debug.Log($"Rotation set to: {_currentRotationIndex}");
+                //Debug.Log($"Rotation set to: {_currentRotationIndex}");
+            }
+
+            // Interact
+            if(Keyboard.current.eKey.wasPressedThisFrame){
+                TryInteract();
+            }
+
+            // Flip (enabled only for CombinerComponents)
+            if(Keyboard.current.tKey.wasPressedThisFrame&&selectedComponentPrefab is CombinerComponent){
+                TryFlip();
+            }
+
+            // Clear Selection
+            if(Keyboard.current.xKey.wasPressedThisFrame){
+                selectedComponentPrefab = null;
+                Debug.Log("Selection Cleared");
             }
 
             // Component Selection
@@ -157,13 +174,6 @@ public class BuildManager : MonoBehaviour
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
             
-            if(Keyboard.current.eKey.wasPressedThisFrame){
-                TryInteract();
-            }
-            if(Keyboard.current.xKey.wasPressedThisFrame){
-                selectedComponentPrefab = null;
-                Debug.Log("Selection Cleared");
-            }
         }
     }
 
@@ -172,10 +182,10 @@ public class BuildManager : MonoBehaviour
     private void SelectComponent(int index)
     {
         _currentRotationIndex=0;
+        _currentFlipIndex=0;
         if (availableComponents != null && index >= 0 && index < availableComponents.Length)
         {
             selectedComponentPrefab = availableComponents[index];
-            // optional: reset rotation or keep it? Keeping it is usually better UX
             Debug.Log($"Selected Component: {selectedComponentPrefab.name}");
             
             OnComponentSelected?.Invoke(index);
@@ -215,7 +225,7 @@ public class BuildManager : MonoBehaviour
             }
         }
 
-        bool r_val=activeManager.IsAreaClear(checkPositions);;
+        bool r_val=activeManager.IsAreaClear(checkPositions);
         Destroy(temp.gameObject);
         return !r_val;
     }
@@ -231,14 +241,31 @@ public class BuildManager : MonoBehaviour
 
         if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
         
-        // Check for validity using simulated footprint
-        int rot = GetEffectiveRotationIndex();
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
-        for (int i=0; i< rot; i++) temp.Rotate();
-        
         int w = temp.GetWidth();
         int h = temp.GetHeight();
         
+        // Check for validity using simulated footprint
+        int rot = GetEffectiveRotationIndex();
+        for (int i=0; i< rot; i++) temp.Rotate();
+        
+        if(_currentFlipIndex==1){
+            if(temp is CombinerComponent newcombiner){
+                //Debug.Log("Flipping Combiner");
+                newcombiner.isFlipped=1;
+                Vector3 s = temp.transform.localScale;
+                temp.transform.localScale = new Vector3(-1f*s.x, s.y, s.z);
+                if (w > 1)
+                {
+                    // Remove cellSize usage as gridPos is integer coordinate
+                    Vector3 worldOffset = temp.transform.rotation * Vector3.right * (w-1);
+                    Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
+                    gridPos += gridOffset;
+                }
+            }
+            else return;
+        }
+
         List<Vector2Int> checkPositions = new List<Vector2Int>();
          for (int x = 0; x < w; x++)
         {
@@ -328,5 +355,13 @@ public class BuildManager : MonoBehaviour
     private void TryInspect()
     {
         //자세한 정보 보기. To be added...
+    }
+
+    private void TryFlip()
+    {
+        if (selectedComponentPrefab == null) return;
+        if (selectedComponentPrefab is not CombinerComponent) return;
+        _currentFlipIndex = (_currentFlipIndex + 1) % 2;
+        Debug.Log($"Flipped to: {_currentFlipIndex}");
     }
 }
