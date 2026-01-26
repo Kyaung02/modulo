@@ -545,7 +545,7 @@ MonoBehaviour:
   - {fileID: 5800738405480898224, guid: f4a7fce66cd4eb0468e8f511b74572e3, type: 3}
   - {fileID: 1587019432957339030, guid: 1412efe19e712b541a249c75eac3add4, type: 3}
   - {fileID: 6113182914553514147, guid: b2f2ec0795d5f834c8d920e2241e2eeb, type: 3}
-  - {fileID: 6113182914553514147, guid: b2f2ec0795d5f834c8d920e2241e2eeb, type: 3}
+  - {fileID: 163270383882418667, guid: 6a84ddae9626e7f469be065a638dd5e9, type: 3}
   selectedComponentPrefab: {fileID: 4853172142464227962, guid: 45af7e6fae79667499eac357fe33c8d5, type: 3}
   componentParent: {fileID: 1384956772}
   _mainCamera: {fileID: 0}

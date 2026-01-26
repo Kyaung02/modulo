@@ -337,8 +337,25 @@ public class BuildManager : NetworkBehaviour
             targetId = activeManager.ownerComponent.NetworkObjectId;
         }
 
+        // Apply Pivot Offset for Flipped Components (Re-implemented logic)
+        Vector2Int buildPos = gridPos;
+        if (_currentFlipIndex == 1 && (selectedComponentPrefab is CombinerComponent || selectedComponentPrefab is DistributerComponent))
+        {
+            int w = selectedComponentPrefab.GetWidth();
+            if (w > 1)
+            {
+                // Logic: Previously we rotated a dummy object. Now we calculate manually.
+                // Rotate vector (1,0) by -90 * rot
+                int rot = GetEffectiveRotationIndex();
+                Quaternion rotQ = Quaternion.Euler(0, 0, -90 * rot);
+                Vector3 worldOffset = rotQ * Vector3.right * (w - 1);
+                Vector2Int gridOffset = new Vector2Int(Mathf.RoundToInt(worldOffset.x), Mathf.RoundToInt(worldOffset.y));
+                buildPos += gridOffset;
+            }
+        }
+
         // Send RPC
-        RequestBuildServerRpc(index, gridPos, GetEffectiveRotationIndex(), _currentFlipIndex, targetId);
+        RequestBuildServerRpc(index, buildPos, GetEffectiveRotationIndex(), _currentFlipIndex, targetId);
     }
 
     private void TryInteract()
