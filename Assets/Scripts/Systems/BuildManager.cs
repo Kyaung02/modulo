@@ -157,8 +157,8 @@ public class BuildManager : MonoBehaviour
                 TryInteract();
             }
 
-            // Flip (enabled only for CombinerComponents)
-            if(Keyboard.current.tKey.wasPressedThisFrame&&selectedComponentPrefab is CombinerComponent){
+            // Flip (enabled only for IFlippable components)
+            if(Keyboard.current.tKey.wasPressedThisFrame && selectedComponentPrefab is IFlippable){
                 TryFlip();
             }
 
@@ -231,16 +231,12 @@ public class BuildManager : MonoBehaviour
         return !r_val;
     }
 
-    private void TryBuild()
+    private bool TryBuild(Vector2Int gridPos)
     {
-        if (selectedComponentPrefab == null) return;
-        if (activeManager == null) return;
+        if (selectedComponentPrefab == null) return false;
+        if (activeManager == null) return false;
 
-        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
-        Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
-        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
-
-        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return false;
         
         ComponentBase temp = Instantiate(selectedComponentPrefab, Vector3.zero, Quaternion.identity);
         int w = temp.GetWidth();
@@ -251,9 +247,9 @@ public class BuildManager : MonoBehaviour
         for (int i=0; i< rot; i++) temp.Rotate();
         
         if(_currentFlipIndex==1){
-            if(temp is CombinerComponent newcombiner){
-                //Debug.Log("Flipping Combiner");
-                newcombiner.isFlipped=1;
+            if(temp is IFlippable flippable){
+                //Debug.Log("Flipping Component");
+                flippable.isFlipped=1;
                 Vector3 s = temp.transform.localScale;
                 temp.transform.localScale = new Vector3(-1f*s.x, s.y, s.z);
                 if (w > 1)
@@ -264,25 +260,22 @@ public class BuildManager : MonoBehaviour
                     gridPos += gridOffset;
                 }
             }
-            else return;
+            else {
+                Destroy(temp.gameObject);
+                return false; 
+            }
         }
 
-        List<Vector2Int> checkPositions = new List<Vector2Int>();
-         for (int x = 0; x < w; x++)
-        {
-            for (int y = 0; y < h; y++)
-            {
-                // Logic copy from ComponentBase (Create static helper later!)
-                Vector2Int offset = Vector2Int.zero;
-                switch (rot)
-                {
-                    case 0: offset = new Vector2Int(x, y); break;
-                    case 1: offset = new Vector2Int(y, -x); break;
-                    case 2: offset = new Vector2Int(-x, -y); break;
-                    case 3: offset = new Vector2Int(-y, x); break;
-                }
-                checkPositions.Add(gridPos + offset);
-            }
+        List<Vector2Int> checkPositions = temp.GetOccupiedPositions();
+        
+        // Use temp's GridPosition logic simulation? 
+        // ComponentBase's grid position is not set yet.
+        // We need to shift "checkPositions" (which are local relative to pivot) by gridPos
+        
+        // Wait, GetOccupiedPositions uses GridPosition property which is 0,0 right now.
+        // So we add gridPos to each.
+        for(int i=0; i<checkPositions.Count; i++){
+            checkPositions[i] += gridPos;
         }
 
         if (!activeManager.IsAreaClear(checkPositions))
@@ -367,7 +360,7 @@ public class BuildManager : MonoBehaviour
     private void TryFlip()
     {
         if (selectedComponentPrefab == null) return;
-        if (selectedComponentPrefab is not CombinerComponent) return;
+        if (selectedComponentPrefab is not CombinerComponent && selectedComponentPrefab is not DistributerComponent) return;
         _currentFlipIndex = (_currentFlipIndex + 1) % 2;
         Debug.Log($"Flipped to: {_currentFlipIndex}");
     }

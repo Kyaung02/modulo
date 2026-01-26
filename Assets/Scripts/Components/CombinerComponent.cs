@@ -122,8 +122,8 @@ public class CombinerComponent : ComponentBase
              x = y;
              y = -temp;
          }
-         Debug.Log("before flip: " + x + ", " + y);
-         Debug.Log("after flip: " + x + ", " + y);
+         //Debug.Log("before flip: " + x + ", " + y);
+         //Debug.Log("after flip: " + x + ", " + y);
          return new Vector2Int(x, y);
     }
     

@@ -6,12 +6,6 @@ public class DistributerComponent : ComponentBase
     public int isFlipped = 0;
 
     public int _nextOutputIndex = 0; // 0: Left Output, 1: Right Output
-    
-    protected override void Start()
-    {
-        base.Start();
-
-    }
 
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
@@ -89,7 +83,20 @@ public class DistributerComponent : ComponentBase
     {
          int x = localOffset.x;
          int y = localOffset.y;
-         for (int i=0; i<(int)RotationIndex; i++) { int temp = x; x = y; y = -temp; }
+         //flip: x->-x
+         if(isFlipped==1){
+            x=-x;
+         }
+         // Apply Rotation (CW)
+         for (int i=0; i<(int)RotationIndex; i++)
+         {
+             // CW: (x,y) -> (y, -x)
+             int temp = x;
+             x = y;
+             y = -temp;
+         }
+         //Debug.Log("before flip: " + x + ", " + y);
+         //Debug.Log("after flip: " + x + ", " + y);
          return new Vector2Int(x, y);
     }
     
