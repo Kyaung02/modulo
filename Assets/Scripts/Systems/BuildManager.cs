@@ -139,7 +139,8 @@ public class BuildManager : NetworkBehaviour
                 TryInteract();
             }
 
-            if(Keyboard.current.tKey.wasPressedThisFrame && selectedComponentPrefab is CombinerComponent){
+            // Flip (enabled only for CombinerComponents and DistributerComponents)
+            if(Keyboard.current.tKey.wasPressedThisFrame && (selectedComponentPrefab is CombinerComponent || selectedComponentPrefab is DistributerComponent)){
                 TryFlip();
             }
 
@@ -151,6 +152,7 @@ public class BuildManager : NetworkBehaviour
             if (Keyboard.current.digit2Key.wasPressedThisFrame) SelectComponent(1);
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
+            if (Keyboard.current.digit5Key.wasPressedThisFrame) SelectComponent(4);
         }
     }
 
@@ -319,6 +321,8 @@ public class BuildManager : NetworkBehaviour
         Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
         Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
 
+        if (!activeManager.IsWithinBounds(gridPos.x, gridPos.y)) return;
+        
         // Find index
         int index = -1;
         for(int i=0; i<availableComponents.Length; i++) {
@@ -394,7 +398,7 @@ public class BuildManager : NetworkBehaviour
     private void TryFlip()
     {
         if (selectedComponentPrefab == null) return;
-        if (selectedComponentPrefab is not CombinerComponent) return;
+        if (selectedComponentPrefab is not CombinerComponent && selectedComponentPrefab is not DistributerComponent) return;
         _currentFlipIndex = (_currentFlipIndex + 1) % 2;
         Debug.Log($"Flipped to: {_currentFlipIndex}");
     }

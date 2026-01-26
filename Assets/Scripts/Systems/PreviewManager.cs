@@ -80,9 +80,9 @@ public class PreviewManager : MonoBehaviour
                 _previewObject.transform.localScale = new Vector3(scaleX, s.y, s.z);
                 
                 // If flipped, add visual offset
-                if(buildManager._currentFlipIndex == 1 && _currentPreviewPrefab is CombinerComponent)
+                if(buildManager._currentFlipIndex == 1 && (_currentPreviewPrefab is CombinerComponent || _currentPreviewPrefab is DistributerComponent))
                 {
-                    _previewObject.transform.localPosition += new Vector3(0, -buildManager.activeManager.cellSize, 0);
+                    _previewObject.transform.localPosition += new Vector3(0, -buildManager.activeManager.cellSize*(_currentPreviewPrefab.GetWidth()-1), 0);
                 }
 
                 _lastFlipIndex = buildManager._currentFlipIndex;
