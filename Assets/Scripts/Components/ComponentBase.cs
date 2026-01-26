@@ -11,7 +11,20 @@ public class ComponentBase : NetworkBehaviour
 
     public Vector2Int GridPosition 
     { 
-        get => IsSpawned ? _netGridPosition.Value : _localGridPosition;
+        get 
+        {
+            if (IsSpawned)
+            {
+                // 클라이언트 동기화 지연 보호: 네트워크값이 (0,0)이고 로컬값이 (0,0)이 아니면 로컬값 사용
+                if (!IsServer && _netGridPosition.Value == Vector2Int.zero && _localGridPosition != Vector2Int.zero)
+                {
+                    // Debug.Log($"[ComponentBase] Using local grid position fallback: {_localGridPosition}");
+                    return _localGridPosition;
+                }
+                return _netGridPosition.Value;
+            }
+            return _localGridPosition;
+        }
         private set 
         {
             if (IsSpawned && IsServer) _netGridPosition.Value = value;
@@ -182,14 +195,32 @@ public class ComponentBase : NetworkBehaviour
             
             if (TickManager.Instance != null)
                 TickManager.Instance.OnTick += OnTick;
+
+            InitializeManager();
+            SnapToGrid();
+            UpdateRotationVisual();
+            SyncHeldWordFromId();
+            UpdateVisuals();
         }
+        else
+        {
+            // 클라이언트: 네트워크 변수가 동기화될 시간을 확보하기 위해 1프레임 지연 초기화
+            StartCoroutine(InitializeOnClientDelayed());
+        }
+    }
+
+    private System.Collections.IEnumerator InitializeOnClientDelayed()
+    {
+        // 1프레임 대기 (네트워크 페이로드 동기화가 확실히 이루어지도록 함)
+        yield return null;
 
         InitializeManager();
         SnapToGrid();
         UpdateRotationVisual();
-        
         SyncHeldWordFromId();
         UpdateVisuals();
+        
+        // Debug.Log($"[ComponentBase] Client initialized {name} at {GridPosition}");
     }
     public override void OnNetworkDespawn()
     {

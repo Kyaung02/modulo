@@ -111,6 +111,14 @@ public class ModuleManager : MonoBehaviour
         {
             if (IsWithinBounds(pos.x, pos.y))
             {
+                // 이미 다른 컴포넌트가 점유 중인지 확인 (자신은 제외)
+                var existing = _gridComponents[pos.x, pos.y];
+                if (existing != null && existing != component)
+                {
+                    Debug.LogWarning($"[ModuleManager] Slot at {pos} is already occupied by {existing.name}. Skipping registration for {component.name} to prevent overwriting.");
+                    continue; // Skip this cell to protect existing component
+                }
+                
                 _gridComponents[pos.x, pos.y] = component;
             }
         }

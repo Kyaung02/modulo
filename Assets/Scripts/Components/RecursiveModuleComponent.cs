@@ -201,8 +201,8 @@ public class RecursiveModuleComponent : ComponentBase
         // Configure Logic
         port.Configure(this, wallDir);
         
-        // Direct set to target rotation
-        port.RotationIndex = facingDir;
+        // Prepare for Network Spawn (Crucial to avoid (0,0) registration)
+        port.PrepareForSpawn(gridPos, facingDir);
         
         var no = portObj.GetComponent<NetworkObject>();
         no.Spawn();
