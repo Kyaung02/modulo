@@ -33,7 +33,9 @@ public class PortComponent : ComponentBase
         _bodyVisual = GameObject.CreatePrimitive(PrimitiveType.Quad);
         _bodyVisual.transform.SetParent(transform);
         // Reset transform to avoid weird scaling from parent
-        _bodyVisual.transform.localPosition = Vector3.zero;
+        // Offset the visual by 1.0 unit locally in the 'Facing' direction (assuming rotation handles it)
+        // User requested: "0.4f 말고 1f 밀어줘" and "prefab자체를 한쪽에 치우치게"
+        _bodyVisual.transform.localPosition = new Vector3(0, 0.5f, 0);
         _bodyVisual.transform.localRotation = Quaternion.identity;
         _bodyVisual.transform.localScale = new Vector3(1.0f, 0.2f, 1.0f);
         
@@ -207,5 +209,10 @@ public class PortComponent : ComponentBase
                 }
             }
         }
+    }
+
+    protected override void UpdateVisuals()
+    {
+        // 포트에서는 아이템(Word)을 시각적으로 표시하지 않음
     }
 }

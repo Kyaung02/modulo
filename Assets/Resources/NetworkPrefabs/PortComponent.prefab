@@ -72,6 +72,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PortComponent
   ShowTopMostFoldoutHeaderGroup: 1
+  _debugHeldWord: {fileID: 0}
   wallDirection: 0
   parentModule: {fileID: 0}
   infiniteSourceWord: {fileID: 0}
