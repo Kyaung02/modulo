@@ -16,4 +16,4 @@ MonoBehaviour:
   wordName: Australia
   emoji: Continent
   wordColor: {r: 0.6619692, g: 0.9, b: 0.35999995, a: 1}
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: -3034096712763535294, guid: 7a63366d775da3c40a0fb4228def6750, type: 3}
