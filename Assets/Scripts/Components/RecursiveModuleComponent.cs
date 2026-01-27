@@ -788,5 +788,118 @@ public class RecursiveModuleComponent : ComponentBase
             if (_previewCamera.enabled != shouldEnable) 
                 _previewCamera.enabled = shouldEnable;
         }
+
+        UpdatePlayerBorder();
+    }
+
+    private LineRenderer _playerBorder;
+
+    private void UpdatePlayerBorder()
+    {
+        if (innerGrid == null) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening) return;
+
+        // 1. Find players inside this module
+        List<Color> playerColors = new List<Color>();
+        
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.PlayerObject != null)
+            {
+                var pc = client.PlayerObject.GetComponent<Network.NetworkPlayerController>();
+                if (pc != null && pc.currentViewId.Value == NetworkObjectId)
+                {
+                    // Exclude self (don't show my own color on the border)
+                    if (client.ClientId != NetworkManager.Singleton.LocalClientId)
+                    {
+                        playerColors.Add(pc.playerColor.Value);
+                    }
+                }
+            }
+        }
+
+        // 2. Setup LineRenderer
+        if (_playerBorder == null)
+        {
+            GameObject borderObj = new GameObject("PlayerBorder");
+            borderObj.transform.SetParent(transform);
+            borderObj.transform.localPosition = Vector3.zero;
+            borderObj.transform.localRotation = Quaternion.identity;
+            
+            _playerBorder = borderObj.AddComponent<LineRenderer>();
+            _playerBorder.useWorldSpace = false;
+            _playerBorder.loop = true;
+            _playerBorder.widthMultiplier = 0.02f;
+            _playerBorder.material = new Material(Shader.Find("Sprites/Default"));
+            
+            // Box shape around 1x1 module (centered)
+            // Module is 1x1. Half extents 0.5.
+            // Scale is slightly larger than module to be visible? Or exactly on edge?
+            // Let's make it slightly larger than module (1.05) 
+            float s = 0.49f; // 0.5 + margin
+            _playerBorder.positionCount = 4;
+            _playerBorder.SetPositions(new Vector3[] {
+                new Vector3(-s, -s, -0.2f),
+                new Vector3(-s, s, -0.2f),
+                new Vector3(s, s, -0.2f),
+                new Vector3(s, -s, -0.2f)
+            });
+        }
+
+        // 3. Update Colors
+        if (playerColors.Count == 0)
+        {
+            _playerBorder.enabled = false;
+        }
+        else
+        {
+            _playerBorder.enabled = true;
+            
+            // Simple approach: Apply gradient if multiple
+            // If 1 player: Solid color
+            // If > 1: Gradient Loop? LineRenderer Gradient is linear start-to-end.
+            // To make it look like "shared", we can use a gradient with hard stops or smooth blend.
+            
+            Gradient gradient = new Gradient();
+            if (playerColors.Count == 1)
+            {
+                gradient.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(playerColors[0], 0.0f), new GradientColorKey(playerColors[0], 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(1.0f, 1.0f) }
+                );
+            }
+            else
+            {
+                // Divide gradient into segments
+                List<GradientColorKey> colorKeys = new List<GradientColorKey>();
+                List<GradientAlphaKey> alphaKeys = new List<GradientAlphaKey>();
+                
+                float step = 1.0f / playerColors.Count;
+                for (int i = 0; i < playerColors.Count; i++)
+                {
+                    // Hard transition or smooth? Let's do smooth/distinct
+                    colorKeys.Add(new GradientColorKey(playerColors[i], i * step));
+                    colorKeys.Add(new GradientColorKey(playerColors[i], (i + 1) * step - 0.01f)); // Keep color for the segment
+                }
+                
+                // Unity Gradient supports max 8 keys. If > 4 players (8 keys), we might lose info.
+                // Fallback: Just mix?
+                // Or: If > 4 players, simplify.
+                if (colorKeys.Count > 8)
+                {
+                    // Too many players, just pick first 4 or blend evenly
+                    colorKeys.Clear();
+                    colorKeys.Add(new GradientColorKey(playerColors[0], 0f));
+                    colorKeys.Add(new GradientColorKey(playerColors[playerColors.Count-1], 1f));
+                }
+                
+                alphaKeys.Add(new GradientAlphaKey(1.0f, 0.0f));
+                alphaKeys.Add(new GradientAlphaKey(1.0f, 1.0f));
+                
+                gradient.SetKeys(colorKeys.ToArray(), alphaKeys.ToArray());
+            }
+            
+            _playerBorder.colorGradient = gradient;
+        }
     }
 }
