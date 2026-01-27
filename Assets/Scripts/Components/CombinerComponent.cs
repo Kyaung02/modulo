@@ -121,20 +121,26 @@ public class CombinerComponent : ComponentBase
         if (localDir == Vector2Int.up)
         {
             Vector2Int worldOffset = targetPos - GridPosition;
+            //Debug.Log("TargetPos: "+targetPos);
+            //Debug.Log("GridPosition: "+GridPosition);
+            //Debug.Log("WorldOffset: "+worldOffset);
             Vector2Int localPos = WorldToLocalOffset(worldOffset);
+            //Debug.Log("Coming from: "+localPos);
 
             // Cell (0,0) is Left -> Input A
-            if (localPos == Vector2Int.zero) 
+            if (localPos == new Vector2Int(0,-1)) 
             {
+                Debug.Log("Comingfrom A");
                 if (_inputA == null)
                 {
+                    Debug.Log("Item received to Slot A");
                     _inputA = word;
                     _netInputAId.Value = word.id;
                     return true;
                 }
             }
             // Cell (1,0) is Right -> Input B
-            else if (localPos == new Vector2Int(1, 0)) 
+            else if (localPos == new Vector2Int(1,-1)) 
             {
                 if (_inputB == null)
                 {

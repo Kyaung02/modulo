@@ -43,14 +43,14 @@ public class BuildUI : MonoBehaviour
             Destroy(child.gameObject);
         }
         _slotImages.Clear();
-
+        if(_buildManager==null)return;
         if (_buildManager.availableComponents == null) return;
 
         for (int i = 0; i < _buildManager.availableComponents.Length; i++)
         {
             ComponentBase comp = _buildManager.availableComponents[i];
             
-            if (comp == null) continue;
+            if(comp == null) continue;
             if(comp.IsHidden() == 1) continue;
             if(GoalManager.Instance.CheckUnlock(i) == 0) continue;  
 

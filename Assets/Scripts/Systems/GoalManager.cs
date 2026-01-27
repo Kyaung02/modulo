@@ -8,7 +8,7 @@ public class GoalManager : NetworkBehaviour
     public static GoalManager Instance { get; private set; }
 
     [System.Serializable]
-    public struct LevelGoal
+    public class LevelGoal
     {
         public WordData targetWord;
         public int requiredCount;
@@ -35,6 +35,7 @@ public class GoalManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log($"[GoalManager] OnNetworkSpawn Called. IsServer: {IsServer}");
         _netLevelIndex.OnValueChanged += OnStateChanged;
         _netDeliverCount.OnValueChanged += OnStateChanged;
         
@@ -127,7 +128,7 @@ public class GoalManager : NetworkBehaviour
         Debug.Log($"[GoalManager] State restored: Level {levelIndex}, Count {deliverCount}");
     }
 
-    NetworkList<int> ComponentsUnlocked = new NetworkList<int>();
+    private NetworkList<int> ComponentsUnlocked = new NetworkList<int>();
     
     // Callback for NetworkList changes (Clients + Server)
     private void OnUnlockChanged(NetworkListEvent<int> changeEvent)
@@ -149,6 +150,9 @@ public class GoalManager : NetworkBehaviour
                 ComponentsUnlocked.Add(0);
             }
         }
+        UnlockComponent(0);
+        UnlockComponent(1);
+        Debug.Log("Unlockables Initialized");
     }
     public void UnlockComponent(int componentId)
     {

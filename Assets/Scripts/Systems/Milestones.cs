@@ -3,9 +3,9 @@ using System;
 using Unity.Netcode;
 using UnityEngine.Events;
 
-public class Milestone:MonoBehaviour
+public class Milestones : MonoBehaviour
 {
-    public static Milestone Instance;
+    public static Milestones Instance;
     private void Awake()
     {
         if (Instance == null) Instance = this;
