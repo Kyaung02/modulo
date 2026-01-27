@@ -90,7 +90,7 @@ public class DistributerComponent : ComponentBase
         Vector2Int worldOutputOffset = LocalToWorldOffset(direction);
         Vector2Int targetPos = GridPosition + worldOutputOffset;
 
-        ComponentBase targetComponent = ModuleManager.Instance.GetComponentAt(targetPos);
+        ComponentBase targetComponent = AssignedManager.GetComponentAt(targetPos);
         
         if (targetComponent != null)
         {

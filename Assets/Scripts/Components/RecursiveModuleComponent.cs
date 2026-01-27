@@ -30,6 +30,7 @@ public class RecursiveModuleComponent : ComponentBase
         BoxCollider2D col = GetComponent<BoxCollider2D>();
         if (col == null) col = gameObject.AddComponent<BoxCollider2D>();
         
+        //we must assume here that all cellsizes are equal, otherwise change to assignedmanager
         if (ModuleManager.Instance != null)
         {
              // Size it to the cell (1.0f default)
