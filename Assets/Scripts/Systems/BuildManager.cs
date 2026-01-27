@@ -59,6 +59,7 @@ public class BuildManager : NetworkBehaviour
     public void SetActiveManager(ModuleManager manager)
     {
         activeManager = manager;
+        RecursiveModuleComponent.RefreshAllModules();
     }
 
     public void ExitCurrentModule()

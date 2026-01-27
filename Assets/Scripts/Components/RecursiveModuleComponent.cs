@@ -215,6 +215,49 @@ public class RecursiveModuleComponent : ComponentBase
     private RenderTexture _previewTexture;
     private GameObject _previewDisplay;
     
+    // Static tracking
+    private static List<RecursiveModuleComponent> _allModules = new List<RecursiveModuleComponent>();
+
+    public static void RefreshAllModules()
+    {
+        // Copy to avoid modification errors if logic spawns/destroys (unlikely but safe)
+        var list = new List<RecursiveModuleComponent>(_allModules);
+        foreach (var mod in list)
+        {
+             if (mod != null) mod.RefreshVisualState();
+        }
+    }
+
+    private void OnEnable() { _allModules.Add(this); }
+    private void OnDisable() { _allModules.Remove(this); }
+    
+    public void RefreshVisualState()
+    {
+        if (BuildManager.Instance == null || BuildManager.Instance.activeManager == null) return;
+        if (innerGrid == null) return;
+
+        // 1. Check if we are the Current Container (Inner)
+        bool isCurrentContainer = (innerGrid == BuildManager.Instance.activeManager);
+        
+        // 2. Refresh Glass Floor (Outer Preview)
+        // If we are inside this module, turn ON glass floor to see outside.
+        // If we are NOT inside this module, turn OFF glass floor (save perf).
+        // Note: ToggleOuterPreview(true) turns on OuterCamera and Quad.
+        ToggleOuterPreview(isCurrentContainer);
+
+        // 3. Refresh CCTV (Preview Camera)
+        // Handled by Update logic mostly, but let's force a check here.
+        // Using same logic as Update:
+        int activeDepth = GetManagerDepth(BuildManager.Instance.activeManager);
+        _depth = GetManagerDepth(_assignedManager);
+        bool inRange = (_depth >= activeDepth && _depth <= activeDepth + 2);
+        bool shouldEnableCCTV = inRange && !isCurrentContainer;
+
+        if (_previewCamera != null) _previewCamera.enabled = shouldEnableCCTV;
+        if (_previewDisplay != null) _previewDisplay.SetActive(!isCurrentContainer); // Hide exterior if inside
+    }
+
+    // ... existing CreatePreview ...
     private void CreatePreview()
     {
         // 1. Create Render Texture
