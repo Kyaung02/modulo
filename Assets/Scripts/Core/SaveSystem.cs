@@ -137,7 +137,7 @@ public class SaveSystem : NetworkBehaviour
             if (manager == null) continue;
             
             // 이 매니저의 모든 컴포넌트 가져오기
-            ComponentBase[] components = FindObjectsOfType<ComponentBase>();
+            ComponentBase[] components = FindObjectsByType<ComponentBase>(FindObjectsSortMode.None);
             
             foreach (var component in components)
             {
@@ -301,7 +301,7 @@ public class SaveSystem : NetworkBehaviour
         Debug.Log("[SaveSystem] Applying loaded game data...");
         
         // 기존 컴포넌트 모두 제거 (Root Port 제외)
-        ComponentBase[] existingComponents = FindObjectsOfType<ComponentBase>();
+        ComponentBase[] existingComponents = FindObjectsByType<ComponentBase>(FindObjectsSortMode.None);
         foreach (var comp in existingComponents)
         {
             // Root 포트는 유지
@@ -424,7 +424,7 @@ public class SaveSystem : NetworkBehaviour
                 // Fallback: 기존 방식으로 검색 (네트워크 스폰 타이밍에 따라 필요할 수 있음)
                 if (targetManager == null)
                 {
-                    NetworkObject[] allNetObjects = FindObjectsOfType<NetworkObject>();
+                    NetworkObject[] allNetObjects = FindObjectsByType<NetworkObject>(FindObjectsSortMode.None);
                     foreach (var no in allNetObjects)
                     {
                         if (no.NetworkObjectId == data.parentModuleNetworkId)

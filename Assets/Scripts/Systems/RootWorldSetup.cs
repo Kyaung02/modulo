@@ -43,7 +43,7 @@ public class RootWorldSetup : MonoBehaviour
         
         // Root Port가 없으면 생성 (새 게임이거나 로드 오류 시)
         // 모든 PortComponent를 찾아서 parentModule이 null인 것이 있는지 확인
-        PortComponent[] allPorts = FindObjectsOfType<PortComponent>();
+        PortComponent[] allPorts = FindObjectsByType<PortComponent>(FindObjectsSortMode.None);
         bool hasRootPort = false;
         foreach (var port in allPorts)
         {
