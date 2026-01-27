@@ -461,7 +461,7 @@ public class RecursiveModuleComponent : ComponentBase
             ComponentBase neighbor = _assignedManager.GetComponentAt(targetPos);
             if (neighbor != null)
             {
-                return neighbor.AcceptWord(word, worldOutDir, targetPos);
+                return neighbor.AcceptWord(word, worldOutDir, GridPosition);
             }
         }
         

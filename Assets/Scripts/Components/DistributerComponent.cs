@@ -95,7 +95,7 @@ public class DistributerComponent : ComponentBase
         if (targetComponent != null)
         {
              Vector2Int worldFlowDir = LocalToWorldDirection(direction);
-             return targetComponent.AcceptWord(word, worldFlowDir, targetPos);
+             return targetComponent.AcceptWord(word, worldFlowDir, GridPosition);
         }
         return false;
     }
