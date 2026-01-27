@@ -43,6 +43,7 @@ public class BuildUI : MonoBehaviour
             ComponentBase comp = _buildManager.availableComponents[i];
             
             if (comp == null) continue;
+            if(comp.IsHidden() == 1) continue;
 
             GameObject slot = Instantiate(slotPrefab, slotContainer);
             

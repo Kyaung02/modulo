@@ -30,6 +30,7 @@ public class TunnelInComponent : ComponentBase
         {
             ComponentBase target=AssignedManager.GetComponentAt(targetPos);
             if(target is TunnelOutComponent && target.GetOutputDirection() == GetOutputDirection())break;
+            if(target is TunnelInComponent && target.GetOutputDirection() == GetOutputDirection())return;
             targetPos += GetOutputDirection();
         }
 

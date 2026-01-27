@@ -142,7 +142,7 @@ public class BuildManager : NetworkBehaviour
             }
 
             // Flip (enabled only for CombinerComponents and DistributerComponents)
-            if(Keyboard.current.tKey.wasPressedThisFrame && (selectedComponentPrefab is CombinerComponent || selectedComponentPrefab is DistributerComponent)){
+            if(Keyboard.current.tKey.wasPressedThisFrame ){
                 TryFlip();
             }
 
@@ -156,7 +156,7 @@ public class BuildManager : NetworkBehaviour
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
             if (Keyboard.current.digit5Key.wasPressedThisFrame) SelectComponent(4);
             if (Keyboard.current.digit6Key.wasPressedThisFrame) SelectComponent(5);
-            if (Keyboard.current.digit7Key.wasPressedThisFrame) SelectComponent(6);
+            //if (Keyboard.current.digit7Key.wasPressedThisFrame) SelectComponent(6);
         }
     }
 
@@ -164,12 +164,13 @@ public class BuildManager : NetworkBehaviour
 
     private void SelectComponent(int index)
     {
-        _currentRotationIndex=0;
-        _currentFlipIndex=0;
-        if (availableComponents != null && index >= 0 && index < availableComponents.Length)
+        //_currentRotationIndex=0;
+        
+        if (availableComponents != null && index >= 0 && index < availableComponents.Length && selectedComponentPrefab != availableComponents[index])
         {
+            _currentFlipIndex=0;
             selectedComponentPrefab = availableComponents[index];
-            OnComponentSelected?.Invoke(index);
+            if(selectedComponentPrefab.IsHidden() == 0)OnComponentSelected?.Invoke(index);
         }
     }
 
@@ -329,6 +330,12 @@ public class BuildManager : NetworkBehaviour
 
         // Send RPC
         RequestBuildServerRpc(index, buildPos, GetEffectiveRotationIndex(), _currentFlipIndex, targetId);
+        if(selectedComponentPrefab is TunnelInComponent){
+            SelectComponent(6);
+        }
+        else if(selectedComponentPrefab is TunnelOutComponent){
+            SelectComponent(5);
+        }
     }
 
     private void TryInteract()
@@ -388,6 +395,15 @@ public class BuildManager : NetworkBehaviour
     private void TryFlip()
     {
         if (selectedComponentPrefab == null) return;
+        if( selectedComponentPrefab is TunnelInComponent || selectedComponentPrefab is TunnelOutComponent){
+            if(selectedComponentPrefab is TunnelInComponent){
+                SelectComponent(6);
+            }
+            else if(selectedComponentPrefab is TunnelOutComponent){
+                SelectComponent(5);
+            }
+            return;
+        }
         if (selectedComponentPrefab is not CombinerComponent && selectedComponentPrefab is not DistributerComponent) return;
         _currentFlipIndex = (_currentFlipIndex + 1) % 2;
         Debug.Log($"Flipped to: {_currentFlipIndex}");
