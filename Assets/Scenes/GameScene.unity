@@ -2767,8 +2767,125 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GoalManager
   ShowTopMostFoldoutHeaderGroup: 1
   levels:
-  - targetWord: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}
-    requiredCount: 10
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 11500000, guid: 26e3a67904f2b6c44abe185ef9b01220, type: 3}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: 
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: b67102a4c58efd64387a99dcd06dbfce, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 11500000, guid: 26e3a67904f2b6c44abe185ef9b01220, type: 3}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: 
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 11500000, guid: 26e3a67904f2b6c44abe185ef9b01220, type: 3}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: 
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!4 &1718209873
 Transform:
   m_ObjectHideFlags: 0
