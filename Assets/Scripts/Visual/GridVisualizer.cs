@@ -103,7 +103,14 @@ public class GridVisualizer : MonoBehaviour
         lr.startWidth = ColorPalette.GridLineWidth;
         lr.endWidth = ColorPalette.GridLineWidth;
         
-        if (lineMaterial != null) lr.material = lineMaterial;
+        if (lineMaterial != null) 
+        {
+            lr.material = lineMaterial;
+        }
+        else
+        {
+             lr.material = new Material(Shader.Find("Sprites/Default"));
+        }
         lr.startColor = ColorPalette.GridLineColor;
         lr.endColor = ColorPalette.GridLineColor;
         

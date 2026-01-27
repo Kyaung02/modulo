@@ -267,8 +267,8 @@ public class BuildManager : NetworkBehaviour
         temp.transform.position = manager.GridToWorldPosition(gridPos.x, gridPos.y);
         var no = temp.GetComponent<NetworkObject>();
         no.Spawn();
-        
-        temp.SetManager(manager); // Add this reliability.
+        no.TrySetParent(manager.transform);
+        // temp.SetManager(manager); // Add this reliability.
     }
 
     [ServerRpc(RequireOwnership = false)]

@@ -264,7 +264,7 @@ public class RecursiveModuleComponent : ComponentBase
         
         // Assign Texture
         Renderer r = _previewDisplay.GetComponent<Renderer>();
-        r.material = new Material(Shader.Find("Unlit/Texture")); // Simple shader
+        r.material = new Material(Shader.Find("Sprites/Default")); // Safe shader for standard/URP 2D
         r.material.mainTexture = _previewTexture;
         
         // Layering
@@ -534,7 +534,7 @@ public class RecursiveModuleComponent : ComponentBase
                 var ren = _innerBackgroundQuad.GetComponent<Renderer>();
                 if (ren.material.name != "OuterPreviewMat") 
                 {
-                    Material mat = new Material(Shader.Find("Unlit/Texture"));
+                    Material mat = new Material(Shader.Find("Sprites/Default"));
                     mat.name = "OuterPreviewMat";
                     mat.mainTexture = _outerTexture;
                     ren.material = mat;
@@ -587,6 +587,9 @@ public class RecursiveModuleComponent : ComponentBase
             innerGrid.transform.position.y + innerGrid.originPosition.y + (innerGrid.height * innerGrid.cellSize * 0.5f),
             Camera.main.transform.position.z
         );
+        
+        // Safety: Ensure parent link is valid for Exiting
+        if (innerGrid.parentManager == null) innerGrid.parentManager = _assignedManager; 
         
         if (CameraController.Instance != null)
         {

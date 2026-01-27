@@ -34,6 +34,8 @@ public class PreviewManager : MonoBehaviour
         }
 
         // 3. Update Position & Rotation
+        if (buildManager.activeManager == null) return;
+
         Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
         Vector3 mouseWorldPos = buildManager._mainCamera.ScreenToWorldPoint(mouseScreenPos);
         Vector2Int gridPos = buildManager.activeManager.WorldToGridPosition(mouseWorldPos);
