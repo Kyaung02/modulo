@@ -18,6 +18,9 @@ public class RecursiveModuleComponent : ComponentBase
 
     // Networked Inner World Position
     private NetworkVariable<Vector3> _netInnerWorldPos = new NetworkVariable<Vector3>(Vector3.zero);
+    
+    // Depth tracking for dynamic visibility
+    private int _depth = 0;
 
     public override void OnNetworkSpawn()
     {
@@ -144,20 +147,12 @@ public class RecursiveModuleComponent : ComponentBase
             CreateInternalPorts();
         }
         
-        // Depth Check (Optimization)
-        // ... (Depth logic same) ...
-        int depth = 0;
-        ModuleManager current = _assignedManager;
-        while (current != null && current.parentManager != null)
-        {
-            depth++;
-            current = current.parentManager;
-        }
+        // Depth Check
+        // We calculate depth but NO LONGER limit creation. 
+        // Visibility is handled dynamically in Update to support "1 level out, 2 levels in" view.
+        _depth = GetManagerDepth(_assignedManager);
         
-        if (depth < 2)
-        {
-            CreatePreview();
-        }
+        CreatePreview();
     }
     // ... (CreatePreview same)
     
@@ -581,11 +576,8 @@ public class RecursiveModuleComponent : ComponentBase
             return;
         }
 
-        // ENABLE OUTER PREVIEW
-        ToggleOuterPreview(true);
-        
-        // Freeze local CCTV immediately to prevent visual feedback loop / weirdness during zoom
-        if (_previewCamera != null) _previewCamera.enabled = false;
+        // Do NOT enable outer preview yet (avoid recursion during zoom)
+        // Do NOT freeze local CCTV yet (keep updating texture during zoom)
         
         Debug.Log($"[RecursiveModule] Entering Module {name}...");
         
@@ -600,7 +592,16 @@ public class RecursiveModuleComponent : ComponentBase
         {
             StartCoroutine(CameraController.Instance.TransitionEnterModule(transform.position, innerCenter, () => {
                 bm.SetActiveManager(innerGrid);
-                if (_previewDisplay != null) _previewDisplay.SetActive(false); // Hide only after transition
+                
+                // Transition Complete Actions:
+                // 1. Enable Glass Floor (Outer Preview)
+                ToggleOuterPreview(true);
+                
+                // 2. Hide Module Exterior Display (we are inside now)
+                if (_previewDisplay != null) _previewDisplay.SetActive(false); 
+                
+                // 3. Disable CCTV Camera (save perf, we see real thing now)
+                if (_previewCamera != null) _previewCamera.enabled = false;
             }));
         }
         else
@@ -609,7 +610,10 @@ public class RecursiveModuleComponent : ComponentBase
             Camera.main.transform.position = innerCenter;
             Camera.main.orthographicSize = 5; 
             bm.SetActiveManager(innerGrid);
+            
+            ToggleOuterPreview(true);
             if (_previewDisplay != null) _previewDisplay.SetActive(false);
+            if (_previewCamera != null) _previewCamera.enabled = false;
         }
     }
 
@@ -649,5 +653,50 @@ public class RecursiveModuleComponent : ComponentBase
          int y = localDir.y;
          for (int i=0; i<(int)RotationIndex; i++) { int temp = x; x = y; y = -temp; }
          return new Vector2Int(x, y);
+    }
+
+    private int GetManagerDepth(ModuleManager manager)
+    {
+        int d = 0;
+        ModuleManager current = manager;
+        while (current != null && current.parentManager != null)
+        {
+            d++;
+            current = current.parentManager;
+        }
+        return d;
+    }
+
+    private void Update()
+    {
+        // Dynamic Camera Culling to optimize performance
+        // Rule: Visible if module is within "1 level outside and 2 levels inside" window relative to player.
+        
+        if (BuildManager.Instance == null || BuildManager.Instance.activeManager == null) return;
+        if (innerGrid == null) return; // Not initialized
+
+        // 1. Determine Active Depth (where the player IS)
+        // Optimization note: Maybe cache this on BuildManager or ModuleManager?
+        int activeDepth = GetManagerDepth(BuildManager.Instance.activeManager);
+        
+        // 2. Determine Visibility
+        // If I am at activeDepth (Sibling on the same grid) -> Show my internals (Depth+1)
+        // If I am at activeDepth + 1 (Inside a Sibling) -> Show my internals (Depth+2)
+        // "2 levels inside" means we want to see (Active+1) and (Active+2) contents.
+        // My Depth is the grid I sit on.
+        
+        bool inRange = (_depth >= activeDepth && _depth <= activeDepth + 1);
+        
+        // Special Case: If I AM the container the player is inside, disable my CCTV 
+        // (Player sees my insides directly, not through the screen)
+        bool isCurrentContainer = (innerGrid == BuildManager.Instance.activeManager);
+        
+        bool shouldEnable = inRange && !isCurrentContainer;
+
+        if (_previewCamera != null)
+        {
+            if (_previewCamera.enabled != shouldEnable) 
+                _previewCamera.enabled = shouldEnable;
+        }
     }
 }
