@@ -8,7 +8,7 @@ public class GridVisualizer : MonoBehaviour
 
     private void Start()
     {
-        // CreateBackground(); // Removing background as requested
+        CreateBackground(); 
         CreateGridLines();
         CreateBorder();
     }
@@ -19,12 +19,25 @@ public class GridVisualizer : MonoBehaviour
         GameObject bgInfo = new GameObject("GridBackground");
         bgInfo.transform.SetParent(transform);
         
+        // Find Local Manager or Instance
+        ModuleManager manager = GetComponent<ModuleManager>();
+        if (manager == null) manager = ModuleManager.Instance;
+        if (manager == null) return;
+
         // Size: 7x7
-        int w = ModuleManager.Instance.width;
-        int h = ModuleManager.Instance.height;
+        int w = manager.width;
+        int h = manager.height;
         
-        bgInfo.transform.position = ModuleManager.Instance.originPosition + new Vector2(w * 0.5f * ModuleManager.Instance.cellSize, h * 0.5f * ModuleManager.Instance.cellSize);
-        bgInfo.transform.localScale = new Vector3(w * ModuleManager.Instance.cellSize, h * ModuleManager.Instance.cellSize, 1);
+        // Position relies on local calculation relative to parent
+        // Since transform.position is the parent's world position, setting localPosition is safer if bgInfo is child
+        bgInfo.transform.localPosition = Vector3.zero; // Reset first
+        
+        // Calculate Center in Local Space
+        // Origin is usually (-3.5, -3.5)
+        Vector2 center = manager.originPosition + new Vector2(w * 0.5f * manager.cellSize, h * 0.5f * manager.cellSize);
+        bgInfo.transform.localPosition = new Vector3(center.x, center.y, 1f); // z=1 to be behind lines(0) and items
+        
+        bgInfo.transform.localScale = new Vector3(w * manager.cellSize, h * manager.cellSize, 1);
         
         SpriteRenderer sr = bgInfo.AddComponent<SpriteRenderer>();
         // Create a 1x1 white sprite dynamically if none provided?
@@ -103,6 +116,6 @@ public class GridVisualizer : MonoBehaviour
         Texture2D texture = new Texture2D(1, 1);
         texture.SetPixel(0, 0, color);
         texture.Apply();
-        return Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+        return Sprite.Create(texture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1.0f);
     }
 }

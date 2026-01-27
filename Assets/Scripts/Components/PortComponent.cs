@@ -37,7 +37,7 @@ public class PortComponent : ComponentBase
         // User requested: "0.4f 말고 1f 밀어줘" and "prefab자체를 한쪽에 치우치게"
         _bodyVisual.transform.localPosition = new Vector3(0, 0.5f, 0);
         _bodyVisual.transform.localRotation = Quaternion.identity;
-        _bodyVisual.transform.localScale = new Vector3(1.0f, 0.2f, 1.0f);
+        _bodyVisual.transform.localScale = new Vector3(1.0f, 0.066f, 1.0f);
         
         Destroy(_bodyVisual.GetComponent<Collider>());
         
@@ -166,7 +166,7 @@ public class PortComponent : ComponentBase
         }
         else
         {
-            Debug.Log("[PortComponent] Import failed: Already holding word.");
+            // Debug.Log("[PortComponent] Import failed: Already holding word.");
         }
         return false;
     }
