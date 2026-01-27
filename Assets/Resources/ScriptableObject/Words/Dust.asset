@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Dust
   wordName: Dust
-  emoji: 
+  emoji: Earth
   wordColor: {r: 0.9, g: 0.35999995, b: 0.4138055, a: 1}
   wordIcon: {fileID: 21300000, guid: 8c816b2cb9917194fbc1f836e924a0e0, type: 3}

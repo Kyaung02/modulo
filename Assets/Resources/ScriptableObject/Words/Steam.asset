@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
+  m_Name: Steam
+  m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: Steam
+  wordName: Steam
+  emoji: Fire
+  wordColor: {r: 0.5048915, g: 0.35999995, b: 0.9, a: 1}
+  wordIcon: {fileID: 7414261224600783322, guid: 14f2f5601b789fa46964b66de527f246, type: 3}

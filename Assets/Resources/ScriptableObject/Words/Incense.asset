@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
+  m_Name: Incense
+  m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: Incense
+  wordName: Incense
+  emoji: Plant
+  wordColor: {r: 0.9, g: 0.5952727, b: 0.35999995, a: 1}
+  wordIcon: {fileID: -5775345850067933086, guid: d1859a713311c4c4892bd2bf47a58f45, type: 3}

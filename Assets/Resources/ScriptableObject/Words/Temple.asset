@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
+  m_Name: Temple
+  m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: Temple
+  wordName: Temple
+  emoji: Prayer
+  wordColor: {r: 0.52743316, g: 0.35999995, b: 0.9, a: 1}
+  wordIcon: {fileID: 296725949041184523, guid: 8ab94c944f8b4cd4aa2f4d377f78276b, type: 3}

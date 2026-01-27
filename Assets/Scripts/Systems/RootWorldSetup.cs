@@ -130,8 +130,8 @@ public class RootWorldSetup : MonoBehaviour
         // Now using Port prefab local offset (1.0f) combined with rotation to stick to wall.
         portObj.transform.position = grid.GridToWorldPosition(gridPos.x, gridPos.y);
 
-        // Rotation via NetworkVariable (fixed in ComponentBase)
-        port.SetRotationInitial(facingDir);
+        // Initial Grid Setup (Crucial to prevent (0,0) default)
+        port.PrepareForSpawn(gridPos, facingDir);
         
         var no = portObj.GetComponent<NetworkObject>();
         no.Spawn();
