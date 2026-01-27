@@ -130,10 +130,8 @@ public class CombinerComponent : ComponentBase
             // Cell (0,0) is Left -> Input A
             if (localPos == new Vector2Int(0,-1)) 
             {
-                Debug.Log("Comingfrom A");
                 if (_inputA == null)
                 {
-                    Debug.Log("Item received to Slot A");
                     _inputA = word;
                     _netInputAId.Value = word.id;
                     return true;
