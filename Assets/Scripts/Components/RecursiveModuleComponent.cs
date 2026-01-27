@@ -176,7 +176,7 @@ public class RecursiveModuleComponent : ComponentBase
         GameObject prefab = Resources.Load<GameObject>("NetworkPrefabs/PortComponent");
         if (prefab == null)
         {
-            Debug.LogError("Missing PortComponent prefab! Please run Modulo > Setup Network Prefabs in menu.");
+            // Debug.LogError("Missing PortComponent prefab! Please run Modulo > Setup Network Prefabs in menu.");
             return;
         }
 
@@ -419,7 +419,7 @@ public class RecursiveModuleComponent : ComponentBase
         {
             // Debug.Log($"[RecursiveModule] Importing item to Port {targetWall}");
             bool result = port.ImportItem(word);
-            if (!result) Debug.LogWarning($"[RecursiveModule] Port {targetWall} rejected item.");
+            // if (!result) Debug.LogWarning($"[RecursiveModule] Port {targetWall} rejected item.");
             return result;
         }
         else
@@ -524,7 +524,7 @@ public class RecursiveModuleComponent : ComponentBase
                 else
                     _outerCamera.backgroundColor = new Color(0.1f, 0.1f, 0.1f); 
                     
-                _outerCamera.orthographicSize = 1.5f; // 3x3 area (Radius 1.5)
+                _outerCamera.orthographicSize = 1.5f * 0.95f; // Match the 0.95 scale of the preview display
             }
             _outerCamera.gameObject.SetActive(true);
             
