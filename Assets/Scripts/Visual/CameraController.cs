@@ -187,36 +187,28 @@ public class CameraController : MonoBehaviour
     // --- Spectate Logic ---
     public void Spectate(ulong targetInfoNetId)
     {
-        // If targetInfoNetId is 0, view Root
+        // 1. Root Case
         if (targetInfoNetId == 0)
         {
-             // Assumes Root origin is roughly (0,0) or Camera default
-             FocusOn(new Vector3(0,0,-10), 5f);
+             // Reset to Root
+             if (BuildManager.Instance != null)
+             {
+                 BuildManager.Instance.SetActiveManager(ModuleManager.Instance);
+             }
+             // Assumes Root origin is roughly (0,0) with center (3.5, 3.5)
+             Vector3 rootCenter = new Vector3(0, 0, -10f); // Default for now, adjust if Root origin differs
+             SetPositionByType(rootCenter, 5f);
              return;
         }
 
-        // Find the object
+        // 2. Module Case
         if (Unity.Netcode.NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(targetInfoNetId, out Unity.Netcode.NetworkObject obj))
         {
             var recursiveMod = obj.GetComponent<RecursiveModuleComponent>();
-            if (recursiveMod != null && recursiveMod.innerGrid != null)
+            if (recursiveMod != null)
             {
-                 // Calculate Center
-                 ModuleManager inner = recursiveMod.innerGrid;
-                 Vector3 innerCenter = new Vector3(
-                    inner.transform.position.x + inner.originPosition.x + (inner.width * inner.cellSize * 0.5f),
-                    inner.transform.position.y + inner.originPosition.y + (inner.height * inner.cellSize * 0.5f),
-                    transform.position.z 
-                );
-                
-                // Switch Manager Context
-                if (BuildManager.Instance != null)
-                {
-                    BuildManager.Instance.SetActiveManager(inner);
-                }
-                
-                // Teleport
-                SetPositionByType(innerCenter, 5.0f);
+                // Use the dedicated Instant Entry logic to set up visuals and state
+                recursiveMod.InstantEnterModule();
             }
         }
     }

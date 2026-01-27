@@ -554,6 +554,59 @@ public class RecursiveModuleComponent : ComponentBase
     // Allow entering the module
     // Public method called by BuildManager
     // Public method called by BuildManager
+    public void InstantEnterModule()
+    {
+        // 1. Ensure Initialization
+        if (innerGrid == null)
+        {
+             // Try using networked position
+             if (_netInnerWorldPos.Value != Vector3.zero) 
+             {
+                 InitializeInnerWorld(_netInnerWorldPos.Value);
+             }
+             else if (IsServer) // Host case fallback? Should act as server
+             {
+                  // If host (server+client) doesn't have it initialized yet (rare), do it.
+                  Vector3 randomPos = new Vector3(Random.Range(10000, 90000), Random.Range(10000, 90000), 0);
+                  _netInnerWorldPos.Value = randomPos;
+                  InitializeInnerWorld(randomPos);
+             }
+             
+             if (innerGrid == null) 
+             {
+                 Debug.LogError($"[InstantEnter] Failed to init innerGrid for {name}");
+                 return;
+             }
+        }
+        
+        BuildManager bm = FindFirstObjectByType<BuildManager>();
+        if (bm == null) return;
+
+        // Target Inner Position
+        Vector3 innerCenter = new Vector3(
+            innerGrid.transform.position.x + innerGrid.originPosition.x + (innerGrid.width * innerGrid.cellSize * 0.5f),
+            innerGrid.transform.position.y + innerGrid.originPosition.y + (innerGrid.height * innerGrid.cellSize * 0.5f),
+            Camera.main.transform.position.z // Preserve Z
+        );
+
+        // Ensure Parent Linkage for Q-Exit
+        if (innerGrid.parentManager == null) 
+        {
+            innerGrid.parentManager = _assignedManager;
+            innerGrid.ownerComponent = this;
+        }
+
+        // Instant Update
+        if (CameraController.Instance != null)
+             CameraController.Instance.SetPositionByType(innerCenter, 5f);
+        
+        bm.SetActiveManager(innerGrid);
+                    
+        ToggleOuterPreview(true);
+        if (_previewDisplay != null) _previewDisplay.SetActive(false); 
+        if (_previewCamera != null) _previewCamera.enabled = false;
+    }
+
     public void EnterModule()
     {
         // Debug Init Status
@@ -672,26 +725,17 @@ public class RecursiveModuleComponent : ComponentBase
 
     private void Update()
     {
-        // Dynamic Camera Culling to optimize performance
-        // Rule: Visible if module is within "1 level outside and 2 levels inside" window relative to player.
-        
+        // Dynamic Camera Culling
         if (BuildManager.Instance == null || BuildManager.Instance.activeManager == null) return;
-        if (innerGrid == null) return; // Not initialized
+        if (innerGrid == null) return; 
 
-        // 1. Determine Active Depth (where the player IS)
-        // Optimization note: Maybe cache this on BuildManager or ModuleManager?
+        // Recalculate depth to be safe (cheap enough for now)
+        _depth = GetManagerDepth(_assignedManager);
         int activeDepth = GetManagerDepth(BuildManager.Instance.activeManager);
         
-        // 2. Determine Visibility
-        // If I am at activeDepth (Sibling on the same grid) -> Show my internals (Depth+1)
-        // If I am at activeDepth + 1 (Inside a Sibling) -> Show my internals (Depth+2)
-        // "2 levels inside" means we want to see (Active+1) and (Active+2) contents.
-        // My Depth is the grid I sit on.
+        // Widen range to ensure visibility
+        bool inRange = (_depth >= activeDepth && _depth <= activeDepth + 2);
         
-        bool inRange = (_depth >= activeDepth && _depth <= activeDepth + 1);
-        
-        // Special Case: If I AM the container the player is inside, disable my CCTV 
-        // (Player sees my insides directly, not through the screen)
         bool isCurrentContainer = (innerGrid == BuildManager.Instance.activeManager);
         
         bool shouldEnable = inRange && !isCurrentContainer;
