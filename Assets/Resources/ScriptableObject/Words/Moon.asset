@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
+  m_Name: Moon
+  m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: Moon
+  wordName: Moon
+  emoji: 
+  wordColor: {r: 0.35999995, g: 0.7153792, b: 0.9, a: 1}
+  wordIcon: {fileID: 7699978436774145253, guid: 0ec81d3a4b6e87d4582a468fbf7dfa2c, type: 3}

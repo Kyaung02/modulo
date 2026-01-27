@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
+  m_Name: Lava
+  m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: Lava
+  wordName: Lava
+  emoji: 
+  wordColor: {r: 0.35999995, g: 0.46598938, b: 0.9, a: 1}
+  wordIcon: {fileID: -8890641348306671835, guid: 69d18217a34b1a84a8123afbaa73a5e5, type: 3}

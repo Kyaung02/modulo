@@ -1,35 +1,231 @@
 $baseUrl = "https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/128/emoji_u"
 $destDir = "Assets/Sprites/Emojis"
-New-Item -ItemType Directory -Force -Path $destDir
 
-$emojis = @{
-    "Earth" = "1f30d"
-    "Wind" = "1f32c" 
-    "Fire" = "1f525"
-    "Water" = "1f4a7"
-    "Dust" = "23f3"
-    "Planet" = "1fa90"
-    "Ocean" = "1f30a"
-    "Sun" = "2600"
-    "Solar" = "26a1"
-    "System" = "2699"
-    "Computer" = "1f4bb"
-    "Submarine" = "2693"
-    "Software" = "1f4be"
-    "Subsystem" = "1f3d7"
-    "Module" = "1f4e6"
+# Ensure destination directory exists
+if (-not (Test-Path $destDir)) {
+    New-Item -ItemType Directory -Force -Path $destDir
 }
 
-foreach ($name in $emojis.Keys) {
-    $code = $emojis[$name]
+# Embedded CSV Data
+$csvContent = @"
+Name,Emoji
+Earth,🌍
+Water,💧
+Wind,🌬️
+Fire,🔥
+Plant,🌱
+Dandelion,🌼
+Tree,🌳
+Wish,✨
+Money,💰
+Gold,🥇
+Lake,🌊
+Wave,🌊
+Sand,🏖️
+Dust,💨
+Glass,🍷
+Telescope,🔭
+Mirror,🪞
+Radio,📻
+Microwave,🍳
+Teleport,🌀
+Lava,🌋
+Stone,🪨
+Obsidian,💎
+River,🏞️
+Blade,🗡️
+Axe,🪓
+Head,👤
+Source,⛲
+Planet,🪐
+Ocean,🌊
+Sun,☀️
+Solar,☀️
+System,⚙️
+Computer,💻
+Submarine,🚢
+Software,💾
+Subsystem,🛠️
+Module,📦
+Mountain,🏔️
+Steam,💨
+Engine,🚂
+Train,🚆
+Tunnel,🚇
+Paper,📄
+Map,🗺️
+Treasure,🏴☠️
+X,❌
+Xerox,📠
+Copy,📋
+Volcano,🌋
+Avalanche,❄️
+Tsunami,🌊
+Smoke,💨
+Swamp,🐊
+Mud,💩
+Dandelion Patch,🌼
+Hourglass,⏳
+Cloud,☁️
+Tractor,🚜
+Ash,🚬
+Fjord,🏞️
+Rocket,🚀
+Island,🏝️
+Snow,❄️
+Wine,🍷
+Incense,🕯️
+Flower,🌸
+Car,🚗
+Rain,🌧️
+Brick,🧱
+Crash,💥
+Yellow Car,🚕
+Time,⏰
+Vinegar,🏺
+Jet,✈️
+Tank,🚜
+Pencil,✏️
+Whale,🐋
+Satellite,🛰️
+Continent,🗺️
+Surf,🏄
+Asia,🌏
+Moon,🌙
+Sandpaper,📜
+Prayer,🙏
+Truck,🚚
+Rich,🤑
+House,🏠
+America,🇺🇸
+Yellow Submarine,🚢
+Beach,🏖️
+Surfer,🏄
+Battery,🔋
+War,⚔️
+Book,📖
+Internet,🌐
+Australia,🇦🇺
+Everest,🏔️
+No,🚫
+Eclipse,🌑
+Rough,🌊
+Temple,🏛️
+Delivery,📦
+Richer,💎
+Town,🏘️
+Google,🔍
+The Beatles,🎸
+Sauna,🧖
+Steamroller,🚜
+Remote,📺
+Battle,🤺
+Homework,📚
+Fail,❌
+Ever,♾️
+Apocalypse,☄️
+Church,⛪
+Baptism,💧
+Wiser,🧠
+Port,⚓
+Search,🔍
+Yesterday,📅
+Finnish,🇫🇮
+Previous,⬅️
+Older,👴
+Fight,🥊
+Clean,🧹
+Never,🙅
+Apoclipse,☄️
+Holy Spirit,🕊️
+Explore,🧭
+Export,🚢
+Try,🎯
+Younger,👶
+Done,✅
+End,🔚
+Pentecost,🔥
+Import,📥
+Ending,🔚
+Rougher,🌊
+Tongues,👅
+Tougher,💪
+Latin,🏛️
+Enduring,⏳
+Attempt,🎯
+Endure,⛰️
+Attempted,🎯
+Failed,📉
+Ended,🏁
+Road,🛣️
+Pancake,🥞
+Bridge,🌉
+Arch,⛩️
+Stack,📚
+Lily,🌸
+Angel,👼
+UPS,📦
+Upgrade,⬆️
+"@
+
+# Helper to convert emoji string to Noto-compatible hex string
+function Get-NotoHexCode($str) {
+    if ([string]::IsNullOrEmpty($str)) { return $null }
+    
+    $codes = @()
+    $chars = $str.ToCharArray()
+    for ($i = 0; $i -lt $chars.Length; $i++) {
+        $c = $chars[$i]
+        $val = 0
+        if ([char]::IsHighSurrogate($c)) {
+            $val = [char]::ConvertToUtf32($str, $i)
+            $i++
+        } else {
+            $val = [int]$c
+        }
+
+        # Noto Emoji convention:
+        # - Lowercase hex
+        # - Exclude FE0F (Variation Selector-16) generally
+        # - Include ZWJ (200D)
+        
+        if ($val -ne 0xFE0F) {
+            $codes += "{0:x}" -f $val
+        }
+    }
+    return $codes -join "_"
+}
+
+# Parse CSV
+$items = $csvContent | ConvertFrom-Csv
+
+foreach ($item in $items) {
+    $name = $item.Name
+    $emoji = $item.Emoji
+    
+    if ([string]::IsNullOrWhiteSpace($emoji)) { continue }
+
+    $code = Get-NotoHexCode $emoji
+    
+    # Specific fix for some complex sequences if Get-NotoHexCode fails or produces wrong filename
+    # But usually Noto follows the standard unicode sequence.
+    # Note: 'Treasure' provided as '🏴☠️' might be two chars in CSV or one sequence. 
+    # If it's separate, we might get 1f3f4_2620. 
+    # Correct Pirate Flag is 1f3f4_200d_2620_fe0f.
+    
     $url = "$baseUrl$code.png"
     $outPath = Join-Path $destDir "$name.png"
+    
+    # Check if file exists to skip? Or overwrite? Overwrite is safer to ensure correct emoji.
     
     Write-Host "Downloading $name ($code)..."
     try {
         Invoke-WebRequest -Uri $url -OutFile $outPath
     } catch {
-        Write-Error "Failed to download $name from $url"
+        Write-Warning "Failed to download $name ($code). Attempting fallback (adding/removing fe0f?)"
+        # Try fallback with fe0f if it wasn't there? Or just report error.
+        # Noto is strict.
     }
 }
-Write-Host "Done."
+
+Write-Host "Download Complete."

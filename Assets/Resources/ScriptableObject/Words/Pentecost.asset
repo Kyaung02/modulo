@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10cdb2f4f318fd244927fb29ae08e3b1, type: 3}
+  m_Name: Pentecost
+  m_EditorClassIdentifier: Assembly-CSharp::WordData
+  id: Pentecost
+  wordName: Pentecost
+  emoji: 
+  wordColor: {r: 0.9, g: 0.45000738, b: 0.35999995, a: 1}
+  wordIcon: {fileID: -6339079995127363531, guid: 286240fbefeeed44486242481ce26eaf, type: 3}
