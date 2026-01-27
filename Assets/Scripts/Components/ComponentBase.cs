@@ -120,6 +120,8 @@ public class ComponentBase : NetworkBehaviour
     public virtual int GetWidth() => 1;
     public virtual int GetHeight() => 1;
 
+    public virtual int IsHidden() => 0;
+
     public List<Vector2Int> GetOccupiedPositions()
     {
          // Use current state

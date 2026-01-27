@@ -5,6 +5,7 @@ using Unity.Collections;
 
 public class TunnelOutComponent : ComponentBase
 {
+    public override int IsHidden() => 1;
     //1. 준게 TunnelIn인가?
     //방향 및 가까운거 확인은 TunnelIn에서 처리
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
