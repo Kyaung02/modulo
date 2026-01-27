@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Import
   wordName: Import
-  emoji: 
+  emoji: Delivery
   wordColor: {r: 0.8842056, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -4647365528429937374, guid: 932fd66556d0fa14688cee73ba759d52, type: 3}

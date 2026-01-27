@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Incense
   wordName: Incense
-  emoji: 
+  emoji: Plant
   wordColor: {r: 0.9, g: 0.5952727, b: 0.35999995, a: 1}
   wordIcon: {fileID: -5775345850067933086, guid: d1859a713311c4c4892bd2bf47a58f45, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Fjord
   wordName: Fjord
-  emoji: 
+  emoji: Lake
   wordColor: {r: 0.35999995, g: 0.7142753, b: 0.9, a: 1}
   wordIcon: {fileID: 7417759272537255695, guid: 4275eee6a011640429b4dfca0425fcda, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: No
   wordName: No
-  emoji: 
+  emoji: Australia
   wordColor: {r: 0.7626514, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: 6959302527311757296, guid: 8d6e1c0a9276e4245aa2f7a9c3b67100, type: 3}

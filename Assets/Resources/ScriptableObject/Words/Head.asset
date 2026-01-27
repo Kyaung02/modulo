@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Head
   wordName: Head
-  emoji: 
+  emoji: Axe
   wordColor: {r: 0.9, g: 0.35999995, b: 0.8119583, a: 1}
   wordIcon: {fileID: -5156993582514690110, guid: f94ff5f02af056444813c5a9acf2ded4, type: 3}

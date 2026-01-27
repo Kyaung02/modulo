@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Bridge
   wordName: Bridge
-  emoji: 
+  emoji: Road
   wordColor: {r: 0.9, g: 0.35999995, b: 0.5582179, a: 1}
   wordIcon: {fileID: 7265813586516431896, guid: e8114b3d87b345a47a144046d54443b6, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Train
   wordName: Train
-  emoji: 
+  emoji: Engine
   wordColor: {r: 0.4634841, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -4368322862165430076, guid: 5fb91347752b8e545828774b3a0982d0, type: 3}

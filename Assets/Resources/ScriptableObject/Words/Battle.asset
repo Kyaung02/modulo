@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Battle
   wordName: Battle
-  emoji: 
+  emoji: War
   wordColor: {r: 0.5370304, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: 3867594838521495272, guid: b35aab10c3feba045a3f51ee985c2be0, type: 3}

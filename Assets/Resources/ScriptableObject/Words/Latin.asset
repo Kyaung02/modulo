@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Latin
   wordName: Latin
-  emoji: 
+  emoji: Church
   wordColor: {r: 0.35999995, g: 0.9, b: 0.78592354, a: 1}
   wordIcon: {fileID: 8450335503636137838, guid: d17edf4d39ad34c4a9904799b9ad5cfe, type: 3}

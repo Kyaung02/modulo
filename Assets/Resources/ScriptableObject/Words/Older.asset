@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Older
   wordName: Older
-  emoji: 
+  emoji: Time
   wordColor: {r: 0.35999995, g: 0.8426959, b: 0.9, a: 1}
   wordIcon: {fileID: -1542941529320515303, guid: 8f96e19927e66a64e81eb208f360a7de, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Angel
   wordName: Angel
-  emoji: 
+  emoji: Dust
   wordColor: {r: 0.9, g: 0.8387356, b: 0.35999995, a: 1}
   wordIcon: {fileID: 794005853264362711, guid: e386e3c15089f1b4588bc6a4f38fd993, type: 3}

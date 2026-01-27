@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Church
   wordName: Church
-  emoji: 
+  emoji: Earth
   wordColor: {r: 0.5921497, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: -6506036955920984320, guid: 6fb21fe76c5855e40bf08d5d43fb58f1, type: 3}

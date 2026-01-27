@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Internet
   wordName: Internet
-  emoji: 
+  emoji: Fjord
   wordColor: {r: 0.53704613, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: -3890015702104882173, guid: aeecf61a7d94c484a8e94b17e08d1f4f, type: 3}

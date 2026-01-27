@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Obsidian
   wordName: Obsidian
-  emoji: 
+  emoji: Lava
   wordColor: {r: 0.35999995, g: 0.9, b: 0.67211926, a: 1}
   wordIcon: {fileID: 6522594400000613951, guid: 6f10713cfd0f3884091e3bd9be47eae2, type: 3}

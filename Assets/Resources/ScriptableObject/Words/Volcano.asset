@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Volcano
   wordName: Volcano
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.38476068, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -1309091486694266011, guid: 8380dac43a2204847a260cc07e26ab06, type: 3}

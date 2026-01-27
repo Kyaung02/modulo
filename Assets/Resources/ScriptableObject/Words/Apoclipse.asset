@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Apoclipse
   wordName: Apoclipse
-  emoji: 
+  emoji: Apocalypse
   wordColor: {r: 0.9, g: 0.35999995, b: 0.3802507, a: 1}
   wordIcon: {fileID: -7464453855754631689, guid: 8a717aca3fa9d2a479f6e461754547c3, type: 3}

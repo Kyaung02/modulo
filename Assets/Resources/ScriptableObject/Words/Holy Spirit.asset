@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Holy Spirit
   wordName: Holy Spirit
-  emoji: 
+  emoji: Baptism
   wordColor: {r: 0.35999995, g: 0.8041792, b: 0.9, a: 1}
   wordIcon: {fileID: 2991058435465376874, guid: 4d256f9aaecee54469d301604b03ecf8, type: 3}

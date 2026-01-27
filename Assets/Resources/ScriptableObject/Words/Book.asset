@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Book
   wordName: Book
-  emoji: 
+  emoji: Paper
   wordColor: {r: 0.9, g: 0.39868557, b: 0.35999995, a: 1}
   wordIcon: {fileID: 2353571312451627304, guid: 27478c37167f0f840b82f4739f4465f7, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Rain
   wordName: Rain
-  emoji: 
+  emoji: River
   wordColor: {r: 0.6574351, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: 8371938986527376862, guid: b4b483c40a766504e805eb6c757378f3, type: 3}

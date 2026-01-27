@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Town
   wordName: Town
-  emoji: 
+  emoji: House
   wordColor: {r: 0.35999995, g: 0.9, b: 0.6972919, a: 1}
   wordIcon: {fileID: -6470653568274419442, guid: 7ec57d336963a1246a9e5859d52abaa0, type: 3}

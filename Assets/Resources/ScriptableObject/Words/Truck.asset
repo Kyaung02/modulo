@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Truck
   wordName: Truck
-  emoji: 
+  emoji: Car
   wordColor: {r: 0.6639992, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -6461785809725244843, guid: a56521c2196b082498cd19243e143328, type: 3}

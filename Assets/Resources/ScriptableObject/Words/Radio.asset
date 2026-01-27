@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Radio
   wordName: Radio
-  emoji: 
+  emoji: Telescope
   wordColor: {r: 0.35999995, g: 0.3859137, b: 0.9, a: 1}
   wordIcon: {fileID: -8070686850402279387, guid: b79824b52ba353449a410608325a5c7e, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Copy
   wordName: Copy
-  emoji: 
+  emoji: Water
   wordColor: {r: 0.9, g: 0.35999995, b: 0.60463905, a: 1}
   wordIcon: {fileID: -2822384490363785072, guid: 2a21c55392dc5bc4e945ba7a4b71c1d4, type: 3}

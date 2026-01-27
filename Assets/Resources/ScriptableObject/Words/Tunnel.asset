@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Tunnel
   wordName: Tunnel
-  emoji: 
+  emoji: Mountain
   wordColor: {r: 0.35999995, g: 0.42966446, b: 0.9, a: 1}
   wordIcon: {fileID: -5828474959326346466, guid: 2792e856e7938ef4f82e44702db3985f, type: 3}

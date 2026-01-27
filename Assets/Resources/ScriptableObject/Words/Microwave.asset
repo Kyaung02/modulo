@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Microwave
   wordName: Microwave
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.9, g: 0.7048651, b: 0.35999995, a: 1}
   wordIcon: {fileID: -7736496859148224309, guid: cfc9099e588c82246bca7613cbe4300c, type: 3}

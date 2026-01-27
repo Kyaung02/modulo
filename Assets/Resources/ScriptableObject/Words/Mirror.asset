@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Mirror
   wordName: Mirror
-  emoji: 
+  emoji: Glass
   wordColor: {r: 0.9, g: 0.709892, b: 0.35999995, a: 1}
   wordIcon: {fileID: -3342743851459327484, guid: 470ce4af7d324e8489923a98d181ea4f, type: 3}

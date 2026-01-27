@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Rocket
   wordName: Rocket
-  emoji: 
+  emoji: Engine
   wordColor: {r: 0.78310734, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: 6711257252158638106, guid: bcae8dfab0fce404b805e6089c6cd5ee, type: 3}

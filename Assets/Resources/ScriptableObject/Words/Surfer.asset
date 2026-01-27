@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Surfer
   wordName: Surfer
-  emoji: 
+  emoji: Beach
   wordColor: {r: 0.9, g: 0.35999995, b: 0.88489217, a: 1}
   wordIcon: {fileID: 2011148319957810942, guid: 59d093518605d8a42b2546db969c18cf, type: 3}

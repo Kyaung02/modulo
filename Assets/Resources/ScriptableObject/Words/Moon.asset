@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Moon
   wordName: Moon
-  emoji: 
+  emoji: Earth
   wordColor: {r: 0.35999995, g: 0.7153792, b: 0.9, a: 1}
   wordIcon: {fileID: 7699978436774145253, guid: 0ec81d3a4b6e87d4582a468fbf7dfa2c, type: 3}

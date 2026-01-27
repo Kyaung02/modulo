@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Attempt
   wordName: Attempt
-  emoji: 
+  emoji: Latin
   wordColor: {r: 0.38096112, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: -1593404707824127732, guid: 079e5d2ccc5087b4094a003d45ec91df, type: 3}

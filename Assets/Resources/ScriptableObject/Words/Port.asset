@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Port
   wordName: Port
-  emoji: 
+  emoji: Town
   wordColor: {r: 0.5947053, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: -137828615955225665, guid: f8d137f43347fab4f8ad89f83eb7e412, type: 3}

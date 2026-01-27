@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Rougher
   wordName: Rougher
-  emoji: 
+  emoji: Rough
   wordColor: {r: 0.9, g: 0.35999995, b: 0.8834813, a: 1}
   wordIcon: {fileID: -3185928310103583534, guid: f829ba97c7e93134e8dac6a17303c40b, type: 3}

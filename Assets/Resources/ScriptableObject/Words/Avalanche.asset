@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Avalanche
   wordName: Avalanche
-  emoji: 
+  emoji: Mountain
   wordColor: {r: 0.35999995, g: 0.87559104, b: 0.9, a: 1}
   wordIcon: {fileID: -2653310580176414600, guid: 44f40ab38c48a944abc34029fc14a9cd, type: 3}

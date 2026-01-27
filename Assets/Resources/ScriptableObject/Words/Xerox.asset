@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Xerox
   wordName: Xerox
-  emoji: 
+  emoji: Paper
   wordColor: {r: 0.9, g: 0.6111336, b: 0.35999995, a: 1}
   wordIcon: {fileID: -3426794793805984119, guid: d868d68eb71bd8e489e2bc559541ae66, type: 3}

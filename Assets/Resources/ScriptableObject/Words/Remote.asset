@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Remote
   wordName: Remote
-  emoji: 
+  emoji: Battery
   wordColor: {r: 0.35999995, g: 0.9, b: 0.3714348, a: 1}
   wordIcon: {fileID: -332233981676622189, guid: e86c03e8beffc1f4d80e911ebc86a061, type: 3}

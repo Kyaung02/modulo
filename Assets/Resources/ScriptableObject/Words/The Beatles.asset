@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: The Beatles
   wordName: The Beatles
-  emoji: 
+  emoji: Car
   wordColor: {r: 0.9, g: 0.60767907, b: 0.35999995, a: 1}
   wordIcon: {fileID: 3605506574070657904, guid: 0bfa11bfec07ec748a8eb4508109bc81, type: 3}

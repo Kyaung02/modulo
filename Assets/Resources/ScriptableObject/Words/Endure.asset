@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Endure
   wordName: Endure
-  emoji: 
+  emoji: Enduring
   wordColor: {r: 0.35999995, g: 0.9, b: 0.5028867, a: 1}
   wordIcon: {fileID: -3432717163987084976, guid: 6ae96add5715e3f4f9ece315bcf8932f, type: 3}

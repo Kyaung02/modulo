@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Lily
   wordName: Lily
-  emoji: 
+  emoji: Lake
   wordColor: {r: 0.35999995, g: 0.9, b: 0.58697534, a: 1}
   wordIcon: {fileID: -1250542065175253887, guid: 50906077f2559ba46ab3363d1b6b6fe0, type: 3}

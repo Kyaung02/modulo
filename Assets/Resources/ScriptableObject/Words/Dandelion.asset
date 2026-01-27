@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Dandelion
   wordName: Dandelion
-  emoji: 
+  emoji: Plant
   wordColor: {r: 0.8272393, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -270125197025380968, guid: b505eda1323344a489dbb8f896ef9e8f, type: 3}

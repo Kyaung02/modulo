@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: America
   wordName: America
-  emoji: 
+  emoji: Continent
   wordColor: {r: 0.9, g: 0.89444196, b: 0.35999995, a: 1}
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: -8865326729261036552, guid: 4fe730799ef0a6b43b186597f1ea5c73, type: 3}

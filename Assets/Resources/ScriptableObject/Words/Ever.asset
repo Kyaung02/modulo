@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Ever
   wordName: Ever
-  emoji: 
+  emoji: Everest
   wordColor: {r: 0.35999995, g: 0.37901163, b: 0.9, a: 1}
   wordIcon: {fileID: -5031712430337171397, guid: c2524bf7f7bf8014c9b38780c367a429, type: 3}

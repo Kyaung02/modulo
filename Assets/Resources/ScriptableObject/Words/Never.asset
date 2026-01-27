@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Never
   wordName: Never
-  emoji: 
+  emoji: Australia
   wordColor: {r: 0.35999995, g: 0.9, b: 0.5792805, a: 1}
   wordIcon: {fileID: -1083628517632357030, guid: eb14b5e915b746142b1f956600dfd3e5, type: 3}

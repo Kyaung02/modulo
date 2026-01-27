@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Mud
   wordName: Mud
-  emoji: 
+  emoji: Dust
   wordColor: {r: 0.67501295, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: -5971745814065712087, guid: 42166e48a3d23a04ca28cdf8116c2b12, type: 3}

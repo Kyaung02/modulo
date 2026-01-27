@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: UPS
   wordName: UPS
-  emoji: 
+  emoji: Angel
   wordColor: {r: 0.35999995, g: 0.70150554, b: 0.9, a: 1}
   wordIcon: {fileID: 5106846116659923670, guid: acc9a4b6a92b681478e1ceea6eb21f2a, type: 3}

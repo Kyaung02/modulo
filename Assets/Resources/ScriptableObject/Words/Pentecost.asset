@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Pentecost
   wordName: Pentecost
-  emoji: 
+  emoji: Church
   wordColor: {r: 0.9, g: 0.45000738, b: 0.35999995, a: 1}
   wordIcon: {fileID: -6339079995127363531, guid: 286240fbefeeed44486242481ce26eaf, type: 3}

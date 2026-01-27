@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Finnish
   wordName: Finnish
-  emoji: 
+  emoji: Sauna
   wordColor: {r: 0.9, g: 0.5868906, b: 0.35999995, a: 1}
-  wordIcon: {fileID: 0}
+  wordIcon: {fileID: 5374845663746973842, guid: 2b2e3f0adfa20fb4692b746317126d0c, type: 3}

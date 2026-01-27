@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Crash
   wordName: Crash
-  emoji: 
+  emoji: Car
   wordColor: {r: 0.7317821, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: 4655868819431197315, guid: 746711e3916bf574b8609b15de1c246e, type: 3}

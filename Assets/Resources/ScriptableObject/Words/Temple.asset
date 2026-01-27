@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Temple
   wordName: Temple
-  emoji: 
+  emoji: Prayer
   wordColor: {r: 0.52743316, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: 296725949041184523, guid: 8ab94c944f8b4cd4aa2f4d377f78276b, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Island
   wordName: Island
-  emoji: 
+  emoji: Lake
   wordColor: {r: 0.35999995, g: 0.9, b: 0.70296705, a: 1}
   wordIcon: {fileID: -2207619908799101039, guid: 1ab2705d84294fd46863e3be2fd10a61, type: 3}

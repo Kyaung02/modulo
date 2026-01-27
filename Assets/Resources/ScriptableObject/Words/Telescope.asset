@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Telescope
   wordName: Telescope
-  emoji: 
+  emoji: Dust
   wordColor: {r: 0.6479321, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -6588791340254099908, guid: 9e1bb419412d00144b7223005cd21d69, type: 3}

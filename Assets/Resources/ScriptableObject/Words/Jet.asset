@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Jet
   wordName: Jet
-  emoji: 
+  emoji: Cloud
   wordColor: {r: 0.35999995, g: 0.7432759, b: 0.9, a: 1}
   wordIcon: {fileID: 8151910413271119951, guid: d7417eaef408e3048be226184bfc0fe9, type: 3}

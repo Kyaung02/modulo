@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Vinegar
   wordName: Vinegar
-  emoji: 
+  emoji: Dust
   wordColor: {r: 0.35999995, g: 0.9, b: 0.40355244, a: 1}
   wordIcon: {fileID: -6583524493842645155, guid: a8abfd7006072554ab22fa8001e132b2, type: 3}

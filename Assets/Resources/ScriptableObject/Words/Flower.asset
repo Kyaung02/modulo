@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Flower
   wordName: Flower
-  emoji: 
+  emoji: Dandelion
   wordColor: {r: 0.9, g: 0.4319797, b: 0.35999995, a: 1}
   wordIcon: {fileID: 3373568495408583166, guid: dbd1e989c926f0f47a3ce7920f11390f, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Rough
   wordName: Rough
-  emoji: 
+  emoji: Sandpaper
   wordColor: {r: 0.9, g: 0.58125883, b: 0.35999995, a: 1}
   wordIcon: {fileID: 83664050022404833, guid: a3e4bb852e5373f4ba6f1ac4c675fb4f, type: 3}

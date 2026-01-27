@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Blade
   wordName: Blade
-  emoji: 
+  emoji: Obsidian
   wordColor: {r: 0.9, g: 0.7541047, b: 0.35999995, a: 1}
   wordIcon: {fileID: -2678498615165238795, guid: b3e854de576c9a845b7592657a8ad667, type: 3}

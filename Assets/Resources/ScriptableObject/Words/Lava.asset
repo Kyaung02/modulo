@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Lava
   wordName: Lava
-  emoji: 
+  emoji: Earth
   wordColor: {r: 0.35999995, g: 0.46598938, b: 0.9, a: 1}
   wordIcon: {fileID: -8890641348306671835, guid: 69d18217a34b1a84a8123afbaa73a5e5, type: 3}

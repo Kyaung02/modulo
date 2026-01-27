@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Tsunami
   wordName: Tsunami
-  emoji: 
+  emoji: Water
   wordColor: {r: 0.35999995, g: 0.49200714, b: 0.9, a: 1}
   wordIcon: {fileID: 8191787836398006521, guid: e30443205fe017f4188d192d131fb0d1, type: 3}

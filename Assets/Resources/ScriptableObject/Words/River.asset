@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: River
   wordName: River
-  emoji: 
+  emoji: Tree
   wordColor: {r: 0.7545064, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -3663761578151886962, guid: f3c524d9736103641b014d04c11f9c08, type: 3}

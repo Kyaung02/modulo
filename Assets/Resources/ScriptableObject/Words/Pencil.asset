@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Pencil
   wordName: Pencil
-  emoji: 
+  emoji: Ash
   wordColor: {r: 0.9, g: 0.35999995, b: 0.77017194, a: 1}
   wordIcon: {fileID: 5806247343882902020, guid: f30d8c165eca67a409392a125cc21dcb, type: 3}

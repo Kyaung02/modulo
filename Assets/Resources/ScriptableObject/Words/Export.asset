@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Export
   wordName: Export
-  emoji: 
+  emoji: Explore
   wordColor: {r: 0.40392503, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -1742641940220886497, guid: c8cf58457a76e414dae611e5af9a5f76, type: 3}

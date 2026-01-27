@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Tank
   wordName: Tank
-  emoji: 
+  emoji: Jet
   wordColor: {r: 0.35999995, g: 0.9, b: 0.5434587, a: 1}
   wordIcon: {fileID: 4326872430171513394, guid: a760c4c327fe72c429bde175bcafa304, type: 3}

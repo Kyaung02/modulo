@@ -1,3 +1,6 @@
+# Set encoding to handle emojis correctly in console
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 $baseUrl = "https://raw.githubusercontent.com/googlefonts/noto-emoji/main/png/128/emoji_u"
 $destDir = "Assets/Sprites/Emojis"
 
@@ -196,6 +199,17 @@ function Get-NotoHexCode($str) {
     return $codes -join "_"
 }
 
+# Manual Overrides for tricky sequences or flags
+# Keys are the exact names from CSV
+$manualOverrides = @{
+    "Treasure" = "1f3f4_200d_2620"
+    "America" = "1f1fa_1f1f8"
+    "Australia" = "1f1e6_1f1fa"
+    "Finnish" = "1f1eb_1f1ee"
+    "Ended" = "1f3c1" 
+    "Finish" = "1f3c1"
+}
+
 # Parse CSV
 $items = $csvContent | ConvertFrom-Csv
 
@@ -205,26 +219,21 @@ foreach ($item in $items) {
     
     if ([string]::IsNullOrWhiteSpace($emoji)) { continue }
 
-    $code = Get-NotoHexCode $emoji
-    
-    # Specific fix for some complex sequences if Get-NotoHexCode fails or produces wrong filename
-    # But usually Noto follows the standard unicode sequence.
-    # Note: 'Treasure' provided as '🏴☠️' might be two chars in CSV or one sequence. 
-    # If it's separate, we might get 1f3f4_2620. 
-    # Correct Pirate Flag is 1f3f4_200d_2620_fe0f.
+    if ($manualOverrides.ContainsKey($name)) {
+        $code = $manualOverrides[$name]
+        Write-Host "Using manual override for $name`t: $code"
+    } else {
+        $code = Get-NotoHexCode $emoji
+    }
     
     $url = "$baseUrl$code.png"
     $outPath = Join-Path $destDir "$name.png"
-    
-    # Check if file exists to skip? Or overwrite? Overwrite is safer to ensure correct emoji.
     
     Write-Host "Downloading $name ($code)..."
     try {
         Invoke-WebRequest -Uri $url -OutFile $outPath
     } catch {
-        Write-Warning "Failed to download $name ($code). Attempting fallback (adding/removing fe0f?)"
-        # Try fallback with fe0f if it wasn't there? Or just report error.
-        # Noto is strict.
+        Write-Warning "Failed to download $name ($code). Possible Noto mapping issue."
     }
 }
 

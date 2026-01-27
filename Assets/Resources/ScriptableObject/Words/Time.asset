@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Time
   wordName: Time
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.8121961, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -3092223754324887936, guid: 5feaf241bc5d9604c80093c02414d2e4, type: 3}

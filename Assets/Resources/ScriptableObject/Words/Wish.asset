@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Wish
   wordName: Wish
-  emoji: 
+  emoji: Dandelion
   wordColor: {r: 0.8684104, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: -5519615208755442361, guid: 6ffd749161f4ef24490b6fa5f18aa778, type: 3}

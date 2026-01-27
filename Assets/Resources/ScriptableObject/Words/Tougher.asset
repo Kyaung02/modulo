@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Tougher
   wordName: Tougher
-  emoji: 
+  emoji: Previous
   wordColor: {r: 0.64177936, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: 4361191136579305634, guid: f29ca1776ee1e6a44a60bac6773b3b56, type: 3}

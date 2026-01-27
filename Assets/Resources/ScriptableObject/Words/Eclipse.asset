@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Eclipse
   wordName: Eclipse
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.9, g: 0.35999995, b: 0.85928273, a: 1}
   wordIcon: {fileID: 3959148203379402939, guid: 3eb1fb485b56811409ec4cb4b9357267, type: 3}

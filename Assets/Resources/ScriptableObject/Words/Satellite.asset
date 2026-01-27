@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Satellite
   wordName: Satellite
-  emoji: 
+  emoji: Rocket
   wordColor: {r: 0.9, g: 0.35999995, b: 0.6430976, a: 1}
   wordIcon: {fileID: -8541936030981981254, guid: c3fdb2c7806145a4fbdb1825bc757131, type: 3}

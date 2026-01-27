@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Search
   wordName: Search
-  emoji: 
+  emoji: Google
   wordColor: {r: 0.35999995, g: 0.9, b: 0.8408865, a: 1}
   wordIcon: {fileID: 2737061490664926285, guid: 1e1bd3422ad38a947bf7ecc638393576, type: 3}

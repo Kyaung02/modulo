@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Wine
   wordName: Wine
-  emoji: 
+  emoji: Glass
   wordColor: {r: 0.35999995, g: 0.9, b: 0.60365856, a: 1}
   wordIcon: {fileID: 4133926295016576647, guid: 56dacd0797e1b3647b23a4694e19ef6a, type: 3}

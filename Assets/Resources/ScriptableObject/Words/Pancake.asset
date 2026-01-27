@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Pancake
   wordName: Pancake
-  emoji: 
+  emoji: Ash
   wordColor: {r: 0.9, g: 0.47841364, b: 0.35999995, a: 1}
   wordIcon: {fileID: 5871849610016742436, guid: 9cb202b22722df14c8faaac1fdcd7c1f, type: 3}

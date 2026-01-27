@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: House
   wordName: House
-  emoji: 
+  emoji: Brick
   wordColor: {r: 0.60957056, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: -7411974349392773033, guid: f09b2aa288d199f4f86678687cc96748, type: 3}

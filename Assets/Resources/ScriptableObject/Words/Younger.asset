@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Younger
   wordName: Younger
-  emoji: 
+  emoji: Never
   wordColor: {r: 0.9, g: 0.35999995, b: 0.87628984, a: 1}
   wordIcon: {fileID: 4576954948428644200, guid: 27bc1816bf240ec4193e15859efa7691, type: 3}

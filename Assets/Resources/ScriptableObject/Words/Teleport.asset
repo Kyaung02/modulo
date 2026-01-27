@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Teleport
   wordName: Teleport
-  emoji: 
+  emoji: Microwave
   wordColor: {r: 0.9, g: 0.85181826, b: 0.35999995, a: 1}
   wordIcon: {fileID: 1320761110985423309, guid: 59a121003d0b0b4449d9260d6f006151, type: 3}

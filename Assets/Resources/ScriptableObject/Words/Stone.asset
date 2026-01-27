@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Stone
   wordName: Stone
-  emoji: 
+  emoji: Ash
   wordColor: {r: 0.5559182, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: 8399011212269539787, guid: 51836736510f00d4eaef1c88301881cb, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Steam
   wordName: Steam
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.5048915, g: 0.35999995, b: 0.9, a: 1}
   wordIcon: {fileID: 7414261224600783322, guid: 14f2f5601b789fa46964b66de527f246, type: 3}

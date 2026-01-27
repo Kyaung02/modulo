@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Dandelion Patch
   wordName: Dandelion Patch
-  emoji: 
+  emoji: Dandelion
   wordColor: {r: 0.5125753, g: 0.9, b: 0.35999995, a: 1}
   wordIcon: {fileID: 6845850889315694136, guid: 3397543abce900443bbeebe81db4baa0, type: 3}

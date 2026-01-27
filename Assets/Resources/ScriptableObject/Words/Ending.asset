@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Ending
   wordName: Ending
-  emoji: 
+  emoji: End
   wordColor: {r: 0.35999995, g: 0.9, b: 0.4313921, a: 1}
   wordIcon: {fileID: -3074712795068796413, guid: c7cc15e83b55ba54cb2dcea89b2c5713, type: 3}

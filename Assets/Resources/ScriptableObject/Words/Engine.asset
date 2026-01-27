@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Engine
   wordName: Engine
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.35999995, g: 0.9, b: 0.42718673, a: 1}
   wordIcon: {fileID: -507298352823947034, guid: 126e0e5b045736d48b99e752e4626684, type: 3}

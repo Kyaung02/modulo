@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Map
   wordName: Map
-  emoji: 
+  emoji: Earth
   wordColor: {r: 0.35999995, g: 0.36390948, b: 0.9, a: 1}
   wordIcon: {fileID: 645411862609229670, guid: cf3b73c16e96736458aa07e46c5c2225, type: 3}

@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WordData
   id: Brick
   wordName: Brick
-  emoji: 
+  emoji: Fire
   wordColor: {r: 0.9, g: 0.35999995, b: 0.46477786, a: 1}
   wordIcon: {fileID: 8222420645925065664, guid: 5b54a83849020ac41823c94ce1c834ad, type: 3}
