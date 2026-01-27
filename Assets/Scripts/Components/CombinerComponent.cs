@@ -166,7 +166,7 @@ public class CombinerComponent : ComponentBase
             if (targetComponent != null)
             {
                 //Debug.Log("target Found");
-                if (targetComponent.AcceptWord(HeldWord, GetOutputDirection(), targetPos))
+                if (targetComponent.AcceptWord(HeldWord, GetOutputDirection(), GridPosition))
                 {
                     //Debug.Log("target Accepted");
                     ClearHeldWord(); // Base component syncs this

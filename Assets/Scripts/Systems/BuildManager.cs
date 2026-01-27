@@ -155,6 +155,8 @@ public class BuildManager : NetworkBehaviour
             if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
             if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
             if (Keyboard.current.digit5Key.wasPressedThisFrame) SelectComponent(4);
+            if (Keyboard.current.digit6Key.wasPressedThisFrame) SelectComponent(5);
+            if (Keyboard.current.digit7Key.wasPressedThisFrame) SelectComponent(6);
         }
     }
 

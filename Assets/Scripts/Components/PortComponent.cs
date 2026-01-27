@@ -199,7 +199,7 @@ public class PortComponent : ComponentBase
                 if (targetComponent != null)
                 {
                     // Try to give the word to the target
-                    if (targetComponent.AcceptWord(HeldWord, outputDir, targetPos))
+                    if (targetComponent.AcceptWord(HeldWord, outputDir, GridPosition))
                     {
                         // Successfully passed the word
                         // Since we are Server, we use base SetHeldWordServer(null) or ClearHeldWord()?

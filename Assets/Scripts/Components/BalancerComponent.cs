@@ -24,26 +24,11 @@ public class BalancerComponent : ComponentBase
 
     public override bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
-        // Inputs from Bottom (Local UP direction)
         Vector2Int localDir = WorldToLocalDirection(direction);
-
         if (localDir == Vector2Int.up)
         {
-            // Sync Fix: Balancer uses HeldWord as its "Active" item buffer (Limit 1)
-            // This ensures built-in sync works.
-            if (HeldWord == null)
-            {
-                // SetHeldWordServer handles _netHeldWordId and _netLastInputDir automatically!
-                // We just need to ensure we pass the correct params if wrapping logic.
-                // Actually, componentBase logic handles this if we call base.AcceptWord?
-                // No, Balancer has custom logic. We must manually set it.
-                
-                // IMPORTANT: Use the Base method logic here
-                base.AcceptWord(word, direction, targetPos);
-                return true;
-            }
+            return base.AcceptWord(word, direction, targetPos);
         }
-        
         return false;
     }
 
@@ -97,7 +82,7 @@ public class BalancerComponent : ComponentBase
              Vector2Int localFlowDir = Vector2Int.up;
              Vector2Int worldFlowDir = LocalToWorldDirection(localFlowDir);
              
-             return targetComponent.AcceptWord(word, worldFlowDir, targetPos);
+             return targetComponent.AcceptWord(word, worldFlowDir, GridPosition);
         }
         
         return false;

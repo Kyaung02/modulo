@@ -83,8 +83,8 @@ public class ComponentBase : NetworkBehaviour
         _localRotation = rot;
     }
 
-    private NetworkVariable<FixedString64Bytes> _netHeldWordId = new NetworkVariable<FixedString64Bytes>("");
-    private NetworkVariable<Vector2Int> _netLastInputDir = new NetworkVariable<Vector2Int>(Vector2Int.zero); // For Animation
+    protected NetworkVariable<FixedString64Bytes> _netHeldWordId = new NetworkVariable<FixedString64Bytes>("");
+    protected NetworkVariable<Vector2Int> _netLastInputDir = new NetworkVariable<Vector2Int>(Vector2Int.zero); // For Animation
 
 
     [Header("Debug")]
@@ -386,6 +386,9 @@ public class ComponentBase : NetworkBehaviour
 
     // Returns true if the component successfully accepted the word
     // SERVER ONLY
+    //word:보내는 word
+    //direction:보내는 방향
+    //targetPos:보내는 위치
     public virtual bool AcceptWord(WordData word, Vector2Int direction, Vector2Int targetPos)
     {
         if (!IsServer) return false;
@@ -429,7 +432,7 @@ public class ComponentBase : NetworkBehaviour
 
             if (targetComponent != null)
             {
-                if (targetComponent.AcceptWord(HeldWord, GetOutputDirection(), targetPos))
+                if (targetComponent.AcceptWord(HeldWord, GetOutputDirection(), GridPosition))
                 {
                     HeldWord = null;
                     _netHeldWordId.Value = "";
