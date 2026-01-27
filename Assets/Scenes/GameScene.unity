@@ -119,6 +119,54 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &12939392
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 12939394}
+  - component: {fileID: 12939393}
+  m_Layer: 0
+  m_Name: GoalUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &12939393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 12939392}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d703d0c431d281148aff873648b74f2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoalUI
+  targetIcon: {fileID: 1525925782}
+  progressText: {fileID: 433942355}
+  goalNameText: {fileID: 2015001243}
+  levelCompletePanel: {fileID: 0}
+--- !u!4 &12939394
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 12939392}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 202.35999, y: 978.83105, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &166348021
 GameObject:
   m_ObjectHideFlags: 0
@@ -211,6 +259,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GoalUI
   targetIcon: {fileID: 1525925782}
   progressText: {fileID: 433942355}
+  goalNameText: {fileID: 0}
   levelCompletePanel: {fileID: 0}
 --- !u!1 &207591700
 GameObject:
@@ -2771,7 +2820,124 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   levels:
   - targetWord: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}
-    requiredCount: 10
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1736450790}
+          m_TargetAssemblyTypeName: Milestone, Assembly-CSharp
+          m_MethodName: ModuleUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 9346866c60ee8524f8bd3a90f6a0e8ec, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1736450790}
+          m_TargetAssemblyTypeName: Milestone, Assembly-CSharp
+          m_MethodName: TunnelUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 11500000, guid: 26e3a67904f2b6c44abe185ef9b01220, type: 3}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: 
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
+  - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
+    requiredCount: 1
+    onComplete:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 1718209872}
+          m_TargetAssemblyTypeName: GoalManager, Assembly-CSharp
+          m_MethodName: SystemUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!4 &1718209873
 Transform:
   m_ObjectHideFlags: 0
@@ -2812,6 +2978,50 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!1 &1736450789
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1736450791}
+  - component: {fileID: 1736450790}
+  m_Layer: 0
+  m_Name: Milestone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1736450790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1736450789}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26e3a67904f2b6c44abe185ef9b01220, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Milestone
+--- !u!4 &1736450791
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1736450789}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 234.02481, y: 985.61395, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1740507451
 GameObject:
   m_ObjectHideFlags: 0
@@ -3943,3 +4153,5 @@ SceneRoots:
   - {fileID: 1718209873}
   - {fileID: 1943736093}
   - {fileID: 585891833}
+  - {fileID: 12939394}
+  - {fileID: 1736450791}

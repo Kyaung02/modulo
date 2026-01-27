@@ -7,6 +7,7 @@ public class GoalUI : MonoBehaviour
     [Header("UI Elements")]
     public ItemIconUI targetIcon;
     public TMP_Text progressText; // Changed to TMP_Text for TextMeshPro support
+    public TMP_Text goalNameText; // <-- Added this
     public GameObject levelCompletePanel; // Optional: Show when level is done
 
     private void Start()
@@ -46,6 +47,12 @@ public class GoalUI : MonoBehaviour
             {
                 progressText.text = "All Goals Complete!";
             }
+        }
+        
+        if (goalNameText != null)
+        {
+             if (goal.targetWord != null) goalNameText.text = goal.targetWord.wordName;
+             else goalNameText.text = "";
         }
     }
 

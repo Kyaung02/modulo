@@ -151,12 +151,12 @@ public class BuildManager : NetworkBehaviour
                 selectedComponentPrefab = null;
             }
 
-            if (Keyboard.current.digit1Key.wasPressedThisFrame) SelectComponent(0);
-            if (Keyboard.current.digit2Key.wasPressedThisFrame) SelectComponent(1);
-            if (Keyboard.current.digit3Key.wasPressedThisFrame) SelectComponent(2);
-            if (Keyboard.current.digit4Key.wasPressedThisFrame) SelectComponent(3);
-            if (Keyboard.current.digit5Key.wasPressedThisFrame) SelectComponent(4);
-            if (Keyboard.current.digit6Key.wasPressedThisFrame) SelectComponent(5);
+            if (Keyboard.current.digit1Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(0)==1) SelectComponent(0);
+            if (Keyboard.current.digit2Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(1)==1) SelectComponent(1);
+            if (Keyboard.current.digit3Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(2)==1) SelectComponent(2);
+            if (Keyboard.current.digit4Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(3)==1) SelectComponent(3);
+            if (Keyboard.current.digit5Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(4)==1) SelectComponent(4);
+            if (Keyboard.current.digit6Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(5)==1) SelectComponent(5);
             //if (Keyboard.current.digit7Key.wasPressedThisFrame) SelectComponent(6);
         }
     }

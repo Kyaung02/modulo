@@ -4,6 +4,13 @@ using System.Collections.Generic;
 
 public class BuildUI : MonoBehaviour
 {
+    public static BuildUI Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+    }
+
     [Header("Settings")]
     public GameObject slotPrefab; // Prefab with an Image and a Button/Background
     public Transform slotContainer; // Horizontal Layout Group parent
@@ -16,7 +23,7 @@ public class BuildUI : MonoBehaviour
 
     private void Start()
     {
-        _buildManager = FindFirstObjectByType<BuildManager>();
+        _buildManager = BuildManager.Instance;
         
         if (_buildManager != null)
         {
@@ -27,7 +34,8 @@ public class BuildUI : MonoBehaviour
         }
     }
 
-    private void CreateSlots()
+    //슬롯들의 새로고침역시 지원함
+    public void CreateSlots()
     {
         // Clear existing
         foreach (Transform child in slotContainer)
@@ -35,15 +43,16 @@ public class BuildUI : MonoBehaviour
             Destroy(child.gameObject);
         }
         _slotImages.Clear();
-
+        if(_buildManager==null)return;
         if (_buildManager.availableComponents == null) return;
 
         for (int i = 0; i < _buildManager.availableComponents.Length; i++)
         {
             ComponentBase comp = _buildManager.availableComponents[i];
             
-            if (comp == null) continue;
+            if(comp == null) continue;
             if(comp.IsHidden() == 1) continue;
+            if(GoalManager.Instance.CheckUnlock(i) == 0) continue;  
 
             GameObject slot = Instantiate(slotPrefab, slotContainer);
             

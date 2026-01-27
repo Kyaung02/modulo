@@ -1,16 +1,18 @@
 using UnityEngine;
 using System;
 using Unity.Netcode;
+using UnityEngine.Events;
 
 public class GoalManager : NetworkBehaviour
 {
     public static GoalManager Instance { get; private set; }
 
     [System.Serializable]
-    public struct LevelGoal
+    public class LevelGoal
     {
         public WordData targetWord;
         public int requiredCount;
+        public UnityEvent onComplete;
     }
 
     [Header("Settings")]
@@ -33,9 +35,17 @@ public class GoalManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        Debug.Log($"[GoalManager] OnNetworkSpawn Called. IsServer: {IsServer}");
         _netLevelIndex.OnValueChanged += OnStateChanged;
         _netDeliverCount.OnValueChanged += OnStateChanged;
         
+        ComponentsUnlocked.OnListChanged += OnUnlockChanged;
+        
+        if (IsServer)
+        {
+             InitLock();
+        }
+
         OnGoalUpdated?.Invoke(); // Initial sync
     }
 
@@ -43,6 +53,7 @@ public class GoalManager : NetworkBehaviour
     {
         _netLevelIndex.OnValueChanged -= OnStateChanged;
         _netDeliverCount.OnValueChanged -= OnStateChanged;
+        ComponentsUnlocked.OnListChanged -= OnUnlockChanged;
     }
 
     private void OnStateChanged(int oldVal, int newVal)
@@ -83,6 +94,12 @@ public class GoalManager : NetworkBehaviour
         // Server Only logic calling this
         Debug.Log($"Level {currentLevelIndex} Complete!");
         
+        // Invoke Level-specific callback
+        if (levels != null && currentLevelIndex < levels.Length)
+        {
+            levels[currentLevelIndex].onComplete?.Invoke();
+        }
+        
         _netLevelIndex.Value++;
         _netDeliverCount.Value = 0;
         
@@ -111,4 +128,41 @@ public class GoalManager : NetworkBehaviour
         Debug.Log($"[GoalManager] State restored: Level {levelIndex}, Count {deliverCount}");
     }
 
+    private NetworkList<int> ComponentsUnlocked = new NetworkList<int>();
+    
+    // Callback for NetworkList changes (Clients + Server)
+    private void OnUnlockChanged(NetworkListEvent<int> changeEvent)
+    {
+        // Whenever the unlock list changes (Init or Update), refresh UI
+        if (BuildUI.Instance != null && BuildUI.Instance.isActiveAndEnabled)
+        {
+            BuildUI.Instance.CreateSlots();
+        }
+    }
+
+    public void InitLock()
+    {
+        ComponentsUnlocked.Clear();
+        if (BuildManager.Instance != null && BuildManager.Instance.availableComponents != null)
+        {
+            for(int i=0;i<BuildManager.Instance.availableComponents.Length;i++)
+            {
+                ComponentsUnlocked.Add(0);
+            }
+        }
+        UnlockComponent(0);
+        UnlockComponent(1);
+        Debug.Log("Unlockables Initialized");
+    }
+    public void UnlockComponent(int componentId)
+    {
+        if (!IsServer) return;
+        ComponentsUnlocked[componentId] = 1;
+        BuildUI.Instance.CreateSlots();
+    }
+    public int CheckUnlock(int componentId)
+    {
+        if(componentId>=ComponentsUnlocked.Count) return 0;
+        return ComponentsUnlocked[componentId];
+    }
 }

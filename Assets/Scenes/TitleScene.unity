@@ -747,7 +747,7 @@ MonoBehaviour:
   loadGameButton: {fileID: 181524486}
   joinButton: {fileID: 1327423967}
   ipInputField: {fileID: 1309507215}
-  portInputField: {fileID: 0}
+  portInputField: {fileID: 1796427732}
   statusText: {fileID: 1068522}
   gameSceneName: GameScene
   lobbyListUI: {fileID: 597707709}
