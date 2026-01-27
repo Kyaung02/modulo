@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Network
 {
@@ -7,8 +8,10 @@ namespace Network
     [RequireComponent(typeof(NetworkObject))]
     public class NetworkPlayerController : NetworkBehaviour
     {
-        [Header("Movement")]
-        [SerializeField] private float moveSpeed = 5f;
+        public NetworkVariable<Unity.Collections.FixedString64Bytes> playerName = new NetworkVariable<Unity.Collections.FixedString64Bytes>("Player");
+        // 0 = Root, >0 = NetworkObjectId of the Module we are inside
+        public NetworkVariable<ulong> currentViewId = new NetworkVariable<ulong>(0);
+        public NetworkVariable<Color> playerColor = new NetworkVariable<Color>(Color.white);
 
         [Header("Visuals")]
         [SerializeField] private Renderer playerRenderer;
@@ -19,23 +22,39 @@ namespace Network
             if (playerRenderer == null) 
                 playerRenderer = GetComponent<Renderer>();
 
-            UpdatePlayerColor();
-        }
-
-        private void UpdatePlayerColor()
-        {
-            if (playerRenderer == null) return;
-
+            playerColor.OnValueChanged += OnPlayerColorChanged;
+            
+            // Initial Sync
             if (IsOwner)
             {
-                // Local player is Blue
-                playerRenderer.material.color = Color.blue;
+                // Set default name (e.g. "Player 123")
+                playerName.Value = $"Player {OwnerClientId}";
             }
-            else
+            
+             if (IsServer)
             {
-                // Remote players are Red
-                playerRenderer.material.color = Color.red;
+                // Assign Random Color
+                playerColor.Value = new Color(Random.value, Random.value, Random.value);
             }
+            
+            UpdatePlayerColor(playerColor.Value);
+        }
+        
+        public override void OnNetworkDespawn() 
+        {
+            playerColor.OnValueChanged -= OnPlayerColorChanged;
+            base.OnNetworkDespawn();
+        }
+
+        private void OnPlayerColorChanged(Color oldColor, Color newColor)
+        {
+            UpdatePlayerColor(newColor);
+        }
+
+        private void UpdatePlayerColor(Color c)
+        {
+            if (playerRenderer == null) return;
+            playerRenderer.material.color = c;
         }
 
         private void Update()
@@ -43,24 +62,39 @@ namespace Network
             // Only control your own player
             if (!IsOwner) return;
 
-            HandleMovement();
+            CheckCurrentView();
         }
-
-        private void HandleMovement()
+        
+        // Track where the player is looking/working
+        private void CheckCurrentView()
         {
-            Vector3 moveDir = Vector3.zero;
-
-            // Simple WASD movement
-            if (Input.GetKey(KeyCode.W)) moveDir.y += 1f;
-            if (Input.GetKey(KeyCode.S)) moveDir.y -= 1f;
-            if (Input.GetKey(KeyCode.A)) moveDir.x -= 1f;
-            if (Input.GetKey(KeyCode.D)) moveDir.x += 1f;
-
-            if (moveDir != Vector3.zero)
+            if (BuildManager.Instance == null) return;
+            
+            ulong newViewId = 0;
+            var activeMgr = BuildManager.Instance.activeManager;
+            
+            // If activeManager is NOT the root instance
+            if (activeMgr != null && activeMgr != ModuleManager.Instance)
             {
-                // Move based on direction, speed, and time
-                transform.position += moveDir.normalized * moveSpeed * Time.deltaTime;
+                // Find the RecursiveModule that OWNS this manager
+                if (activeMgr.ownerComponent != null)
+                {
+                    newViewId = activeMgr.ownerComponent.NetworkObjectId;
+                }
+            }
+            
+            if (currentViewId.Value != newViewId)
+            {
+                CheckCurrentViewServerRpc(newViewId);
             }
         }
+
+        [ServerRpc]
+        private void CheckCurrentViewServerRpc(ulong newId)
+        {
+            currentViewId.Value = newId;
+        }
+
+
     }
 }
