@@ -29,6 +29,7 @@ namespace Network
             }
         }
 
+        public bool IsSessionActive => !string.IsNullOrEmpty(currentSessionId);
         private string currentSessionId;
 
         private void Awake()
@@ -158,9 +159,6 @@ namespace Network
                 
                 if (results.Sessions.Count > 0)
                 {
-                    // Simple logic: Join the first one. 
-                    // In a real app, you'd filter for AvailableSlots > 0, etc.
-                    // Assuming Query returns open sessions or we check manually:
                     foreach (var s in results.Sessions)
                     {
                         if (s.AvailableSlots > 0)
@@ -183,6 +181,25 @@ namespace Network
                 Debug.LogWarning($"[LobbyManager] Quick Join Failed: {e.Message}");
                 return false;
             }
+        }
+
+        public async Task<bool> PromoteLocalToOnline(string sessionName, int maxPlayers)
+        {
+            Debug.Log("[LobbyManager] Promoting Local Host to Online Session...");
+            
+            // 1. Authenticate if needed
+            await Authenticate();
+
+            // 2. Shutdown Local Host
+            // Note: This temporarily disconnects the host. State might be lost if not saved.
+            if (NetworkManager.Singleton.IsListening)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+
+            // 3. Create Session (This sets up Relay Transport)
+            // We reuse CreateLobby logic but ensure we handle key variables
+            return await CreateLobby(sessionName, maxPlayers);
         }
     }
 }

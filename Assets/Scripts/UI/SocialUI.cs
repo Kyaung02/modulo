@@ -13,6 +13,8 @@ namespace UI
         public Transform playerListContainer;
         public GameObject playerListItemPrefab;
         public float listUpdateInterval = 1.0f;
+        public Button serverOpenButton;
+        public TextMeshProUGUI serverStatusText;
         
         private float _lastListUpdate;
         private List<GameObject> _spawnedPlayerItems = new List<GameObject>();
@@ -20,6 +22,11 @@ namespace UI
         private void Start()
         {
             UpdatePlayerList();
+            if (serverOpenButton != null)
+            {
+                serverOpenButton.onClick.AddListener(OnServerOpenClicked);
+            }
+            UpdateServerStatus();
         }
 
         private void Update()
@@ -27,8 +34,47 @@ namespace UI
             if (Time.time - _lastListUpdate > listUpdateInterval)
             {
                 UpdatePlayerList();
+                UpdateServerStatus();
                 _lastListUpdate = Time.time;
             }
+        }
+
+        private void UpdateServerStatus()
+        {
+            if (serverStatusText == null) return;
+            
+            bool isOnline = LobbyManager.Instance.IsSessionActive;
+            serverStatusText.text = isOnline ? "Online Server" : "Offline / Local";
+            
+            if (serverOpenButton)
+            {
+                // Only enable if we are Host and NOT online yet
+                serverOpenButton.interactable = NetworkManager.Singleton.IsHost && !isOnline;
+                serverOpenButton.gameObject.SetActive(NetworkManager.Singleton.IsHost && !isOnline); // Hide if already online
+            }
+        }
+
+        private async void OnServerOpenClicked()
+        {
+            if (serverOpenButton) serverOpenButton.interactable = false;
+            
+            // 1. Save current state (if needed, assume SaveSystem handles auto-save or persisted state)
+            // SaveSystem.SaveGame(); // Optional
+
+            // 2. Switch to Online
+            bool success = await LobbyManager.Instance.PromoteLocalToOnline("My Game Room", 4);
+            
+            if (success)
+            {
+                Debug.Log("Server Opened Successfully!");
+            }
+            else
+            {
+                Debug.LogError("Failed to Open Server");
+                if (serverOpenButton) serverOpenButton.interactable = true;
+            }
+            
+            UpdateServerStatus();
         }
 
         private void UpdatePlayerList()

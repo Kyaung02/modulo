@@ -107,36 +107,43 @@ public class NetworkMenuUI : MonoBehaviour
         UpdateStatus("Authenticating...");
         await Network.LobbyManager.Instance.Authenticate();
 
-        UpdateStatus("Creating Lobby...");
+        // 1. Authenticate (optional for local, but good for later upgrade)
+        // await Network.LobbyManager.Instance.Authenticate(); 
+        // -> Skipping auth for pure offline start speed, will auth when opening server.
+
+        UpdateStatus("Starting Local Game...");
         SaveSystem.PendingLoadData = null; 
         
-        bool success = await Network.LobbyManager.Instance.CreateLobby("New Room", 4);
-        if (success)
+        // 2. Start Local Host
+        // Ensure transport is set to default (Local) if it was changed? 
+        // Assuming default checks or we can force it.
+        // For now, just StartHost. 
+        if (NetworkManager.Singleton.StartHost())
         {
-            UpdateStatus("Lobby Created! Starting Host...");
+            UpdateStatus("Local Host Started. Loading Scene...");
             NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
         }
         else
         {
-            UpdateStatus("Failed to Create Lobby.");
+            UpdateStatus("Failed to Start Local Host.");
         }
+
     }
     
-    private async void StartLoadGame()
+    private void StartLoadGame()
     {
         CleanupNetwork();
         UpdateStatus("Loading Save File...");
 
         if (SaveSystem.LoadSaveFile())
         {
-            UpdateStatus("Save Loaded. Authenticating...");
-            await Network.LobbyManager.Instance.Authenticate();
+            UpdateStatus("Save Loaded. Starting Local Game...");
+           
+            // await Network.LobbyManager.Instance.Authenticate(); // Defer until "Open Server"
             
-            UpdateStatus("Creating Lobby...");
-            bool success = await Network.LobbyManager.Instance.CreateLobby("Loaded Room", 4);
-            if (success)
+            if (NetworkManager.Singleton.StartHost())
             {
-                UpdateStatus("Lobby Created. Starting Host...");
+                UpdateStatus("Local Host Started. Loading Scene...");
                 NetworkManager.Singleton.SceneManager.LoadScene(gameSceneName, LoadSceneMode.Single);
             }
              else
