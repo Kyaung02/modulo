@@ -63,6 +63,8 @@ public class BuildManager : NetworkBehaviour
 
     public void ExitCurrentModule()
     {
+        if (CameraController.Instance != null && CameraController.Instance.IsTransitioning) return;
+        
         if (activeManager != null && activeManager.parentManager != null)
         {
             var parent = activeManager.parentManager;
