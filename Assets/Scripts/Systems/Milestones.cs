@@ -16,7 +16,7 @@ public class Milestones : MonoBehaviour
     {
         Debug.Log("Dust Unlocked");
         GoalManager.Instance.UnlockComponent(2);
-        GoalManager.Instance.UnlockComponent(4);
+        GoalManager.Instance.UnlockComponent(3);
     }
     public void SystemUnlocked()
     {
@@ -39,7 +39,7 @@ public class Milestones : MonoBehaviour
     public void ModuleUnlocked()
     {
         Debug.Log("Module Unlocked");
-        GoalManager.Instance.UnlockComponent(3);
+        GoalManager.Instance.UnlockComponent(4);
     }
 
     public void CopyUnlocked()

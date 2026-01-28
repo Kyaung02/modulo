@@ -16,4 +16,4 @@ MonoBehaviour:
   wordName: Mountain
   emoji: Earth
   wordColor: {r: 0.3986046, g: 0.9, b: 0.35999995, a: 1}
-  wordIcon: {fileID: -1819830194433888264, guid: 5d85102d7d961e94fb3bd794a280a76f, type: 3}
+  wordIcon: {fileID: -5390007138980725549, guid: 5d85102d7d961e94fb3bd794a280a76f, type: 3}

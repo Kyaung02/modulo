@@ -105,7 +105,8 @@ public class SaveSystem : NetworkBehaviour
                 saveData.goalData = new GoalSaveData
                 {
                     progressCounts = progressList,
-                    completedGoals = completedList
+                    completedGoals = completedList,
+                    unlockedComponents = GoalManager.Instance.GetUnlockedList()
                 };
             }
             
@@ -346,7 +347,8 @@ public class SaveSystem : NetworkBehaviour
         {
             GoalManager.Instance.RestoreState(
                 PendingLoadData.goalData.progressCounts,
-                PendingLoadData.goalData.completedGoals
+                PendingLoadData.goalData.completedGoals,
+                PendingLoadData.goalData.unlockedComponents
             );
         }
         

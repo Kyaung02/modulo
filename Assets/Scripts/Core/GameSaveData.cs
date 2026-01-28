@@ -36,6 +36,7 @@ public class GoalSaveData
 {
     public List<int> progressCounts = new List<int>();
     public List<int> completedGoals = new List<int>();
+    public List<int> unlockedComponents = new List<int>();
 }
 
 /// <summary>

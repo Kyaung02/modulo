@@ -197,7 +197,17 @@ public class GoalManager : NetworkBehaviour
     /// <summary>
     /// 저장된 상태 복원 (서버 전용)
     /// </summary>
-    public void RestoreState(List<int> progressList, List<int> completedGoals)
+    public List<int> GetUnlockedList()
+    {
+        List<int> list = new List<int>();
+        foreach (var val in ComponentsUnlocked) list.Add(val);
+        return list;
+    }
+
+    /// <summary>
+    /// 저장된 상태 복원 (서버 전용)
+    /// </summary>
+    public void RestoreState(List<int> progressList, List<int> completedGoals, List<int> unlockedComponents)
     {
         if (!IsServer) return;
         
@@ -221,7 +231,24 @@ public class GoalManager : NetworkBehaviour
                 foreach(var g in completedGoals) _completedGoalIndices.Add(g);
             }
 
-            Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}");
+            // Restore Components Unlocked
+            ComponentsUnlocked.Clear();
+            if (unlockedComponents != null && unlockedComponents.Count > 0)
+            {
+                foreach(var u in unlockedComponents) ComponentsUnlocked.Add(u);
+            }
+            else
+            {
+                // Fallback for old saves or empty list
+                InitLock();
+            }
+
+            Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}, Unlocked: {ComponentsUnlocked.Count}");
+
+            if (BuildUI.Instance != null && BuildUI.Instance.isActiveAndEnabled)
+            {
+                BuildUI.Instance.CreateSlots();
+            }
 
             // Re-trigger completion events to restore game state (unlocks, bools, etc.)
             foreach (int index in _completedGoalIndices)

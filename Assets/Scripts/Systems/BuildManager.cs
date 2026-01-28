@@ -133,19 +133,14 @@ public class BuildManager : NetworkBehaviour
         if (CameraController.Instance != null && CameraController.Instance.IsTransitioning) return;
         if (Mouse.current == null) return;
         
-        bool isPointerOverUI = UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
-
-        if (!isPointerOverUI)
+        if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                if (selectedComponentPrefab != null) TryBuild(false);
-                else TryInspect();
-            }
-            if (Mouse.current.rightButton.wasPressedThisFrame)
-            {
-                TryRemove();
-            }
+            if (selectedComponentPrefab != null) TryBuild(false);
+            else TryInspect();
+        }
+        if (Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            TryRemove();
         }
 
         // Use KeybindingManager
@@ -160,8 +155,7 @@ public class BuildManager : NetworkBehaviour
                 ExitCurrentModule();
             }
 
-            // Mouse-dependent actions blocked by UI
-            if(!isPointerOverUI && KeybindingManager.Instance.GetKeyDown(GameAction.Interact)){
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Interact)){
                 TryInteract();
             }
 
@@ -170,12 +164,12 @@ public class BuildManager : NetworkBehaviour
                 TryFlip();
             }
 
-            if(!isPointerOverUI && KeybindingManager.Instance.GetKeyDown(GameAction.Copy))
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Copy))
             {
                 TryCopy();
             }
             
-            if(!isPointerOverUI && KeybindingManager.Instance.GetKeyDown(GameAction.Paste))
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Paste))
             {
                 TryPaste();
             }
