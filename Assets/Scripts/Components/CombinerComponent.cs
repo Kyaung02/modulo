@@ -50,6 +50,11 @@ public class CombinerComponent : ComponentBase
 
     public override void OnNetworkSpawn()
     {
+        if (IsServer)
+        {
+            _netIsFlipped.Value = _localIsFlipped;
+        }
+
         base.OnNetworkSpawn();
         _netIsFlipped.OnValueChanged += OnFlipChanged;
         _netInputAId.OnValueChanged += OnInputAChanged;
@@ -59,11 +64,6 @@ public class CombinerComponent : ComponentBase
         SyncInputs();
         UpdateFlipVisual();
         
-        if (IsServer)
-        {
-            _netIsFlipped.Value = _localIsFlipped;
-        }
-
         if (_visualizer != null)
         {
             _visualizer.transform.localPosition = new Vector3(0.5f, 0, 0); 

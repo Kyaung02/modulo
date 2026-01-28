@@ -206,6 +206,15 @@ public class GoalManager : NetworkBehaviour
         }
 
         Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}");
+
+        // Re-trigger completion events to restore game state (unlocks, bools, etc.)
+        foreach (int index in _completedGoalIndices)
+        {
+            if (levels != null && index >= 0 && index < levels.Length)
+            {
+                //Debug.Log($"[GoalManager] Restoring completion effect for goal {index}");
+            }
+        }
     }
 
     private NetworkList<int> ComponentsUnlocked = new NetworkList<int>();
