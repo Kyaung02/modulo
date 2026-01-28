@@ -92,18 +92,36 @@ public class NetworkMenuUI : MonoBehaviour
         return "127.0.0.1";
     }
 
-    private void CleanupNetwork()
+    private async System.Threading.Tasks.Task CleanupNetwork()
     {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        if (NetworkManager.Singleton != null)
         {
-            Debug.Log("[NetworkMenu] Shutting down existing network session...");
+            // Always try to shutdown to ensure Transport is reset
+            Debug.Log("[NetworkMenu] Ensuring NetworkManager is shutdown...");
             NetworkManager.Singleton.Shutdown();
+            
+            // Wait for socket release
+            await System.Threading.Tasks.Task.Delay(100);
         }
     }
 
+    private bool _isBusy = false;
+
     private async void StartNewGame()
     {
-        CleanupNetwork();
+        if (_isBusy) return;
+        _isBusy = true;
+        
+        await CleanupNetwork();
+        
+        // Log Transport Settings
+        var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        if (transport != null)
+        {
+            var data = transport.ConnectionData;
+            Debug.Log($"[NetworkMenu] Transport attempting bind to: {data.Address}:{data.Port} (ServerIP: {data.ServerListenAddress})");
+        }
+        
         UpdateStatus("Authenticating...");
         await Network.LobbyManager.Instance.Authenticate();
 
@@ -115,9 +133,10 @@ public class NetworkMenuUI : MonoBehaviour
         SaveSystem.PendingLoadData = null; 
         
         // 2. Start Local Host
-        // Ensure transport is set to default (Local) if it was changed? 
-        // Assuming default checks or we can force it.
-        // For now, just StartHost. 
+        // Use Port 0 (Random) to avoid "Address in use" errors during local testing
+        // Use Port 0 (Random) to avoid "Address in use" errors during local testing
+        if (transport != null) transport.SetConnectionData("127.0.0.1", 0);
+
         if (NetworkManager.Singleton.StartHost())
         {
             UpdateStatus("Local Host Started. Loading Scene...");
@@ -127,12 +146,13 @@ public class NetworkMenuUI : MonoBehaviour
         {
             UpdateStatus("Failed to Start Local Host.");
         }
-
+        
+        _isBusy = false;
     }
     
-    private void StartLoadGame()
+    private async void StartLoadGame()
     {
-        CleanupNetwork();
+        await CleanupNetwork();
         UpdateStatus("Loading Save File...");
 
         if (SaveSystem.LoadSaveFile())
@@ -140,6 +160,10 @@ public class NetworkMenuUI : MonoBehaviour
             UpdateStatus("Save Loaded. Starting Local Game...");
            
             // await Network.LobbyManager.Instance.Authenticate(); // Defer until "Open Server"
+            
+            // Use Port 0 (Random)
+            var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+            if (transport != null) transport.SetConnectionData("127.0.0.1", 0);
             
             if (NetworkManager.Singleton.StartHost())
             {
@@ -150,10 +174,13 @@ public class NetworkMenuUI : MonoBehaviour
             {
                 UpdateStatus("Failed to Create Lobby.");
             }
+            
+            _isBusy = false;
         }
         else
         {
             UpdateStatus("Failed to Load Save File!");
+            _isBusy = false;
         }
     }
 
@@ -162,7 +189,7 @@ public class NetworkMenuUI : MonoBehaviour
 
     private async void StartClient()
     {
-        CleanupNetwork();
+        await CleanupNetwork();
         UpdateStatus("Authenticating...");
         try
         {
