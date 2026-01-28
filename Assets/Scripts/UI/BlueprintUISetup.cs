@@ -53,20 +53,9 @@ public class BlueprintUISetup : MonoBehaviour
         
         if (panelObj == null)
         {
-            // If not found, create new (Fallback)
-            panelObj = new GameObject("BPPanel_Auto");
-            panelObj.transform.SetParent(canvas.transform, false);
-             // Positioning (Right side)
-            RectTransform rect = panelObj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(1, 0);
-            rect.anchorMax = new Vector2(1, 1);
-            rect.pivot = new Vector2(1, 0.5f);
-            rect.sizeDelta = new Vector2(350, 0); // Widen to 350 for text box
-            
-            // Background
-            Image bg = panelObj.AddComponent<Image>();
-            bg.color = new Color(0, 0, 0, 0.5f);
-            createdNew = true;
+            // Auto creation removed as per user request
+            Debug.Log("[BlueprintUISetup] BPPanel not found. Auto-creation disabled.");
+            return;
         }
 
         if (panelObj.GetComponent<BlueprintUI>() == null)
