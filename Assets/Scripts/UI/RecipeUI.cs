@@ -46,21 +46,35 @@ public class RecipeUI : MonoBehaviour
            scrollRect = GetComponentInChildren<ScrollRect>();
         }
 
+        if (GoalManager.Instance != null)
+        {
+            GoalManager.Instance.OnGoalUpdated += OnGoalUpdated;
+        }
+
         // Default closed
         SetOpen(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (GoalManager.Instance != null)
+        {
+            GoalManager.Instance.OnGoalUpdated -= OnGoalUpdated;
+        }
+    }
+
+    private void OnGoalUpdated()
+    {
+        if (_isOpen) RefreshList();
     }
 
     private void Update()
     {
         if (Keyboard.current == null) return;
         
-        // KeyCode를 Key로 변환
-        Key key = (Key)toggleKey;
-        
-        // G 키를 직접 확인 (디버깅용)
+        // G 키를 직접 확인
         if (Keyboard.current.gKey.wasPressedThisFrame)
         {
-            // Debug.Log("G key pressed - Toggling Recipe UI");
             Toggle();
         }
     }
@@ -100,15 +114,65 @@ public class RecipeUI : MonoBehaviour
         _spawnedRows.Clear();
         _recipeRowMap.Clear();
 
-        // Populate
-        foreach (var recipe in recipeDatabase.recipes)
+        // 1. Collect all root words (Unlocked Milestone Targets)
+        HashSet<WordData> wordsToProcess = new HashSet<WordData>();
+        if (GoalManager.Instance != null && GoalManager.Instance.levels != null)
         {
-            // Basic validation
+            for(int i=0; i < GoalManager.Instance.levels.Length; i++)
+            {
+                if (GoalManager.Instance.IsGoalUnlocked(i))
+                {
+                    var goal = GoalManager.Instance.levels[i];
+                    if (goal.targetWord != null)
+                    {
+                        wordsToProcess.Add(goal.targetWord);
+                    }
+                }
+            }
+        }
+        
+        // 2. Recursive dependency search
+        // We want to show recipes for 'wordsToProcess' AND their ingredients, recursively down.
+        
+        HashSet<RecipeData> recipesToShow = new HashSet<RecipeData>();
+        Queue<WordData> queue = new Queue<WordData>(wordsToProcess);
+        HashSet<WordData> visitedWords = new HashSet<WordData>(wordsToProcess); // Avoid infinite loops
+
+        while (queue.Count > 0)
+        {
+            WordData currentOutput = queue.Dequeue();
+            
+            // Find recipes that produce this output
+            foreach (var recipe in recipeDatabase.recipes)
+            {
+                if (recipe.output == currentOutput)
+                {
+                    // Add this recipe
+                    if (!recipesToShow.Contains(recipe))
+                    {
+                        recipesToShow.Add(recipe);
+                        
+                        // Add inputs to queue if not visited
+                        if (recipe.inputA != null && !visitedWords.Contains(recipe.inputA))
+                        {
+                            visitedWords.Add(recipe.inputA);
+                            queue.Enqueue(recipe.inputA);
+                        }
+                        if (recipe.inputB != null && !visitedWords.Contains(recipe.inputB))
+                        {
+                            visitedWords.Add(recipe.inputB);
+                            queue.Enqueue(recipe.inputB);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Populate UI
+        foreach (var recipe in recipesToShow)
+        {
             if (recipe.inputA == null || recipe.inputB == null || recipe.output == null) continue;
 
-            // Prevent duplicate entries for same output if database has duplicates
-            // But we might want to show multiple ways to make something? For now assuming 1 way.
-            
             GameObject newRow = Instantiate(rowPrefab, listContent);
             RecipeRowUI rowUI = newRow.GetComponent<RecipeRowUI>();
             if (rowUI != null)
@@ -118,7 +182,6 @@ public class RecipeUI : MonoBehaviour
             
             _spawnedRows.Add(newRow);
             
-            // Map the OUTPUT word to this row
             if (!_recipeRowMap.ContainsKey(recipe.output))
             {
                 _recipeRowMap.Add(recipe.output, newRow.GetComponent<RectTransform>());
