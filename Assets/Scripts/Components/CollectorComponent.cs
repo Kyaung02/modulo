@@ -17,16 +17,9 @@ public class CollectorComponent : ComponentBase
             GoalManager.Instance.SubmitWord(word);
         }
         
-        // Visual Feedback (show brief flash of item)
-        // We overwrite any existing held word.
-        // Note: Using SetHeldWordServer triggers visuals.
-        SetHeldWordServer(word);
+        // No Visual Feedback wanted (Item disappears)
+        // SetHeldWordServer(word); // Removed
         
-        // Calculate and set input direction for visualizer (same as base)
-        Vector2Int localDir = WorldToLocalDirection(direction);
-        _netLastInputDir.Value = localDir;
-        UpdateVisuals();
-
         return true;
     }
 
