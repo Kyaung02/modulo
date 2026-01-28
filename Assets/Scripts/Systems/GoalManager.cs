@@ -162,6 +162,24 @@ public class GoalManager : NetworkBehaviour
         if (!_completedGoalIndices.Contains(index))
             _completedGoalIndices.Add(index);
     }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void DebugCompleteGoalServerRpc(int index)
+    {
+        if (index < 0 || index >= levels.Length) return;
+        
+        // Fill progress
+        if (index < _goalProgressCounts.Count)
+        {
+            _goalProgressCounts[index] = levels[index].requiredCount;
+        }
+        
+        // Trigger completion
+        if (!IsGoalCompleted(index))
+        {
+            CompleteGoal(index);
+        }
+    }
     
     /// <summary>
     /// 저장된 상태 복원 (서버 전용)
