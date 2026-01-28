@@ -1903,7 +1903,7 @@ MonoBehaviour:
   playerListContainer: {fileID: 1420100501}
   playerListItemPrefab: {fileID: 7412942924875904413, guid: 182dad339822b504eb92db5789513d8b, type: 3}
   listUpdateInterval: 1
-  serverOpenButton: {fileID: 0}
+  serverOpenButton: {fileID: 1994124192}
   serverStatusText: {fileID: 0}
 --- !u!4 &1355221971 stripped
 Transform:
@@ -2044,7 +2044,7 @@ MonoBehaviour:
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
-  m_ScrollSensitivity: 1
+  m_ScrollSensitivity: 10
   m_Viewport: {fileID: 412669778}
   m_HorizontalScrollbar: {fileID: 0}
   m_VerticalScrollbar: {fileID: 2127205935}
