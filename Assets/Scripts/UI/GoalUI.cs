@@ -52,7 +52,25 @@ public class GoalUI : MonoBehaviour
 
     void Update()
     {
-        if (KeybindingManager.Instance != null && KeybindingManager.Instance.GetKeyDown(GameAction.ToggleMilestone) && milestoneWindow != null)
+        // Safety: If reference was lost or not found in Start, try finding it again
+        if (milestoneWindow == null)
+        {
+            milestoneWindow = FindFirstObjectByType<MilestoneUI>(FindObjectsInactive.Include);
+        }
+
+        bool isKeyDown = false;
+        // 1. Try KeybindingManager
+        if (KeybindingManager.Instance != null && KeybindingManager.Instance.GetKeyDown(GameAction.ToggleMilestone))
+        {
+            isKeyDown = true;
+        }
+        // 2. Fallback to direct F key (Restoring original behavior as backup)
+        else if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
+        {
+            isKeyDown = true;
+        }
+
+        if (isKeyDown && milestoneWindow != null)
         {
             milestoneWindow.ToggleWindow();
         }
