@@ -6,6 +6,12 @@ using Unity.Netcode;
 public class BuildManager : NetworkBehaviour
 {
     public static BuildManager Instance { get; private set; }
+    
+    // Add public method for BlueprintManager to force selection
+    public void ForceSelectComponent(int index)
+    {
+        SelectComponent(index);
+    }
 
     private void Awake()
     {
@@ -129,7 +135,7 @@ public class BuildManager : NetworkBehaviour
         
         if (Mouse.current.leftButton.wasPressedThisFrame)
         {
-            if (selectedComponentPrefab != null) TryBuild();
+            if (selectedComponentPrefab != null) TryBuild(false);
             else TryInspect();
         }
         if (Mouse.current.rightButton.wasPressedThisFrame)
@@ -155,6 +161,16 @@ public class BuildManager : NetworkBehaviour
             // Flip (enabled only for CombinerComponents and DistributerComponents)
             if(Keyboard.current.tKey.wasPressedThisFrame ){
                 TryFlip();
+            }
+
+            if(Keyboard.current.cKey.wasPressedThisFrame)
+            {
+                TryCopy();
+            }
+            
+            if(Keyboard.current.vKey.wasPressedThisFrame)
+            {
+                TryPaste();
             }
 
             if(Keyboard.current.xKey.wasPressedThisFrame){
@@ -225,7 +241,7 @@ public class BuildManager : NetworkBehaviour
     
     // Server RPC for Building
     [ServerRpc(RequireOwnership = false)]
-    private void RequestBuildServerRpc(int prefabIndex, Vector2Int gridPos, int rot, int flip, ulong targetModuleId, ServerRpcParams rpcParams = default)
+    private void RequestBuildServerRpc(int prefabIndex, Vector2Int gridPos, int rot, int flip, ulong targetModuleId, string snapshotJson, ServerRpcParams rpcParams = default)
     {
         // 1. Resolve Target Manager
         ModuleManager manager = null;
@@ -281,6 +297,74 @@ public class BuildManager : NetworkBehaviour
         no.Spawn();
         no.TrySetParent(manager.transform);
         // temp.SetManager(manager); // Add this reliability.
+
+        // 3. Apply Snapshot (Recursive Restoration)
+        if (!string.IsNullOrEmpty(snapshotJson))
+        {
+            if (temp is RecursiveModuleComponent rm)
+            {
+                 // Ensure inner world is ready (Server side instant init)
+                 if(rm.innerGrid == null) rm.OnNetworkSpawn(); // Force Init if not yet? 
+                 // Actually OnNetworkSpawn is called by Netcode automatically on client, but on Server?
+                 // When Spawn() is called on Server, OnNetworkSpawn runs immediately? Yes usually.
+                 // But let's be safe.
+                 
+                 // Apply Data
+                 ApplySnapshot(rm.innerGrid, snapshotJson);
+            }
+        }
+    }
+
+    private void ApplySnapshot(ModuleManager targetManager, string json)
+    {
+        if (targetManager == null || string.IsNullOrEmpty(json)) return;
+        
+        ModuleSnapshot snapshot = JsonUtility.FromJson<ModuleSnapshot>(json);
+        if (snapshot == null || snapshot.components == null) return;
+        
+        foreach (var data in snapshot.components)
+        {
+             if (data.prefabIndex < 0 || data.prefabIndex >= availableComponents.Length) continue;
+             
+             // Recursively request build (Directly instantiate since we are on Server)
+             // We can reuse RequestBuildServerRpc logic or extract it?
+             // Since we are ALREADY on Server, we can just call the logic directly.
+             // But RequestBuildServerRpc is an RPC, we shouldn't call it directly from code usually? 
+             // Actually InternalBuild method is better.
+             
+             // For now, let's duplicate the instantiation logic for recursion to avoid RPC overhead/complexity in loops.
+             
+             ComponentBase prefab = availableComponents[data.prefabIndex];
+             ComponentBase temp = Instantiate(prefab);
+             
+             if (temp is CombinerComponent cc) cc.PrepareFlip(data.flipIndex);
+             if (temp is DistributerComponent dc) dc.PrepareFlip(data.flipIndex);
+             
+             temp.PrepareForSpawn(data.gridPos, (Direction)data.rotationIndex);
+             
+             List<Vector2Int> checkPositions = temp.GetOccupiedPositions();
+             // Assume collision check passed or force it? 
+             // Ideally we should check, but if it's a valid snapshot it should fit.
+             
+             if (!targetManager.IsAreaClear(checkPositions))
+             {
+                 Destroy(temp.gameObject);
+                 continue; 
+             }
+             
+             temp.transform.position = targetManager.GridToWorldPosition(data.gridPos.x, data.gridPos.y);
+             var no = temp.GetComponent<NetworkObject>();
+             no.Spawn();
+             no.TrySetParent(targetManager.transform);
+             
+             // Recurse
+             if (temp is RecursiveModuleComponent childRm && !string.IsNullOrEmpty(data.innerWorldJson))
+             {
+                 // Ensure inner grid exists
+                 if (childRm.innerGrid == null) childRm.OnNetworkSpawn(); 
+                 ApplySnapshot(childRm.innerGrid, data.innerWorldJson);
+             }
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -297,7 +381,7 @@ public class BuildManager : NetworkBehaviour
         }
     }
 
-    private void TryBuild()
+    private void TryBuild(bool useClipboard = false)
     {
         if (selectedComponentPrefab == null) return;
         if (activeManager == null) return;
@@ -339,8 +423,30 @@ public class BuildManager : NetworkBehaviour
             }
         }
 
+        string snapshotData = "";
+        if (useClipboard) // Called from TryPaste
+        {
+            var bp = BlueprintManager.Instance.GetSelectedBlueprint();
+            if (bp != null && bp.prefabIndex == index)
+            {
+                snapshotData = bp.snapshotJson;
+            }
+        }
+        else // Check if we manually selected a blueprint via UI (BuildManager.Instance.ForceSelectComponent was called, but rotation reset logic might apply)
+             // Wait, if user clicked Blueprint in UI, we want standard Build to use that blueprint data?
+             // Actually requirement says: "V key pastes selected". Left click on list just selects it.
+             // If I Left Click on main screen after selecting from list... does it build clean or blueprint?
+             // Requirement: "Click list -> Left click to select... V key to paste selected".
+             // It implies "V" does the specific paste.
+             // But if I select a blueprint, and then just Click to build... usually expectation is it builds the blueprint?
+             // "V key to paste selected" -> Explicit paste.
+             // Let's stick to: "Default Build (Click)" builds CLEAN prefab. "V Build" builds BLUEPRINT.
+        {
+             // Do nothing (clean build)
+        }
+
         // Send RPC
-        RequestBuildServerRpc(index, buildPos, GetEffectiveRotationIndex(), _currentFlipIndex, targetId);
+        RequestBuildServerRpc(index, buildPos, GetEffectiveRotationIndex(), _currentFlipIndex, targetId, snapshotData);
         if(selectedComponentPrefab is TunnelInComponent){
             SelectComponent(6);
         }
@@ -666,5 +772,150 @@ public class BuildManager : NetworkBehaviour
         if (selectedComponentPrefab is not CombinerComponent && selectedComponentPrefab is not DistributerComponent) return;
         _currentFlipIndex = (_currentFlipIndex + 1) % 2;
         Debug.Log($"Flipped to: {_currentFlipIndex}");
+    }
+
+    public void TryCopy()
+    {
+        if (activeManager == null) return;
+        
+        Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
+        Vector3 mouseWorldPos = _mainCamera.ScreenToWorldPoint(mouseScreenPos);
+        Vector2Int gridPos = activeManager.WorldToGridPosition(mouseWorldPos);
+
+        ComponentBase target = activeManager.GetComponentAt(gridPos);
+        if (target != null)
+        {
+            // Identify Prefab Index
+            int index = -1;
+            // Use name matching or type matching? Prefab reference check won't work on instance.
+            // We need a way to ID the prefab from the instance. 
+            // Current simplistic approach: Check Type?
+            // Multiple prefabs might share Type.
+            // Improve: ComponentBase should hold 'PrefabID' or we infer from list.
+            
+            // Heuristic: Check if name starts with prefab name?
+            string targetName = target.name.Replace("(Clone)", "").Trim();
+            for(int i=0; i<availableComponents.Length; i++)
+            {
+                if (availableComponents[i].name == targetName || availableComponents[i].GetType() == target.GetType()) // Fallback to type
+                {
+                    // Strict naming required for multiple same-type components.
+                    // For now assuming 1-to-1 Type to Prefab for complex modules.
+                    if (target.GetType() == availableComponents[i].GetType())
+                    {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (index != -1)
+            {
+                // Delegate to BlueprintManager
+                string json = RecursiveSerialize(target);
+                if (BlueprintManager.Instance == null)
+                {
+                    Debug.Log("[BuildManager] BlueprintManager invalid. Creating new instance...");
+                    GameObject obj = new GameObject("BlueprintManager_Auto");
+                    obj.AddComponent<BlueprintManager>();
+                    // Also setup UI
+                    obj.AddComponent<BlueprintUISetup>().SetupBlueprintSystem();
+                }
+                
+                if (BlueprintManager.Instance != null)
+                {
+                    BlueprintManager.Instance.CaptureBlueprint(target, json, index);
+                }
+                
+                // Copy orientation (Visual feedback for next build)
+                if (!(target is RecursiveModuleComponent))
+                {
+                    _currentRotationIndex = (int)target.RotationIndex;
+                    if(target is CombinerComponent cc) _currentFlipIndex = cc.IsFlipped;
+                    if(target is DistributerComponent dc) _currentFlipIndex = dc.IsFlipped;
+                }
+            }
+        }
+    }
+    
+    private void TryPaste()
+    {
+        if (BlueprintManager.Instance == null) return;
+        
+        var bp = BlueprintManager.Instance.GetSelectedBlueprint();
+        if (bp == null) 
+        {
+            Debug.Log("[BuildManager] No Blueprint selected.");
+            return;
+        }
+        
+        // Ensure the correct component is selected for the clipboard item
+        if (selectedComponentPrefab != availableComponents[bp.prefabIndex])
+        {
+            SelectComponent(bp.prefabIndex);
+        }
+        
+        // TryBuild with clipboard flag
+        TryBuild(true);
+        // Feedback
+        Debug.Log($"[BuildManager] Pasting blueprint: {bp.name}");
+    }
+    
+    private string RecursiveSerialize(ComponentBase target)
+    {
+        // Recursively serialize only if it is a RecursiveModule
+        if (target is RecursiveModuleComponent rm)
+        {
+            if (rm.innerGrid == null) return "";
+            
+            ModuleSnapshot snapshot = new ModuleSnapshot();
+            
+            // Iterate all 7x7 scan? Or internal list?
+            // ModuleManager has _gridComponents array.
+            // But we don't have list of all components. Scan 7x7.
+            
+            HashSet<ComponentBase> visited = new HashSet<ComponentBase>();
+            
+            for(int x=0; x<rm.innerGrid.width; x++)
+            {
+                for(int y=0; y<rm.innerGrid.height; y++)
+                {
+                    ComponentBase child = rm.innerGrid.GetComponentAt(new Vector2Int(x, y));
+                    if (child != null && !visited.Contains(child))
+                    {
+                        visited.Add(child);
+                        
+                        // Find child prefab index
+                        int childIndex = -1;
+                        for(int i=0; i<availableComponents.Length; i++)
+                        {
+                            if (availableComponents[i].GetType() == child.GetType())
+                            {
+                                childIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (childIndex != -1)
+                        {
+                            ComponentSnapshot cs = new ComponentSnapshot();
+                            cs.prefabIndex = childIndex;
+                            cs.gridPos = child.GridPosition;
+                            cs.rotationIndex = (int)child.RotationIndex;
+                            
+                            if (child is CombinerComponent cc) cs.flipIndex = cc.IsFlipped;
+                            else if (child is DistributerComponent dc) cs.flipIndex = dc.IsFlipped;
+                            
+                            // Recurse
+                            cs.innerWorldJson = RecursiveSerialize(child);
+                            
+                            snapshot.components.Add(cs);
+                        }
+                    }
+                }
+            }
+            return JsonUtility.ToJson(snapshot);
+        }
+        return "";
     }
 }
