@@ -27,6 +27,9 @@ public class BuildManager : NetworkBehaviour
     public int _currentRotationIndex = 0;
     public int _currentFlipIndex = 0;
     public ModuleManager activeManager;
+    
+    // Milestone Unlocks
+    public bool canTransformCollector = false;
 
     /// <summary> RecursiveModule is never rotated; others use _currentRotationIndex. </summary>
     private int GetEffectiveRotationIndex()
@@ -358,9 +361,94 @@ public class BuildManager : NetworkBehaviour
             {
                 recursiveModule.EnterModule();
             }
+            else if (component is CollectorComponent && canTransformCollector)
+            {
+                // Transform!
+                ulong managerId = 0;
+                if (activeManager.ownerComponent != null) managerId = activeManager.ownerComponent.NetworkObjectId;
+                
+                RequestCollectorTransformServerRpc(gridPos, managerId);
+                
+                // Hide tutorial text locally
+                if (GoalUI.Instance != null) GoalUI.Instance.HideTutorialText();
+                // Disable flag locally to prevent double trigger
+                canTransformCollector = false; 
+            }
             else
             {
                 Debug.Log($"Clicked on {component.name}");
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCollectorTransformServerRpc(Vector2Int gridPos, ulong managerId)
+    {
+        // 1. Resolve Manager
+        ModuleManager manager = ModuleManager.Instance;
+        if (managerId != 0 && NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(managerId, out NetworkObject obj))
+        {
+            var rm = obj.GetComponent<RecursiveModuleComponent>();
+            if (rm != null) manager = rm.innerGrid;
+        }
+        if (manager == null) return;
+
+        // 2. Validate Collector
+        ComponentBase comp = manager.GetComponentAt(gridPos);
+        if (comp == null || !(comp is CollectorComponent)) return;
+
+        // 3. Destroy Collector
+        comp.GetComponent<NetworkObject>().Despawn(true);
+
+        // 4. Spawn Module
+        // Find RecursiveModule in availableComponents
+        ComponentBase modulePrefab = null;
+        foreach(var c in availableComponents)
+        {
+             if (c is RecursiveModuleComponent) { modulePrefab = c; break; }
+        }
+
+        if (modulePrefab != null)
+        {
+            ComponentBase module = Instantiate(modulePrefab);
+            module.PrepareForSpawn(gridPos, Direction.Up);
+            module.transform.position = manager.GridToWorldPosition(gridPos.x, gridPos.y);
+            
+            var no = module.GetComponent<NetworkObject>();
+            no.Spawn();
+            no.TrySetParent(manager.transform);
+            
+            // 5. Spawn Collector INSIDE the new module
+            // RecursiveModule OnNetworkSpawn (Server) inits innerGrid immediately.
+            RecursiveModuleComponent recursiveMod = module.GetComponent<RecursiveModuleComponent>();
+            if (recursiveMod != null && recursiveMod.innerGrid != null)
+            {
+                 // Find Collector Prefab
+                 ComponentBase collectorPrefab = null;
+                 foreach(var c in availableComponents)
+                 {
+                     if (c is CollectorComponent) { collectorPrefab = c; break; }
+                 }
+
+                 if (collectorPrefab != null)
+                 {
+                     Vector2Int center = new Vector2Int(3, 3);
+                     ComponentBase innerCollector = Instantiate(collectorPrefab);
+                     innerCollector.PrepareForSpawn(center, Direction.Up);
+                     innerCollector.transform.position = recursiveMod.innerGrid.GridToWorldPosition(center.x, center.y);
+                     
+                     var innerNo = innerCollector.GetComponent<NetworkObject>();
+                     innerNo.Spawn();
+                     // Note: innerGrid is not a NetworkObject, so we can't TrySetParent with netcode easily?
+                     // RecursiveModuleComponent.InitializeInnerWorld sets innerGrid on a generic Transform.
+                     // The inner components MUST be parented to innerGrid transform for organization, 
+                     // but NetworkObject parenting requires Parent to be NetworkObject if we use it.
+                     // Our system usually puts them at root or under a NetworkObject.
+                     // RecursiveModule.innerWorldRoot is NOT a NetworkObject.
+                     // So we just set transform parent.
+                     innerCollector.transform.SetParent(recursiveMod.innerGrid.transform);
+                     innerCollector.SetManager(recursiveMod.innerGrid);
+                 }
             }
         }
     }

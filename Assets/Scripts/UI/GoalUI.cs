@@ -9,6 +9,7 @@ public class GoalUI : MonoBehaviour
     public ItemIconUI targetIcon;
     public TMP_Text progressText; // Changed to TMP_Text for TextMeshPro support
     public TMP_Text goalNameText; // <-- Added this
+    public TMP_Text tutorialText; // Tutorial instruction
     public GameObject levelCompletePanel; // Optional: Show when level is done
     
     [Header("Milestone Integration")]
@@ -113,6 +114,23 @@ public class GoalUI : MonoBehaviour
     private void HideLevelComplete()
     {
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
+    }
+
+    public void ShowTutorialText(string text)
+    {
+        if (tutorialText != null)
+        {
+            tutorialText.gameObject.SetActive(true);
+            tutorialText.text = text;
+        }
+    }
+
+    public void HideTutorialText()
+    {
+        if (tutorialText != null)
+        {
+            tutorialText.gameObject.SetActive(false);
+        }
     }
 
     private void OnDestroy()

@@ -20,7 +20,9 @@ public class Milestones : MonoBehaviour
     }
     public void SystemUnlocked()
     {
-        Debug.Log("System Unlocked, nothing for now");
+        Debug.Log("System Unlocked");
+        if (BuildManager.Instance != null) BuildManager.Instance.canTransformCollector = true;
+        if (GoalUI.Instance != null) GoalUI.Instance.ShowTutorialText("Press E on Collector");
     }
 
     public void ModuleUnlocked()
