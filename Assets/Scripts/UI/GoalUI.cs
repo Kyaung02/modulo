@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem; // Added for New Input System
 using TMPro; // Add Namespace
 
 public class GoalUI : MonoBehaviour
@@ -8,6 +9,7 @@ public class GoalUI : MonoBehaviour
     public ItemIconUI targetIcon;
     public TMP_Text progressText; // Changed to TMP_Text for TextMeshPro support
     public TMP_Text goalNameText; // <-- Added this
+    public TMP_Text tutorialText; // Tutorial instruction
     public GameObject levelCompletePanel; // Optional: Show when level is done
     
     [Header("Milestone Integration")]
@@ -39,6 +41,14 @@ public class GoalUI : MonoBehaviour
         
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
         UpdateUI(); // Ensure text is cleared if nothing connected yet
+    }
+
+    void Update()
+    {
+        if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame && milestoneWindow != null)
+        {
+            milestoneWindow.ToggleWindow();
+        }
     }
 
     public void ForceUpdateUI()
@@ -104,6 +114,23 @@ public class GoalUI : MonoBehaviour
     private void HideLevelComplete()
     {
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
+    }
+
+    public void ShowTutorialText(string text)
+    {
+        if (tutorialText != null)
+        {
+            tutorialText.gameObject.SetActive(true);
+            tutorialText.text = text;
+        }
+    }
+
+    public void HideTutorialText()
+    {
+        if (tutorialText != null)
+        {
+            tutorialText.gameObject.SetActive(false);
+        }
     }
 
     private void OnDestroy()

@@ -12,9 +12,17 @@ public class Milestones : MonoBehaviour
         else Destroy(gameObject);
     }
     //여기부터 달성 이벤트들
+    public void DustUnlocked()
+    {
+        Debug.Log("Dust Unlocked");
+        GoalManager.Instance.UnlockComponent(2);
+        GoalManager.Instance.UnlockComponent(4);
+    }
     public void SystemUnlocked()
     {
-        Debug.Log("System Unlocked, nothing for now");
+        Debug.Log("System Unlocked");
+        if (BuildManager.Instance != null) BuildManager.Instance.canTransformCollector = true;
+        if (GoalUI.Instance != null) GoalUI.Instance.ShowTutorialText("Press E on Collector");
     }
 
     public void ModuleUnlocked()
