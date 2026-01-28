@@ -9,9 +9,25 @@ public class GoalUI : MonoBehaviour
     public TMP_Text progressText; // Changed to TMP_Text for TextMeshPro support
     public TMP_Text goalNameText; // <-- Added this
     public GameObject levelCompletePanel; // Optional: Show when level is done
+    
+    [Header("Milestone Integration")]
+    public Button milestoneButton;
+    public MilestoneUI milestoneWindow;
+
+    public static GoalUI Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+    }
 
     private void Start()
     {
+        if (milestoneButton != null && milestoneWindow != null)
+        {
+            milestoneButton.onClick.AddListener(() => milestoneWindow.ToggleWindow());
+        }
+
         if (GoalManager.Instance != null)
         {
             GoalManager.Instance.OnGoalUpdated += UpdateUI;
@@ -22,37 +38,56 @@ public class GoalUI : MonoBehaviour
         }
         
         if (levelCompletePanel != null) levelCompletePanel.SetActive(false);
+        UpdateUI(); // Ensure text is cleared if nothing connected yet
+    }
+
+    public void ForceUpdateUI()
+    {
+        UpdateUI();
     }
 
     private void UpdateUI()
     {
         if (GoalManager.Instance == null) return;
 
-        GoalManager.LevelGoal goal = GoalManager.Instance.GetCurrentGoal();
+        GoalManager.LevelGoal goal = GoalManager.Instance.GetPinnedGoal();
         
-        // Update Icon
-        if (targetIcon != null)
+        if (goal != null)
         {
-            targetIcon.SetWord(goal.targetWord);
-        }
+            // Update Icon
+            if (targetIcon != null)
+            {
+                targetIcon.gameObject.SetActive(true);
+                targetIcon.SetWord(goal.targetWord);
+            }
 
-        // Update Text
-        if (progressText != null)
-        {
-            if (goal.targetWord != null)
+            // Update Text
+            if (progressText != null)
             {
-                progressText.text = $"{GoalManager.Instance.currentDeliverCount} / {goal.requiredCount}";
+                if (goal.targetWord != null)
+                {
+                    // Get specific progress for this pinned goal
+                    int progress = GoalManager.Instance.GetProgress(GoalManager.Instance.PinnedGoalIndex);
+                    progressText.text = $"{progress} / {goal.requiredCount}";
+                }
+                else
+                {
+                   progressText.text = "Complete!";
+                }
             }
-            else
+            
+            if (goalNameText != null)
             {
-                progressText.text = "All Goals Complete!";
+                 if (goal.targetWord != null) goalNameText.text = goal.targetWord.wordName;
+                 else goalNameText.text = "Milestone";
             }
         }
-        
-        if (goalNameText != null)
+        else
         {
-             if (goal.targetWord != null) goalNameText.text = goal.targetWord.wordName;
-             else goalNameText.text = "";
+            // Nothing pinned
+            if (targetIcon != null) targetIcon.gameObject.SetActive(false);
+            if (progressText != null) progressText.text = "Pin a Goal";
+            if (goalNameText != null) goalNameText.text = "Open Milestones";
         }
     }
 

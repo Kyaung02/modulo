@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine.Events;
 
@@ -12,18 +13,19 @@ public class GoalManager : NetworkBehaviour
     {
         public WordData targetWord;
         public int requiredCount;
+        public List<int> prerequisiteIndices; // Indices of goals that must be completed first
         public UnityEvent onComplete;
     }
 
     [Header("Settings")]
-    public LevelGoal[] levels; // Define levels in Inspector
+    public LevelGoal[] levels; // Rename conceptually to "All Goals" but keep name for Inspector link preservation
 
     [Header("State")]
-    private NetworkVariable<int> _netLevelIndex = new NetworkVariable<int>(0);
-    private NetworkVariable<int> _netDeliverCount = new NetworkVariable<int>(0);
+    private NetworkList<int> _goalProgressCounts; // Stores progress count for each level index
+    private NetworkList<int> _completedGoalIndices;
 
-    public int currentLevelIndex => _netLevelIndex.Value;
-    public int currentDeliverCount => _netDeliverCount.Value;
+    // Local UI state
+    public int PinnedGoalIndex { get; set; } = -1;
 
     public event Action OnGoalUpdated; // UI update event
     public event Action OnLevelComplete;
@@ -31,19 +33,29 @@ public class GoalManager : NetworkBehaviour
     private void Awake()
     {
         if (Instance == null) Instance = this;
+        _goalProgressCounts = new NetworkList<int>();
+        _completedGoalIndices = new NetworkList<int>();
     }
 
     public override void OnNetworkSpawn()
     {
         Debug.Log($"[GoalManager] OnNetworkSpawn Called. IsServer: {IsServer}");
-        _netLevelIndex.OnValueChanged += OnStateChanged;
-        _netDeliverCount.OnValueChanged += OnStateChanged;
+        _goalProgressCounts.OnListChanged += OnProgressChanged;
+        _completedGoalIndices.OnListChanged += OnCompletedListChanged;
         
         ComponentsUnlocked.OnListChanged += OnUnlockChanged;
         
         if (IsServer)
         {
              InitLock();
+             // Ensure progress list size matches levels
+             if (levels != null)
+             {
+                 for (int i = 0; i < levels.Length; i++)
+                 {
+                     if (i >= _goalProgressCounts.Count) _goalProgressCounts.Add(0);
+                 }
+             }
         }
 
         OnGoalUpdated?.Invoke(); // Initial sync
@@ -51,81 +63,131 @@ public class GoalManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
-        _netLevelIndex.OnValueChanged -= OnStateChanged;
-        _netDeliverCount.OnValueChanged -= OnStateChanged;
+        _goalProgressCounts.OnListChanged -= OnProgressChanged;
+        _completedGoalIndices.OnListChanged -= OnCompletedListChanged;
         ComponentsUnlocked.OnListChanged -= OnUnlockChanged;
     }
 
-    private void OnStateChanged(int oldVal, int newVal)
+    private void OnProgressChanged(NetworkListEvent<int> changeEvent)
     {
         OnGoalUpdated?.Invoke();
     }
 
-    public LevelGoal GetCurrentGoal()
+    private void OnCompletedListChanged(NetworkListEvent<int> changeEvent)
     {
-        if (levels != null && currentLevelIndex < levels.Length)
+        OnGoalUpdated?.Invoke();
+        OnLevelComplete?.Invoke();
+    }
+
+    /// <summary>
+    /// Returns the locally pinned goal for UI display
+    /// </summary>
+    public LevelGoal GetPinnedGoal()
+    {
+        if (levels != null && PinnedGoalIndex >= 0 && PinnedGoalIndex < levels.Length)
         {
-            return levels[currentLevelIndex];
+            return levels[PinnedGoalIndex];
         }
-        return new LevelGoal(); // Empty if completed all
+        return null;
+    }
+
+    public int GetProgress(int index)
+    {
+        if (index >= 0 && index < _goalProgressCounts.Count)
+            return _goalProgressCounts[index];
+        return 0;
+    }
+
+    public bool IsGoalCompleted(int index)
+    {
+        return _completedGoalIndices.Contains(index);
+    }
+
+    public bool IsGoalUnlocked(int index)
+    {
+        if (index < 0 || index >= levels.Length) return false;
+        
+        LevelGoal goal = levels[index];
+        if (goal.prerequisiteIndices == null || goal.prerequisiteIndices.Count == 0) return true;
+
+        foreach (int reqIndex in goal.prerequisiteIndices)
+        {
+            if (!_completedGoalIndices.Contains(reqIndex)) return false;
+        }
+        return true;
     }
 
     public void SubmitWord(WordData word)
     {
-        if (!IsServer) return; // Only Server verifies goals
+        // Only Server verifies goals
+        if (!IsServer) return; 
 
-        LevelGoal goal = GetCurrentGoal();
-        
-        // Check if submitted word matches target
-        if (word == goal.targetWord)
+        if (levels == null) return;
+
+        // Check against ALL unlocked and incomplete goals
+        for (int i = 0; i < levels.Length; i++)
         {
-            _netDeliverCount.Value++;
-            // OnGoalUpdated invoked via NetworkVariable callback
+            if (IsGoalCompleted(i)) continue;
+            if (!IsGoalUnlocked(i)) continue;
 
-            if (_netDeliverCount.Value >= goal.requiredCount)
+            LevelGoal goal = levels[i];
+            if (word == goal.targetWord)
             {
-                CompleteLevel();
+                // Increment progress
+                if (i < _goalProgressCounts.Count)
+                {
+                    int current = _goalProgressCounts[i];
+                    _goalProgressCounts[i] = current + 1;
+
+                    if (_goalProgressCounts[i] >= goal.requiredCount)
+                    {
+                        CompleteGoal(i);
+                    }
+                }
             }
         }
     }
 
-    private void CompleteLevel()
+    private void CompleteGoal(int index)
     {
         // Server Only logic calling this
-        Debug.Log($"Level {currentLevelIndex} Complete!");
+        Debug.Log($"Goal {index} Complete!");
         
         // Invoke Level-specific callback
-        if (levels != null && currentLevelIndex < levels.Length)
+        if (levels != null && index < levels.Length)
         {
-            levels[currentLevelIndex].onComplete?.Invoke();
+            levels[index].onComplete?.Invoke();
         }
-        
-        _netLevelIndex.Value++;
-        _netDeliverCount.Value = 0;
-        
-        NotifyLevelCompleteClientRpc();
-    }
-    
-    [ClientRpc]
-    private void NotifyLevelCompleteClientRpc()
-    {
-        OnLevelComplete?.Invoke();
+
+        if (!_completedGoalIndices.Contains(index))
+            _completedGoalIndices.Add(index);
     }
     
     /// <summary>
     /// 저장된 상태 복원 (서버 전용)
     /// </summary>
-    public void SetState(int levelIndex, int deliverCount)
+    public void RestoreState(List<int> progressList, List<int> completedGoals)
     {
-        if (!IsServer)
+        if (!IsServer) return;
+        
+        _goalProgressCounts.Clear();
+        if (progressList != null)
         {
-            Debug.LogWarning("[GoalManager] SetState can only be called on Server!");
-            return;
+            foreach(var p in progressList) _goalProgressCounts.Add(p);
+        }
+        // Resize if needed (e.g. game updated with more levels)
+        if (levels != null)
+        {
+            while (_goalProgressCounts.Count < levels.Length) _goalProgressCounts.Add(0);
         }
         
-        _netLevelIndex.Value = levelIndex;
-        _netDeliverCount.Value = deliverCount;
-        Debug.Log($"[GoalManager] State restored: Level {levelIndex}, Count {deliverCount}");
+        _completedGoalIndices.Clear();
+        if (completedGoals != null)
+        {
+            foreach(var g in completedGoals) _completedGoalIndices.Add(g);
+        }
+
+        Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}");
     }
 
     private NetworkList<int> ComponentsUnlocked = new NetworkList<int>();
@@ -133,7 +195,6 @@ public class GoalManager : NetworkBehaviour
     // Callback for NetworkList changes (Clients + Server)
     private void OnUnlockChanged(NetworkListEvent<int> changeEvent)
     {
-        // Whenever the unlock list changes (Init or Update), refresh UI
         if (BuildUI.Instance != null && BuildUI.Instance.isActiveAndEnabled)
         {
             BuildUI.Instance.CreateSlots();
@@ -157,8 +218,11 @@ public class GoalManager : NetworkBehaviour
     public void UnlockComponent(int componentId)
     {
         if (!IsServer) return;
-        ComponentsUnlocked[componentId] = 1;
-        BuildUI.Instance.CreateSlots();
+        if(componentId < ComponentsUnlocked.Count)
+            ComponentsUnlocked[componentId] = 1;
+        
+        if (BuildUI.Instance != null && BuildUI.Instance.isActiveAndEnabled)
+            BuildUI.Instance.CreateSlots();
     }
     public int CheckUnlock(int componentId)
     {
