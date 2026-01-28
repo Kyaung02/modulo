@@ -13,6 +13,19 @@ public class GameSaveData
     public GoalSaveData goalData;
     public ModuleSaveData moduleData;
     public List<ComponentSaveData> components = new List<ComponentSaveData>();
+    public List<BlueprintSaveData> blueprints = new List<BlueprintSaveData>();
+}
+
+/// <summary>
+/// 블루프린트 저장 데이터
+/// </summary>
+[Serializable]
+public class BlueprintSaveData
+{
+    public string name;
+    public string snapshotJson;
+    public int prefabIndex;
+    public string previewImageBase64; // PNG 이미지의 Base64 인코딩 문자열
 }
 
 /// <summary>

@@ -130,7 +130,7 @@ public class BlueprintUISetup : MonoBehaviour
     
     // Create a temporary prefab-like object (or real prefab if in editor, but runtime is safer here)
     // We will attach this to the script at runtime
-    private GameObject CreateItemPrefab()
+    public GameObject CreateItemPrefab()
     {
         // Root Container (Invisible)
         GameObject prefabObj = new GameObject("BlueprintItem_Prefab");
