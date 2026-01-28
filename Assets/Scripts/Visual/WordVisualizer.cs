@@ -23,7 +23,10 @@ public class WordVisualizer : MonoBehaviour
         if (TickManager.Instance != null) _animDuration = TickManager.Instance.tickInterval;
     }
 
-    public void UpdateVisual(WordData word, Vector2Int entryDir)
+    private Vector2Int _currentEntryDir;
+    private Vector2Int _currentExitDir;
+
+    public void UpdateVisual(WordData word, Vector2Int entryDir, Vector2Int exitDir)
     {
         if (word == null)
         {
@@ -34,47 +37,43 @@ public class WordVisualizer : MonoBehaviour
         {
             _renderer.enabled = true;
             _renderer.sprite = word.wordIcon;
-            _renderer.color = Color.white; // No tint for emojis
+            _renderer.color = Color.white; 
             transform.localScale = Vector3.one * 0.6f;
             
-            // Main component: "targetComponent.AcceptWord(HeldWord, GetOutputDirection(), ...)"
-            // GetOutputDirection() is effectively "Move Dir".
-            // So if Move Dir is Right (1,0), items moves Right.
-            // Start Pos relative to center (0,0) should be Left (-1, 0).
+            _currentEntryDir = entryDir;
+            _currentExitDir = exitDir;
             
-            if (entryDir != Vector2Int.zero)
+            // Start Position logic
+            // If just spawned (entryDir zero), start at center?
+            // User requirement: "From prev block".
+            
+            if (entryDir == Vector2Int.zero && exitDir == Vector2Int.zero)
             {
-                // Start exactly at the edge of the cell (-dir)
-                // Assuming standard grid size 1.0. 
-                // Adjust if pivot issues.
-                _startLocalPos = new Vector3(-entryDir.x, -entryDir.y, 0f); // * cellSize? Visualizer is child of Component which is at 0,0 locally.
-                _targetLocalPos = Vector3.zero; // Center of current cell
-                
-                transform.localPosition = _startLocalPos;
-                _animTimer = 0f;
-                _isAnimating = true;
-                
-                // Sync Speed
-                if (TickManager.Instance != null) _animDuration = TickManager.Instance.tickInterval;
-            }
-            else
-            {
-                // Direct spawn (no anim)
+                // Static
                 transform.localPosition = Vector3.zero;
                 _isAnimating = false;
+                return;
             }
+
+            // Sync Speed
+            if (TickManager.Instance != null) _animDuration = TickManager.Instance.tickInterval;
+
+            _animTimer = 0f;
+            _isAnimating = true;
+            
+            // Set initial position immediately to avoid flickers
+            transform.localPosition = CalculatePosition(0f);
         }
     }
     
-    // Overload for simple update without animation reset
+    // Legacy overload
     public void UpdateVisual(WordData word)
     {
-        UpdateVisual(word, Vector2Int.zero);
+        UpdateVisual(word, Vector2Int.zero, Vector2Int.zero);
     }
 
     private void Update()
     {
-        // Keep word upright regardless of parent rotation (world space)
         transform.rotation = Quaternion.identity;
         
         if (_isAnimating)
@@ -82,12 +81,54 @@ public class WordVisualizer : MonoBehaviour
             _animTimer += Time.deltaTime;
             float t = Mathf.Clamp01(_animTimer / _animDuration);
             
-            // Smooth step or Linear? Linear feels mechanical/belt-like.
-            transform.localPosition = Vector3.Lerp(_startLocalPos, _targetLocalPos, t);
+            transform.localPosition = CalculatePosition(t);
             
             if (t >= 1f)
             {
                 _isAnimating = false;
+            }
+        }
+    }
+    
+    private Vector3 CalculatePosition(float t)
+    {
+        // Define Key Points (Local)
+        // Cell size 1.0 assumed. Half extent 0.5.
+        // Entry Dir is "Direction FROM neighbor". 
+        // e.g. Neighbor on Left. EntryDir is (1, 0)? No. 
+        // In ComponentBase, LastInputDir is WorldToLocal(entryDir).
+        // If Neighbor is Left, World Dir is Right (1,0). Local Dir is Right (1,0) (if failed rot).
+        // So `entryDir` points TO Center.
+        // Start Point: `-entryDir * 0.5f`.
+        
+        Vector3 startPos = (_currentEntryDir != Vector2Int.zero) ? new Vector3(-_currentEntryDir.x, -_currentEntryDir.y, 0) * 0.5f : Vector3.zero;
+        Vector3 endPos = (_currentExitDir != Vector2Int.zero) ? new Vector3(_currentExitDir.x, _currentExitDir.y, 0) * 0.5f : Vector3.zero;
+        Vector3 centerPos = Vector3.zero;
+        
+        // Check for Straight path
+        // If entry and exit are opposite: (1,0) and (1,0)?? 
+        // If input is Right (1,0) [From Left], and output is Right (1,0) [To Right].
+        // Then Start: (-0.5, 0). End: (0.5, 0).
+        // They are parallel.
+        
+        bool isStraight = (_currentEntryDir == _currentExitDir) || (_currentEntryDir == Vector2Int.zero) || (_currentExitDir == Vector2Int.zero);
+        
+        if (isStraight)
+        {
+             return Vector3.Lerp(startPos, endPos, t);
+        }
+        else
+        {
+            // Curved path: Start -> Center -> End
+            if (t < 0.5f)
+            {
+                // First half: Start to Center
+                return Vector3.Lerp(startPos, centerPos, t * 2f);
+            }
+            else
+            {
+                // Second half: Center to End
+                return Vector3.Lerp(centerPos, endPos, (t - 0.5f) * 2f);
             }
         }
     }

@@ -243,7 +243,9 @@ public class CombinerComponent : ComponentBase
         // For now just output.
         if (_visualizer != null)
         {
-            _visualizer.UpdateVisual(HeldWord, LastInputDir);
+            Vector2Int worldOut = GetOutputDirection();
+            Vector2Int localOut = WorldToLocalDirection(worldOut);
+            _visualizer.UpdateVisual(HeldWord, LastInputDir, localOut);
         }
     }
 }

@@ -452,7 +452,12 @@ public class ComponentBase : NetworkBehaviour
         if (_visualizer != null)
         {
             Vector2Int animDir = IsSpawned ? _netLastInputDir.Value : Vector2Int.zero;
-            _visualizer.UpdateVisual(HeldWord, animDir);
+            
+            // Calculate Output Dir in Local Space
+            Vector2Int worldOut = GetOutputDirection();
+            Vector2Int localOut = WorldToLocalDirection(worldOut);
+
+            _visualizer.UpdateVisual(HeldWord, animDir, localOut);
         }
     }
 
