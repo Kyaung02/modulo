@@ -21,8 +21,8 @@ public class GameSaveData
 [Serializable]
 public class GoalSaveData
 {
-    public int currentLevelIndex;
-    public int currentDeliverCount;
+    public List<int> progressCounts = new List<int>();
+    public List<int> completedGoals = new List<int>();
 }
 
 /// <summary>

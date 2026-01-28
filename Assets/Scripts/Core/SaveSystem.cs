@@ -79,13 +79,33 @@ public class SaveSystem : NetworkBehaviour
             GameSaveData saveData = new GameSaveData();
             saveData.saveTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             
-            // GoalManager 저장
             if (GoalManager.Instance != null)
             {
+                List<int> completedList = new List<int>();
+                if (GoalManager.Instance.levels != null)
+                {
+                    for (int i = 0; i < GoalManager.Instance.levels.Length; i++)
+                    {
+                        if (GoalManager.Instance.IsGoalCompleted(i))
+                        {
+                            completedList.Add(i);
+                        }
+                    }
+                }
+                
+                List<int> progressList = new List<int>();
+                if (GoalManager.Instance.levels != null)
+                {
+                     for(int i=0; i< GoalManager.Instance.levels.Length; i++)
+                     {
+                         progressList.Add(GoalManager.Instance.GetProgress(i));
+                     }
+                }
+
                 saveData.goalData = new GoalSaveData
                 {
-                    currentLevelIndex = GoalManager.Instance.currentLevelIndex,
-                    currentDeliverCount = GoalManager.Instance.currentDeliverCount
+                    progressCounts = progressList,
+                    completedGoals = completedList
                 };
             }
             
@@ -321,9 +341,9 @@ public class SaveSystem : NetworkBehaviour
         // GoalManager 복원
         if (GoalManager.Instance != null && PendingLoadData.goalData != null)
         {
-            GoalManager.Instance.SetState(
-                PendingLoadData.goalData.currentLevelIndex, 
-                PendingLoadData.goalData.currentDeliverCount
+            GoalManager.Instance.RestoreState(
+                PendingLoadData.goalData.progressCounts,
+                PendingLoadData.goalData.completedGoals
             );
         }
         
