@@ -458,7 +458,7 @@ public class BuildManager : NetworkBehaviour
                      
                      var innerNo = innerCollector.GetComponent<NetworkObject>();
                      innerNo.Spawn();
-                     innerCollector.transform.SetParent(recursiveMod.innerGrid.transform);
+                     innerNo.TrySetParent(recursiveMod.innerGrid.transform);
                      
                      Debug.Log($"[BuildManager] Collector Spawned: NetID {innerNo.NetworkObjectId} at {innerCollector.transform.position}");
                  }
@@ -473,33 +473,145 @@ public class BuildManager : NetworkBehaviour
             }
 
             // 6. Force Enter for EVERYONE
-            ForceEnterModuleClientRpc(no.NetworkObjectId);
+            Debug.Log($"[BuildManager] Trying to invoke ForceEnterModuleClientRpc. ModuleID: {no.NetworkObjectId}");
+            
+            ulong managerNetworkId = 0;
+            if (manager.TryGetComponent(out NetworkObject exactNo))
+            {
+                managerNetworkId = exactNo.NetworkObjectId;
+            }
+            else if (manager.ownerComponent != null)
+            {
+                managerNetworkId = manager.ownerComponent.NetworkObjectId;
+            }
+
+            if (managerNetworkId != 0)
+            {
+                Debug.Log($"[BuildManager] Invoking RPC with ManagerID: {managerNetworkId}");
+                ForceEnterModuleClientRpc(no.NetworkObjectId, managerNetworkId);
+            }
+            else
+            {
+                Debug.LogError("[BuildManager] Failed to get Manager NetworkObject (or Owner) for RPC! Root manager might not be networked?");
+                // Fallback: Try enter anyway? But client needs manager to fix ghost.
+                // If ID is 0, client won't find manager, might fail cleanup.
+                ForceEnterModuleClientRpc(no.NetworkObjectId, 0); 
+            }
         }
     }
 
     [ClientRpc]
-    private void ForceEnterModuleClientRpc(ulong moduleNetId, ClientRpcParams clientRpcParams = default)
+    private void ForceEnterModuleClientRpc(ulong moduleNetworkId, ulong managerId)
     {
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(moduleNetId, out NetworkObject obj))
-        {
-            var rm = obj.GetComponent<RecursiveModuleComponent>();
-            if (rm != null)
-            {
-                // Stop building/inspecting
-                selectedComponentPrefab = null;
-                // Force Enter
-                // Hide current tutorial text (e.g. "Press E") BEFORE starting transition
-                if (GoalUI.Instance != null) GoalUI.Instance.HideTutorialText();
+        StartCoroutine(WaitAndEnterModule(moduleNetworkId, managerId));
+    }
 
-                rm.EnterModule(() => {
-                    // Show new tutorial text AFTER transition completes
-                    if (GoalUI.Instance != null)
-                    {
-                        GoalUI.Instance.ShowTutorialText("Press Q on Module Center to Exit");
-                    }
-                });
+    private System.Collections.IEnumerator WaitAndEnterModule(ulong moduleNetworkId, ulong managerId)
+    {
+        Debug.Log($"[BuildManager] WaitAndEnterModule Started for NetID: {moduleNetworkId}, ManagerID: {managerId}");
+        float timeout = 2.0f;
+        float elapsed = 0f;
+        NetworkObject moduleNo = null;
+
+        // 1. Wait for Module to Spawn
+        while (elapsed < timeout)
+        {
+            if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(moduleNetworkId, out moduleNo))
+            {
+                Debug.Log($"[BuildManager] Found Module NetworkObject after {elapsed:F2}s");
+                break;
             }
+            yield return null;
+            elapsed += Time.deltaTime;
         }
+
+        if (moduleNo == null)
+        {
+             Debug.LogError($"[BuildManager] Failed to find module {moduleNetworkId} for forced entry after timeout.");
+             yield break;
+        }
+
+        RecursiveModuleComponent rm = moduleNo.GetComponent<RecursiveModuleComponent>();
+        if (rm == null) 
+        {
+            Debug.LogError($"[BuildManager] Object {moduleNetworkId} is not a RecursiveModuleComponent!");
+            yield break;
+        }
+
+        // 1.5 Wait for Inner Grid (Network Variable Sync)
+        float innerTimeout = 2.0f;
+        float innerElapsed = 0f;
+        while (rm.innerGrid == null && innerElapsed < innerTimeout)
+        {
+            yield return null;
+            innerElapsed += Time.deltaTime;
+        }
+
+        if (rm.innerGrid == null)
+        {
+             Debug.LogError($"[BuildManager] Failed to enter module {moduleNetworkId}: innerGrid failed to init after {innerTimeout}s (NetVar lag?).");
+             // Fallthrough to let EnterModule try its own last-ditch checks
+        }
+        else
+        {
+             Debug.Log($"[BuildManager] InnerGrid ready after {innerElapsed:F2}s");
+        }
+
+        // 2. Fix Client-side Registration (Race condition with Despawn)
+        if (rm.AssignedManager == null)
+        {
+             Debug.LogWarning($"[BuildManager] Module AssignedManager is null. Attempting to resolve via ManagerID {managerId}...");
+             if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(managerId, out NetworkObject mgrNo))
+             {
+                 ModuleManager parentManager = mgrNo.GetComponent<ModuleManager>();
+                 // If not found directly, check if it's a RecursiveModule acting as owner (Nested Case)
+                 if (parentManager == null)
+                 {
+                     var ownerMod = mgrNo.GetComponent<RecursiveModuleComponent>();
+                     if (ownerMod != null) 
+                     {
+                         // Wait for owner's inner grid too?
+                         // If we are deep nested, owner might also be syncing.
+                         // But for now assume ready.
+                         parentManager = ownerMod.innerGrid;
+                         if (parentManager == null) Debug.LogWarning("[BuildManager] Owner Module found but InnerGrid is null!");
+                     }
+                 }
+
+                 if (parentManager != null)
+                 {
+                      // Check for "Ghost" Collector blocking the slot
+                      Vector2Int pos = rm.GridPosition;
+                      ComponentBase ghost = parentManager.GetComponentAt(pos);
+                      if (ghost != null && ghost != rm)
+                      {
+                           Debug.LogWarning($"[BuildManager] Client: Found ghost {ghost.name} blocking RecursiveModule. Force cleaning.");
+                           parentManager.UnregisterComponent(ghost);
+                           ghost.gameObject.SetActive(false); // Visually hide immediately
+                      }
+                      
+                      // Force Register
+                      rm.SetManager(parentManager);
+                      Debug.Log($"[BuildManager] Force Registered Module {rm.NetworkObjectId} to Manager {parentManager.name}");
+                 }
+                 else Debug.LogError("[BuildManager] ManagerID found but no ModuleManager component!");
+             }
+             else if (managerId != 0) Debug.LogError($"[BuildManager] Could not find Manager NetworkObject {managerId}");
+        }
+
+        // 3. Enter
+        Debug.Log($"[BuildManager] Calling rm.EnterModule()...");
+        rm.EnterModule(() => {
+            Debug.Log($"[BuildManager] EnterModule Transition Complete.");
+            // Show new tutorial text AFTER transition completes
+            if (GoalUI.Instance != null)
+            {
+                GoalUI.Instance.ShowTutorialText("Press Q on Module Center to Exit");
+            }
+        });
+        
+        // Hide current tutorial text (e.g. "Press E") BEFORE starting transition
+        if (GoalUI.Instance != null) GoalUI.Instance.HideTutorialText();
     }
 
     private void TryRemove()
@@ -522,6 +634,15 @@ public class BuildManager : NetworkBehaviour
             {
                 Debug.Log("[BuildManager] Cannot remove Collector.");
                 return;
+            }
+            // Protect RecursiveModule from accidental deletion before unlock
+            if (component is RecursiveModuleComponent)
+            {
+                if (GoalManager.Instance != null && GoalManager.Instance.CheckUnlock(3) == 0)
+                {
+                    Debug.Log("[BuildManager] Cannot remove Module until unlocked.");
+                    return;
+                }
             }
             // RPC
             RequestDestroyServerRpc(component.NetworkObjectId);
