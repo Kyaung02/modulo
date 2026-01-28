@@ -32,19 +32,51 @@ public class BlueprintUI : MonoBehaviour
         }
     }
 
-    private void RefreshUI()
+    public void RefreshUI()
     {
-        if (contentRoot == null) { Debug.LogError("[BlueprintUI] ContentRoot is null!"); return; }
-        if (blueprintItemPrefab == null) { Debug.LogError("[BlueprintUI] BlueprintItemPrefab is null!"); return; }
+        // 1. Auto-recovery for References
+        if (contentRoot == null)
+        {
+            Debug.LogWarning("[BlueprintUI] ContentRoot is null! Attempting to find...");
+            contentRoot = transform.Find("ScrollView/Viewport/Content");
+        }
+        
+        // 2. Logging
+        if (contentRoot == null) 
+        { 
+            Debug.LogError("[BlueprintUI] FAILED to finding ContentRoot. UI cannot refresh."); 
+            return; 
+        }
+        
+        if (blueprintItemPrefab == null) 
+        {
+            Debug.LogWarning("[BlueprintUI] BlueprintItemPrefab is null! Attempting to recover via Setup script...");
+            // Try to find the helper that made us
+            var setup = FindFirstObjectByType<BlueprintUISetup>();
+            if (setup != null)
+            {
+                blueprintItemPrefab = setup.CreateItemPrefab();
+                Debug.Log($"[BlueprintUI] Recovered Prefab: {blueprintItemPrefab}");
+            }
+            else
+            {
+                Debug.LogError("[BlueprintUI] BlueprintItemPrefab is null and Setup script invalid! UI cannot refresh."); 
+                return; 
+            }
+        }
         
         // Clear old
-        foreach(var obj in _spawnedItems) Destroy(obj);
+        foreach(var obj in _spawnedItems) if(obj != null) Destroy(obj);
         _spawnedItems.Clear();
         
-        if (BlueprintManager.Instance == null) return;
+        if (BlueprintManager.Instance == null)
+        {
+             Debug.LogError("[BlueprintUI] BlueprintManager Instance is null!");
+             return;
+        }
         
         var list = BlueprintManager.Instance.blueprints;
-        Debug.Log($"[BlueprintUI] Refreshing UI. Count: {list.Count}");
+        Debug.Log($"[BlueprintUI] Refreshing UI. List Count: {list.Count}");
         
         for (int i = 0; i < list.Count; i++)
         {
@@ -109,6 +141,7 @@ public class BlueprintUI : MonoBehaviour
             }
         }
     }
+    // Polling removed as per user request
     
     private void OnSelectionChanged(int selectedIndex)
     {
