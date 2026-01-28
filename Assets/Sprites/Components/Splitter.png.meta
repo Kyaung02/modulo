@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c71aaa0166ad4544aafa86459e299674
+guid: 1a109c0f318886b49ae7890a029fc25a
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9581230040959887
-    second: Belt_top_0
+      213: 6613509977117578481
+    second: Splitter-compact_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Belt_top_0
+      name: Splitter-compact_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 256
-        height: 256
+        x: 10
+        y: 9
+        width: 246
+        height: 241
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: f8b4a15f31a022000800000000000000
-      internalID: 9581230040959887
+      spriteID: 1f45898c848e7cb50800000000000000
+      internalID: 6613509977117578481
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Belt_top_0: 9581230040959887
+      Splitter-compact_0: 6613509977117578481
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
