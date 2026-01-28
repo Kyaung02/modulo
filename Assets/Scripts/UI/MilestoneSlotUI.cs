@@ -5,10 +5,13 @@ using TMPro;
 public class MilestoneSlotUI : MonoBehaviour
 {
     [Header("UI References")]
+    public TMP_Text titleText; // Restored Title Text
+    public TMP_Text buttonText; // Explicit reference for button label
     public TMP_Text progressText;
     public GameObject descriptionObject; // To hide description when locked
     public ItemIconUI iconUI;
     public Button selectButton;
+    public Button debugButton; // <-- Added Debug Button
     public Image statusBackground; // Optional: changing color based on status
 
     [Header("Settings")]
@@ -24,8 +27,13 @@ public class MilestoneSlotUI : MonoBehaviour
             selectButton.onClick.RemoveAllListeners();
             selectButton.onClick.AddListener(OnSelectClicked);
         }
+        if (debugButton != null)
+        {
+             debugButton.onClick.RemoveAllListeners();
+             debugButton.onClick.AddListener(OnDebugClicked);
+        }
     }
-
+    
     public void RefreshUI()
     {
         if (GoalManager.Instance == null) return;
@@ -61,24 +69,45 @@ public class MilestoneSlotUI : MonoBehaviour
         }
 
         if (descriptionObject != null) descriptionObject.SetActive(isUnlocked);
+        
+        // Debug button visibility
+        if (debugButton != null)
+        {
+             debugButton.gameObject.SetActive(isUnlocked && !isCompleted);
+        }
+
+        // Title Text
+        if (titleText != null)
+        {
+            if (isUnlocked && goal.targetWord != null) titleText.text = goal.targetWord.wordName;
+            else titleText.text = "Unknown Milestone";
+        }
 
         if (selectButton != null)
         {
             selectButton.interactable = isUnlocked && !isCompleted; 
             
-            TMP_Text btnText = selectButton.GetComponentInChildren<TMP_Text>();
-            if (btnText != null)
+            // Only update button text if explicitly assigned
+            if (buttonText != null)
             {
-                if (isPinned) btnText.text = "Pinned";
-                else if (isCompleted) btnText.text = "Done";
-                else if (isUnlocked) btnText.text = "Pin";
-                else btnText.text = "Locked";
+                if (isPinned) buttonText.text = "Pinned";
+                else if (isCompleted) buttonText.text = "Done";
+                else if (isUnlocked) buttonText.text = "Pin";
+                else buttonText.text = "Locked";
             }
         }
         
         // Highlight active (Pinned)
         if (isPinned && statusBackground != null) statusBackground.color = Color.green; 
         else if (statusBackground != null) statusBackground.color = Color.white;
+    }
+
+    private void OnDebugClicked()
+    {
+        if (GoalManager.Instance != null)
+        {
+            GoalManager.Instance.DebugCompleteGoalServerRpc(targetGoalIndex);
+        }
     }
 
     private void OnSelectClicked()

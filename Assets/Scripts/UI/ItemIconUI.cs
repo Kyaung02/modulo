@@ -5,6 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Image))]
 public class ItemIconUI : MonoBehaviour
 {
+    [SerializeField] private TMPro.TMP_Text nameText; // Optional label
     private Button _button;
     private Image _image;
     private WordData _currentWord;
@@ -23,17 +24,23 @@ public class ItemIconUI : MonoBehaviour
 
         if (_image == null) _image = GetComponent<Image>();
 
-        if (word != null && word.wordIcon != null)
+        if (word != null)
         {
-            _image.sprite = word.wordIcon;
-            _image.color = Color.white;
-            _image.enabled = true;
-            // _button.interactable = true; // Always interactable?
+            if (word.wordIcon != null)
+            {
+                _image.sprite = word.wordIcon;
+                _image.color = Color.white;
+                _image.enabled = true;
+            }
+            // else keep image state? Or hide? Standard is icon usually needed.
+            
+            if (nameText != null) nameText.text = word.wordName;
         }
         else
         {
-            _image.enabled = false; // Hide if no data
+            _image.enabled = false;
             _currentWord = null;
+            if (nameText != null) nameText.text = "";
         }
     }
 
