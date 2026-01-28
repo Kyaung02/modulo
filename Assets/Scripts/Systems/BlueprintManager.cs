@@ -67,6 +67,24 @@ public class BlueprintManager : MonoBehaviour
         }
     }
 
+    public void ClearBlueprints()
+    {
+        blueprints.Clear();
+        selectedBlueprintIndex = -1;
+        OnBlueprintListChanged?.Invoke();
+    }
+
+    public void AddBlueprint(string name, string json, int prefabIndex, Sprite sprite)
+    {
+        BlueprintData bp = new BlueprintData();
+        bp.name = name;
+        bp.snapshotJson = json;
+        bp.prefabIndex = prefabIndex;
+        bp.previewSprite = sprite;
+        blueprints.Add(bp);
+        OnBlueprintListChanged?.Invoke();
+    }
+
     public void CaptureBlueprint(ComponentBase target, string jsonSnapshot, int prefabIndex)
     {
         if (target == null) return;

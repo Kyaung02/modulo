@@ -81,6 +81,9 @@ public class GoalManager : NetworkBehaviour
         // Fire local events for everyone (Server & Client) when a goal is officially marked complete
         if (changeEvent.Type == NetworkListEvent<int>.EventType.Add)
         {
+            // Do not fire events during RestoreState to prevent duplicates
+            if (IsRestoring) return;
+
             int index = changeEvent.Value;
             if (levels != null && index >= 0 && index < levels.Length)
             {
@@ -189,6 +192,8 @@ public class GoalManager : NetworkBehaviour
         }
     }
     
+    public bool IsRestoring { get; private set; }
+
     /// <summary>
     /// 저장된 상태 복원 (서버 전용)
     /// </summary>
@@ -196,32 +201,40 @@ public class GoalManager : NetworkBehaviour
     {
         if (!IsServer) return;
         
-        _goalProgressCounts.Clear();
-        if (progressList != null)
+        IsRestoring = true;
+        try
         {
-            foreach(var p in progressList) _goalProgressCounts.Add(p);
-        }
-        // Resize if needed (e.g. game updated with more levels)
-        if (levels != null)
-        {
-            while (_goalProgressCounts.Count < levels.Length) _goalProgressCounts.Add(0);
-        }
-        
-        _completedGoalIndices.Clear();
-        if (completedGoals != null)
-        {
-            foreach(var g in completedGoals) _completedGoalIndices.Add(g);
-        }
-
-        Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}");
-
-        // Re-trigger completion events to restore game state (unlocks, bools, etc.)
-        foreach (int index in _completedGoalIndices)
-        {
-            if (levels != null && index >= 0 && index < levels.Length)
+            _goalProgressCounts.Clear();
+            if (progressList != null)
             {
-                //Debug.Log($"[GoalManager] Restoring completion effect for goal {index}");
+                foreach(var p in progressList) _goalProgressCounts.Add(p);
             }
+            // Resize if needed (e.g. game updated with more levels)
+            if (levels != null)
+            {
+                while (_goalProgressCounts.Count < levels.Length) _goalProgressCounts.Add(0);
+            }
+            
+            _completedGoalIndices.Clear();
+            if (completedGoals != null)
+            {
+                foreach(var g in completedGoals) _completedGoalIndices.Add(g);
+            }
+
+            Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}");
+
+            // Re-trigger completion events to restore game state (unlocks, bools, etc.)
+            foreach (int index in _completedGoalIndices)
+            {
+                if (levels != null && index >= 0 && index < levels.Length)
+                {
+                    //Debug.Log($"[GoalManager] Restoring completion effect for goal {index}");
+                }
+            }
+        }
+        finally
+        {
+            IsRestoring = false;
         }
     }
 

@@ -58,6 +58,50 @@ public class RootWorldSetup : MonoBehaviour
         {
             Debug.Log("[RootWorldSetup] No root ports found, creating default ports...");
             SetupRootPorts(rootManager);
+            SpawnInitialCollector(rootManager);
+        }
+    }
+
+    private void SpawnInitialCollector(ModuleManager manager)
+    {
+        if (BuildManager.Instance == null) return;
+        
+        ComponentBase collectorPrefab = BuildManager.Instance.collectorPrefabReference;
+        if (collectorPrefab == null)
+        {
+            // Fallback search in availableComponents
+             foreach(var c in BuildManager.Instance.availableComponents)
+             {
+                 if (c is CollectorComponent) { collectorPrefab = c; break; }
+             }
+        }
+        
+        // 2nd Fallback: Resources Load
+        if (collectorPrefab == null)
+        {
+            GameObject res = Resources.Load<GameObject>("Prefabs/Collector");
+            if (res != null) collectorPrefab = res.GetComponent<CollectorComponent>();
+        }
+
+        if (collectorPrefab == null) 
+        {
+             Debug.LogError("[RootWorldSetup] Could not find Collector Prefab! Please assign it in BuildManager Inspector or place in Resources/Prefabs/Collector.");
+             return;
+        }
+
+        Vector2Int center = new Vector2Int(3, 3);
+        if (manager.IsAreaClear(new List<Vector2Int>{center}))
+        {
+             ComponentBase collector = Instantiate(collectorPrefab);
+             collector.PrepareForSpawn(center, Direction.Up);
+             collector.transform.position = manager.GridToWorldPosition(center.x, center.y);
+             
+             var no = collector.GetComponent<NetworkObject>();
+             no.Spawn();
+             no.TrySetParent(manager.transform);
+             
+             collector.SetManager(manager);
+             Debug.Log("[RootWorldSetup] Spawned Initial Collector at (3,3)");
         }
     }
     

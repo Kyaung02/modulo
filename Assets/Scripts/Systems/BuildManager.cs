@@ -703,6 +703,20 @@ public class BuildManager : NetworkBehaviour
                  else Debug.LogError("[BuildManager] ManagerID found but no ModuleManager component!");
              }
              else if (managerId != 0) Debug.LogError($"[BuildManager] Could not find Manager NetworkObject {managerId}");
+             else if (managerId == 0)
+             {
+                 // Fallback: If managerId is 0, it implies Root Manager (non-networked).
+                 // Try to find the global ModuleManager.Instance.
+                 if (ModuleManager.Instance != null)
+                 {
+                     rm.SetManager(ModuleManager.Instance);
+                     Debug.Log($"[BuildManager] Force Registered Module {rm.NetworkObjectId} to Root Instance (ID 0 fallback)");
+                 }
+                 else
+                 {
+                     Debug.LogError("[BuildManager] ManagerID is 0 but ModuleManager.Instance is null!");
+                 }
+             }
         }
 
         // 3. Enter

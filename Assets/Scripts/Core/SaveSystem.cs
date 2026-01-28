@@ -124,6 +124,9 @@ public class SaveSystem : NetworkBehaviour
             // 모든 컴포넌트 저장 (루트 + 모든 RecursiveModule 내부)
             SaveAllComponents(saveData);
             
+            // 블루프린트 저장
+            SaveBlueprints(saveData);
+            
             // JSON으로 직렬화
             string json = JsonUtility.ToJson(saveData, true);
             
@@ -376,6 +379,9 @@ public class SaveSystem : NetworkBehaviour
             RestoreComponent(compData, idToModuleMap);
         }
         
+        // 블루프린트 복원
+        RestoreBlueprints();
+        
         Debug.Log($"[SaveSystem] Game loaded successfully! Restored {PendingLoadData.components.Count} components.");
         PendingLoadData = null; // 사용 완료
     }
@@ -537,6 +543,142 @@ public class SaveSystem : NetworkBehaviour
     public static bool SaveFileExists()
     {
         return File.Exists(SaveFilePath);
+    }
+    
+    /// <summary>
+    /// 저장된 블루프린트 복원
+    /// </summary>
+    private void RestoreBlueprints()
+    {
+        Debug.Log("[SaveSystem] RestoreBlueprints() called.");
+        if (PendingLoadData.blueprints == null)
+        {
+             Debug.LogWarning("[SaveSystem] PendingLoadData.blueprints is NULL");
+             return;
+        }
+        Debug.Log($"[SaveSystem] Blueprint count in save data: {PendingLoadData.blueprints.Count}");
+        
+        if (PendingLoadData.blueprints.Count == 0) return;
+        
+        // BlueprintManager가 없으면 생성 (UI 시스템이지만 데이터 복원을 위해 필요)
+        if (BlueprintManager.Instance == null)
+        {
+            GameObject managerObj = new GameObject("BlueprintManager");
+            managerObj.AddComponent<BlueprintManager>();
+            Debug.Log("[SaveSystem] Created BlueprintManager for restoration");
+        }
+        
+        BlueprintManager.Instance.ClearBlueprints();
+        
+        foreach (var bpData in PendingLoadData.blueprints)
+        {
+            Sprite sprite = null;
+            if (!string.IsNullOrEmpty(bpData.previewImageBase64))
+            {
+                try
+                {
+                    byte[] bytes = Convert.FromBase64String(bpData.previewImageBase64);
+                    Texture2D tex = new Texture2D(2, 2); // 크기는 LoadImage가 알아서 조정
+                    if (tex.LoadImage(bytes))
+                    {
+                        sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[SaveSystem] Failed to load blueprint image: {e.Message}");
+                }
+            }
+            
+            BlueprintManager.Instance.AddBlueprint(bpData.name, bpData.snapshotJson, bpData.prefabIndex, sprite);
+        }
+        
+        Debug.Log($"[SaveSystem] Restored {PendingLoadData.blueprints.Count} blueprints.");
+        
+        // Force UI Refresh (Ensure UI sees the data immediately)
+        // Since event might have been missed if UI started late
+        BlueprintUI ui = FindFirstObjectByType<BlueprintUI>();
+        
+        // FAIL-SAFE: If UI is missing, force creation via Setup
+        if (ui == null)
+        {
+             Debug.LogWarning("[SaveSystem] BlueprintUI missing. Triggering Setup...");
+             BlueprintUISetup setup = FindFirstObjectByType<BlueprintUISetup>();
+             if (setup == null)
+             {
+                 GameObject setupObj = new GameObject("BlueprintUISetup_Auto");
+                 setup = setupObj.AddComponent<BlueprintUISetup>();
+             }
+             
+             // Run setup immediately
+             setup.SetupBlueprintSystem();
+             
+             // Try find again
+             ui = FindFirstObjectByType<BlueprintUI>();
+        }
+        
+        if (ui != null)
+        {
+            ui.RefreshUI();
+            Debug.Log("[SaveSystem] Forced BlueprintUI refresh.");
+        }
+        else
+        {
+            Debug.LogError("[SaveSystem] BlueprintUI could NOT be created during restore.");
+        }
+    }
+
+    /// <summary>
+    /// 블루프린트 저장
+    /// </summary>
+    private void SaveBlueprints(GameSaveData saveData)
+    {
+        if (BlueprintManager.Instance == null)
+        {
+             Debug.LogWarning("[SaveSystem] BlueprintManager.Instance is NULL during save!");
+             return;
+        }
+        
+        Debug.Log($"[SaveSystem] Finding Blueprints to save... Current Count: {BlueprintManager.Instance.blueprints.Count}");
+        
+        foreach (var bp in BlueprintManager.Instance.blueprints)
+        {
+            string base64 = null;
+            if (bp.previewSprite != null && bp.previewSprite.texture != null)
+            {
+                try
+                {
+                    // Texture가 Readable이어야 함
+                    if (bp.previewSprite.texture.isReadable)
+                    {
+                        byte[] bytes = bp.previewSprite.texture.EncodeToPNG();
+                        base64 = Convert.ToBase64String(bytes);
+                    }
+                    else
+                    {
+                         // Readable하지 않으면 안타깝지만 이미지는 저장 불가 (또는 렌더텍스처로 복사해야 함)
+                         // BlueprintManager 생성 방식상 Readable이어야 맞음.
+                         Debug.LogWarning($"[SaveSystem] Blueprint texture not readable: {bp.name}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[SaveSystem] Failed to encode blueprint image: {e.Message}");
+                }
+            }
+            
+            BlueprintSaveData bpData = new BlueprintSaveData
+            {
+                name = bp.name,
+                snapshotJson = bp.snapshotJson,
+                prefabIndex = bp.prefabIndex,
+                previewImageBase64 = base64
+            };
+            
+            saveData.blueprints.Add(bpData);
+        }
+        
+        Debug.Log($"[SaveSystem] Saved {saveData.blueprints.Count} blueprints.");
     }
     
     #endregion
