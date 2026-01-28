@@ -85,6 +85,28 @@ public class BuildUI : MonoBehaviour
                 }
             }
             
+            // Setup Keybind Text
+            Transform numObj = slot.transform.Find("Number");
+            if (numObj != null)
+            {
+                TMPro.TextMeshProUGUI numText = numObj.GetComponent<TMPro.TextMeshProUGUI>();
+                if (numText != null)
+                {
+                    // Map index i to QuickSlot Key
+                    // BuildManager maps: Index 0 -> QuickSlot1, Index 1 -> QuickSlot2 ...
+                    // We assume this linear mapping holds.
+                    int keyIndex = i + 1;
+                    if (keyIndex <= 9)
+                    {
+                         // Temporary: Just show the number. 
+                         // Ideally: KeybindingManager.Instance.GetBinding(GameAction.QuickSlotX).ToDisplayString()
+                         numText.text = keyIndex.ToString();
+                    }
+                    else if (keyIndex == 10) numText.text = "0";
+                    else numText.text = "";
+                }
+            }
+            
             // Track the Background Image for highlighting
             _slotImages.Add(slot.GetComponent<Image>());
         }
@@ -92,11 +114,7 @@ public class BuildUI : MonoBehaviour
 
     private void Update()
     {
-        // Check for Exit Input (Q)
-        if (UnityEngine.InputSystem.Keyboard.current.qKey.wasPressedThisFrame)
-        {
-            _buildManager.ExitCurrentModule();
-        }
+        // Input handled by BuildManager / KeybindingManager
     }
 
     private void UpdateUI(int selectedIndex)

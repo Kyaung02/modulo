@@ -51,7 +51,7 @@ public class InGameMenuUI : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (KeybindingManager.Instance != null && KeybindingManager.Instance.GetKeyDown(GameAction.ToggleMenu))
         {
             ToggleMenu();
         }

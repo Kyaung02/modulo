@@ -25,6 +25,13 @@ public class GoalUI : MonoBehaviour
 
     private void Start()
     {
+        // Auto-link MilestoneUI if missing
+        if (milestoneWindow == null)
+        {
+            milestoneWindow = FindFirstObjectByType<MilestoneUI>(FindObjectsInactive.Include);
+            if (milestoneWindow == null) Debug.LogWarning("[GoalUI] MilestoneUI not found in scene!");
+        }
+
         if (milestoneButton != null && milestoneWindow != null)
         {
             milestoneButton.onClick.AddListener(() => milestoneWindow.ToggleWindow());
@@ -45,7 +52,7 @@ public class GoalUI : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame && milestoneWindow != null)
+        if (KeybindingManager.Instance != null && KeybindingManager.Instance.GetKeyDown(GameAction.ToggleMilestone) && milestoneWindow != null)
         {
             milestoneWindow.ToggleWindow();
         }

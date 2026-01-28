@@ -70,10 +70,7 @@ public class RecipeUI : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
-        
-        // G 키를 직접 확인
-        if (Keyboard.current.gKey.wasPressedThisFrame)
+        if (KeybindingManager.Instance != null && KeybindingManager.Instance.GetKeyDown(GameAction.ToggleRecipe))
         {
             Toggle();
         }

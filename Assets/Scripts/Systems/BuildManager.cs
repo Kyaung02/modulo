@@ -143,47 +143,48 @@ public class BuildManager : NetworkBehaviour
             TryRemove();
         }
 
-        if (Keyboard.current != null)
+        // Use KeybindingManager
+        if (KeybindingManager.Instance != null)
         {
-            if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.Rotate) && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
             }
 
-            if(Keyboard.current.qKey.wasPressedThisFrame){
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.ExitModule)){
                 ExitCurrentModule();
             }
 
-            if(Keyboard.current.eKey.wasPressedThisFrame){
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Interact)){
                 TryInteract();
             }
 
             // Flip (enabled only for CombinerComponents and DistributerComponents)
-            if(Keyboard.current.tKey.wasPressedThisFrame ){
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Flip) ){
                 TryFlip();
             }
 
-            if(Keyboard.current.cKey.wasPressedThisFrame)
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Copy))
             {
                 TryCopy();
             }
             
-            if(Keyboard.current.vKey.wasPressedThisFrame)
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.Paste))
             {
                 TryPaste();
             }
 
-            if(Keyboard.current.xKey.wasPressedThisFrame){
+            if(KeybindingManager.Instance.GetKeyDown(GameAction.CancelBuild)){
                 selectedComponentPrefab = null;
             }
 
-            if (Keyboard.current.digit1Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(0)==1) SelectComponent(0);//레일
-            if (Keyboard.current.digit2Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(1)==1) SelectComponent(1);//합성기
-            if (Keyboard.current.digit3Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(2)==1) SelectComponent(2);//밸런서
-            if (Keyboard.current.digit4Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(3)==1) SelectComponent(3);//모듈
-            if (Keyboard.current.digit5Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(4)==1) SelectComponent(4);//분배기
-            if (Keyboard.current.digit6Key.wasPressedThisFrame&&GoalManager.Instance.CheckUnlock(5)==1) SelectComponent(5);//터널
-            //if (Keyboard.current.digit7Key.wasPressedThisFrame) SelectComponent(6);
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot1)&&GoalManager.Instance.CheckUnlock(0)==1) SelectComponent(0);//레일
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot2)&&GoalManager.Instance.CheckUnlock(1)==1) SelectComponent(1);//합성기
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot3)&&GoalManager.Instance.CheckUnlock(2)==1) SelectComponent(2);//밸런서
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot4)&&GoalManager.Instance.CheckUnlock(3)==1) SelectComponent(3);//모듈
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot5)&&GoalManager.Instance.CheckUnlock(4)==1) SelectComponent(4);//분배기
+            if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot6)&&GoalManager.Instance.CheckUnlock(5)==1) SelectComponent(5);//터널
+            //if (KeybindingManager.Instance.GetKeyDown(GameAction.QuickSlot7)) SelectComponent(6);
         }
     }
 
