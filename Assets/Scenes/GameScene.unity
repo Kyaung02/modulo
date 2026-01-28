@@ -3669,7 +3669,19 @@ MonoBehaviour:
     prerequisiteIndices: 
     onComplete:
       m_PersistentCalls:
-        m_Calls: []
+        m_Calls:
+        - m_Target: {fileID: 1736450790}
+          m_TargetAssemblyTypeName: Milestones, Assembly-CSharp
+          m_MethodName: DustUnlocked
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
   - targetWord: {fileID: 11400000, guid: 3611c7b59bfaac64383380d946998eb8, type: 2}
     requiredCount: 1
     prerequisiteIndices: 00000000
