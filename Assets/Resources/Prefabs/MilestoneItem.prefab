@@ -134,6 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c6f16f138c24c94eb2ce36333ca6c7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemIconUI
+  nameText: {fileID: 4581508463912279683}
 --- !u!1 &4323906672094064473
 GameObject:
   m_ObjectHideFlags: 0
@@ -638,6 +639,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71bc4ca878adb1f4cb3ccfdc9bf56b64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MilestoneSlotUI
+  titleText: {fileID: 0}
+  buttonText: {fileID: 0}
   progressText: {fileID: 5988212942193712570}
   descriptionObject: {fileID: 5939842034137854843}
   iconUI: {fileID: 1360050912853548299}

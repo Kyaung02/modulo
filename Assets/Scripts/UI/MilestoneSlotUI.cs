@@ -5,6 +5,8 @@ using TMPro;
 public class MilestoneSlotUI : MonoBehaviour
 {
     [Header("UI References")]
+    public TMP_Text titleText; // Restored Title Text
+    public TMP_Text buttonText; // Explicit reference for button label
     public TMP_Text progressText;
     public GameObject descriptionObject; // To hide description when locked
     public ItemIconUI iconUI;
@@ -61,18 +63,25 @@ public class MilestoneSlotUI : MonoBehaviour
         }
 
         if (descriptionObject != null) descriptionObject.SetActive(isUnlocked);
+        
+        // Title Text
+        if (titleText != null)
+        {
+            if (isUnlocked && goal.targetWord != null) titleText.text = goal.targetWord.wordName;
+            else titleText.text = "Unknown Milestone";
+        }
 
         if (selectButton != null)
         {
             selectButton.interactable = isUnlocked && !isCompleted; 
             
-            TMP_Text btnText = selectButton.GetComponentInChildren<TMP_Text>();
-            if (btnText != null)
+            // Only update button text if explicitly assigned
+            if (buttonText != null)
             {
-                if (isPinned) btnText.text = "Pinned";
-                else if (isCompleted) btnText.text = "Done";
-                else if (isUnlocked) btnText.text = "Pin";
-                else btnText.text = "Locked";
+                if (isPinned) buttonText.text = "Pinned";
+                else if (isCompleted) buttonText.text = "Done";
+                else if (isUnlocked) buttonText.text = "Pin";
+                else buttonText.text = "Locked";
             }
         }
         
