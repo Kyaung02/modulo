@@ -639,6 +639,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MilestoneSlotUI
   progressText: {fileID: 5988212942193712570}
+  descriptionObject: {fileID: 5939842034137854843}
   iconUI: {fileID: 1360050912853548299}
   selectButton: {fileID: 4654087009083338658}
   statusBackground: {fileID: 0}

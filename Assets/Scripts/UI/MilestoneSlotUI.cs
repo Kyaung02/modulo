@@ -6,6 +6,7 @@ public class MilestoneSlotUI : MonoBehaviour
 {
     [Header("UI References")]
     public TMP_Text progressText;
+    public GameObject descriptionObject; // To hide description when locked
     public ItemIconUI iconUI;
     public Button selectButton;
     public Image statusBackground; // Optional: changing color based on status
@@ -43,14 +44,27 @@ public class MilestoneSlotUI : MonoBehaviour
         bool isPinned = (GoalManager.Instance.PinnedGoalIndex == targetGoalIndex);
 
         // Progress display
-        int current = GoalManager.Instance.GetProgress(targetGoalIndex);
-        if (progressText != null) progressText.text = $"{current} / {goal.requiredCount}";
-        
-        if (iconUI != null && goal.targetWord != null) iconUI.SetWord(goal.targetWord);
+        if (isUnlocked)
+        {
+            int current = GoalManager.Instance.GetProgress(targetGoalIndex);
+            if (progressText != null) progressText.text = $"{current} / {goal.requiredCount}";
+            if (iconUI != null)
+            {
+                iconUI.gameObject.SetActive(true);
+                if (goal.targetWord != null) iconUI.SetWord(goal.targetWord);
+            }
+        }
+        else
+        {
+            if (progressText != null) progressText.text = "???";
+            if (iconUI != null) iconUI.gameObject.SetActive(false);
+        }
+
+        if (descriptionObject != null) descriptionObject.SetActive(isUnlocked);
 
         if (selectButton != null)
         {
-            selectButton.interactable = isUnlocked; 
+            selectButton.interactable = isUnlocked && !isCompleted; 
             
             TMP_Text btnText = selectButton.GetComponentInChildren<TMP_Text>();
             if (btnText != null)
