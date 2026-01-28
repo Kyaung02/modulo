@@ -6,6 +6,12 @@ using Unity.Netcode;
 public class BuildManager : NetworkBehaviour
 {
     public static BuildManager Instance { get; private set; }
+    
+    // Add public method for BlueprintManager to force selection
+    public void ForceSelectComponent(int index)
+    {
+        SelectComponent(index);
+    }
 
     private void Awake()
     {
@@ -28,9 +34,6 @@ public class BuildManager : NetworkBehaviour
     public int _currentFlipIndex = 0;
     public ModuleManager activeManager;
     
-    // Clipboard
-    private string _clipboardJson;
-    private int _clipboardPrefabIndex = -1; // -1 means empty
     // Milestone Unlocks
     public bool canTransformCollector = false;
 
@@ -412,11 +415,25 @@ public class BuildManager : NetworkBehaviour
             }
         }
 
-        // Prepare Snapshot Data if we are pasting the same type we copied
-        string snapshotData = "";
-        if (useClipboard && _clipboardPrefabIndex == index && !string.IsNullOrEmpty(_clipboardJson))
+        if (useClipboard) // Called from TryPaste
         {
-            snapshotData = _clipboardJson;
+            var bp = BlueprintManager.Instance.GetSelectedBlueprint();
+            if (bp != null && bp.prefabIndex == index)
+            {
+                snapshotData = bp.snapshotJson;
+            }
+        }
+        else // Check if we manually selected a blueprint via UI (BuildManager.Instance.ForceSelectComponent was called, but rotation reset logic might apply)
+             // Wait, if user clicked Blueprint in UI, we want standard Build to use that blueprint data?
+             // Actually requirement says: "V key pastes selected". Left click on list just selects it.
+             // If I Left Click on main screen after selecting from list... does it build clean or blueprint?
+             // Requirement: "Click list -> Left click to select... V key to paste selected".
+             // It implies "V" does the specific paste.
+             // But if I select a blueprint, and then just Click to build... usually expectation is it builds the blueprint?
+             // "V key to paste selected" -> Explicit paste.
+             // Let's stick to: "Default Build (Click)" builds CLEAN prefab. "V Build" builds BLUEPRINT.
+        {
+             // Do nothing (clean build)
         }
 
         // Send RPC
@@ -605,20 +622,11 @@ public class BuildManager : NetworkBehaviour
             
             if (index != -1)
             {
-                // Clear old clipboard (implicit by assignment, but explicit logic requested)
-                _clipboardPrefabIndex = -1;
-                _clipboardJson = "";
+                // Delegate to BlueprintManager
+                string json = RecursiveSerialize(target);
+                BlueprintManager.Instance.CaptureBlueprint(target, json, index);
                 
-                _clipboardPrefabIndex = index;
-                _clipboardJson = RecursiveSerialize(target);
-                
-                // User Feedback
-                Debug.Log($"[BuildManager] Copied {target.name} to clipboard.");
-                
-                // Auto-select this component for building
-                SelectComponent(index);
-                
-                // Copy orientation?
+                // Copy orientation (Visual feedback for next build)
                 if (!(target is RecursiveModuleComponent))
                 {
                     _currentRotationIndex = (int)target.RotationIndex;
@@ -631,22 +639,25 @@ public class BuildManager : NetworkBehaviour
     
     private void TryPaste()
     {
-        if (_clipboardPrefabIndex == -1) 
+        if (BlueprintManager.Instance == null) return;
+        
+        var bp = BlueprintManager.Instance.GetSelectedBlueprint();
+        if (bp == null) 
         {
-            Debug.Log("[BuildManager] Clipboard is empty.");
+            Debug.Log("[BuildManager] No Blueprint selected.");
             return;
         }
         
         // Ensure the correct component is selected for the clipboard item
-        if (selectedComponentPrefab != availableComponents[_clipboardPrefabIndex])
+        if (selectedComponentPrefab != availableComponents[bp.prefabIndex])
         {
-            SelectComponent(_clipboardPrefabIndex);
+            SelectComponent(bp.prefabIndex);
         }
         
         // TryBuild with clipboard flag
         TryBuild(true);
         // Feedback
-        Debug.Log("[BuildManager] Pasting from clipboard...");
+        Debug.Log($"[BuildManager] Pasting blueprint: {bp.name}");
     }
     
     private string RecursiveSerialize(ComponentBase target)
