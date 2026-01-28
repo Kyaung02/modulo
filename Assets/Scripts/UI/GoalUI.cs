@@ -118,6 +118,7 @@ public class GoalUI : MonoBehaviour
 
     public void ShowTutorialText(string text)
     {
+        gameObject.SetActive(true);
         if (tutorialText != null)
         {
             tutorialText.gameObject.SetActive(true);

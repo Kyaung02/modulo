@@ -267,6 +267,9 @@ public class ComponentBase : NetworkBehaviour
     
     private void OnGridPositionChanged(Vector2Int oldVal, Vector2Int newVal)
     {
+        // Safety: If manager missing (Client sync order issues), try init
+        if (_assignedManager == null) InitializeManager();
+
         // Re-register at new position
         if (_assignedManager != null)
         {

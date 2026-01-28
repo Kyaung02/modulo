@@ -15,6 +15,7 @@ public class BuildManager : NetworkBehaviour
 
     [Header("Settings")]
     public ComponentBase[] availableComponents; // 0: Emitter, 1: Mover, etc.
+    public ComponentBase collectorPrefabReference; // Explicit reference for transformation
     public ComponentBase selectedComponentPrefab; // Currently selected component to build
     
     // We don't really use this parent for NetworkObjects unless we use NetworkTransform parenting
@@ -102,6 +103,8 @@ public class BuildManager : NetworkBehaviour
                 Camera.main.transform.position = parentCenter;
                 Camera.main.orthographicSize = 5;
             }
+            
+            if (GoalUI.Instance != null) GoalUI.Instance.HideTutorialText();
         }
     }
 
@@ -139,6 +142,10 @@ public class BuildManager : NetworkBehaviour
             if (Keyboard.current.rKey.wasPressedThisFrame && !(selectedComponentPrefab is RecursiveModuleComponent) && !(selectedComponentPrefab is null))
             {
                 _currentRotationIndex = (_currentRotationIndex + 1) % 4;
+            }
+
+            if(Keyboard.current.qKey.wasPressedThisFrame){
+                ExitCurrentModule();
             }
 
             if(Keyboard.current.eKey.wasPressedThisFrame){
@@ -382,7 +389,7 @@ public class BuildManager : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestCollectorTransformServerRpc(Vector2Int gridPos, ulong managerId)
+    private void RequestCollectorTransformServerRpc(Vector2Int gridPos, ulong managerId, ServerRpcParams rpcParams = default)
     {
         // 1. Resolve Manager
         ModuleManager manager = ModuleManager.Instance;
@@ -398,10 +405,10 @@ public class BuildManager : NetworkBehaviour
         if (comp == null || !(comp is CollectorComponent)) return;
 
         // 3. Destroy Collector
+        manager.UnregisterComponent(comp); // Force unregister immediately so new module can take the spot
         comp.GetComponent<NetworkObject>().Despawn(true);
 
         // 4. Spawn Module
-        // Find RecursiveModule in availableComponents
         ComponentBase modulePrefab = null;
         foreach(var c in availableComponents)
         {
@@ -417,17 +424,26 @@ public class BuildManager : NetworkBehaviour
             var no = module.GetComponent<NetworkObject>();
             no.Spawn();
             no.TrySetParent(manager.transform);
+            module.SetManager(manager); // <-- Critical: Register with manager
             
-            // 5. Spawn Collector INSIDE the new module
-            // RecursiveModule OnNetworkSpawn (Server) inits innerGrid immediately.
+            // 5. Spawn Collector INSIDE
             RecursiveModuleComponent recursiveMod = module.GetComponent<RecursiveModuleComponent>();
+            
+            // Wait / Ensure Init
+            if (recursiveMod != null && recursiveMod.innerGrid == null)
+            {
+                 Debug.LogWarning($"[BuildManager] recursiveMod.innerGrid is null after spawn! Attempting manual init check.");
+                 // This might be redundant if OnNetworkSpawn works, but let's see.
+            }
+            
             if (recursiveMod != null && recursiveMod.innerGrid != null)
             {
-                 // Find Collector Prefab
-                 ComponentBase collectorPrefab = null;
-                 foreach(var c in availableComponents)
+                 Debug.Log($"[BuildManager] Spawning Collector inside new module at {recursiveMod.innerGrid.transform.position}");
+                 
+                 ComponentBase collectorPrefab = collectorPrefabReference;
+                 if (collectorPrefab == null)
                  {
-                     if (c is CollectorComponent) { collectorPrefab = c; break; }
+                    foreach(var c in availableComponents) { if (c is CollectorComponent) { collectorPrefab = c; break; } }
                  }
 
                  if (collectorPrefab != null)
@@ -437,18 +453,51 @@ public class BuildManager : NetworkBehaviour
                      innerCollector.PrepareForSpawn(center, Direction.Up);
                      innerCollector.transform.position = recursiveMod.innerGrid.GridToWorldPosition(center.x, center.y);
                      
+                     // Critical: Set Manager BEFORE Spawn so OnNetworkSpawn uses the correct manager
+                     innerCollector.SetManager(recursiveMod.innerGrid); 
+                     
                      var innerNo = innerCollector.GetComponent<NetworkObject>();
                      innerNo.Spawn();
-                     // Note: innerGrid is not a NetworkObject, so we can't TrySetParent with netcode easily?
-                     // RecursiveModuleComponent.InitializeInnerWorld sets innerGrid on a generic Transform.
-                     // The inner components MUST be parented to innerGrid transform for organization, 
-                     // but NetworkObject parenting requires Parent to be NetworkObject if we use it.
-                     // Our system usually puts them at root or under a NetworkObject.
-                     // RecursiveModule.innerWorldRoot is NOT a NetworkObject.
-                     // So we just set transform parent.
                      innerCollector.transform.SetParent(recursiveMod.innerGrid.transform);
-                     innerCollector.SetManager(recursiveMod.innerGrid);
+                     
+                     Debug.Log($"[BuildManager] Collector Spawned: NetID {innerNo.NetworkObjectId} at {innerCollector.transform.position}");
                  }
+                 else
+                 {
+                     Debug.LogError("[BuildManager] Could not find CollectorComponent prefab!");
+                 }
+            }
+            else
+            {
+                Debug.LogError($"[BuildManager] Failed to access innerGrid on new module! (RM: {recursiveMod != null})");
+            }
+
+            // 6. Force Enter for EVERYONE
+            ForceEnterModuleClientRpc(no.NetworkObjectId);
+        }
+    }
+
+    [ClientRpc]
+    private void ForceEnterModuleClientRpc(ulong moduleNetId, ClientRpcParams clientRpcParams = default)
+    {
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(moduleNetId, out NetworkObject obj))
+        {
+            var rm = obj.GetComponent<RecursiveModuleComponent>();
+            if (rm != null)
+            {
+                // Stop building/inspecting
+                selectedComponentPrefab = null;
+                // Force Enter
+                // Hide current tutorial text (e.g. "Press E") BEFORE starting transition
+                if (GoalUI.Instance != null) GoalUI.Instance.HideTutorialText();
+
+                rm.EnterModule(() => {
+                    // Show new tutorial text AFTER transition completes
+                    if (GoalUI.Instance != null)
+                    {
+                        GoalUI.Instance.ShowTutorialText("Press Q on Module Center to Exit");
+                    }
+                });
             }
         }
     }
