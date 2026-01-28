@@ -286,6 +286,7 @@ public class BuildManager : NetworkBehaviour
         // 2. Spawn
         // temp.SetGridPositionServer(gridPos); // Handled by PrepareForSpawn
         temp.transform.position = manager.GridToWorldPosition(gridPos.x, gridPos.y);
+        var no = temp.GetComponent<NetworkObject>();
         no.Spawn();
         no.TrySetParent(manager.transform);
         // temp.SetManager(manager); // Add this reliability.
@@ -415,6 +416,7 @@ public class BuildManager : NetworkBehaviour
             }
         }
 
+        string snapshotData = "";
         if (useClipboard) // Called from TryPaste
         {
             var bp = BlueprintManager.Instance.GetSelectedBlueprint();
@@ -585,6 +587,23 @@ public class BuildManager : NetworkBehaviour
 
     private void TryInspect() { }
 
+    private void TryFlip()
+    {
+        if (selectedComponentPrefab == null) return;
+        if( selectedComponentPrefab is TunnelInComponent || selectedComponentPrefab is TunnelOutComponent){
+            if(selectedComponentPrefab is TunnelInComponent){
+                SelectComponent(6);
+            }
+            else if(selectedComponentPrefab is TunnelOutComponent){
+                SelectComponent(5);
+            }
+            return;
+        }
+        if (selectedComponentPrefab is not CombinerComponent && selectedComponentPrefab is not DistributerComponent) return;
+        _currentFlipIndex = (_currentFlipIndex + 1) % 2;
+        Debug.Log($"Flipped to: {_currentFlipIndex}");
+    }
+
     public void TryCopy()
     {
         if (activeManager == null) return;
@@ -624,7 +643,19 @@ public class BuildManager : NetworkBehaviour
             {
                 // Delegate to BlueprintManager
                 string json = RecursiveSerialize(target);
-                BlueprintManager.Instance.CaptureBlueprint(target, json, index);
+                if (BlueprintManager.Instance == null)
+                {
+                    Debug.Log("[BuildManager] BlueprintManager invalid. Creating new instance...");
+                    GameObject obj = new GameObject("BlueprintManager_Auto");
+                    obj.AddComponent<BlueprintManager>();
+                    // Also setup UI
+                    obj.AddComponent<BlueprintUISetup>().SetupBlueprintSystem();
+                }
+                
+                if (BlueprintManager.Instance != null)
+                {
+                    BlueprintManager.Instance.CaptureBlueprint(target, json, index);
+                }
                 
                 // Copy orientation (Visual feedback for next build)
                 if (!(target is RecursiveModuleComponent))

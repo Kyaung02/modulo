@@ -13,6 +13,7 @@ public class BlueprintUI : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log($"[BlueprintUI] Start. Manager: {BlueprintManager.Instance != null}");
         if (BlueprintManager.Instance != null)
         {
             BlueprintManager.Instance.OnBlueprintListChanged += RefreshUI;
@@ -33,7 +34,8 @@ public class BlueprintUI : MonoBehaviour
 
     private void RefreshUI()
     {
-        if (contentRoot == null || blueprintItemPrefab == null) return;
+        if (contentRoot == null) { Debug.LogError("[BlueprintUI] ContentRoot is null!"); return; }
+        if (blueprintItemPrefab == null) { Debug.LogError("[BlueprintUI] BlueprintItemPrefab is null!"); return; }
         
         // Clear old
         foreach(var obj in _spawnedItems) Destroy(obj);
@@ -42,26 +44,52 @@ public class BlueprintUI : MonoBehaviour
         if (BlueprintManager.Instance == null) return;
         
         var list = BlueprintManager.Instance.blueprints;
+        Debug.Log($"[BlueprintUI] Refreshing UI. Count: {list.Count}");
+        
         for (int i = 0; i < list.Count; i++)
         {
             int index = i;
             var data = list[i];
             
             GameObject item = Instantiate(blueprintItemPrefab, contentRoot);
+            item.SetActive(true); // Prefab is disabled, so we must enable usage
             _spawnedItems.Add(item);
             
             // Setup Text
             // Assuming prefab structure: Image (Icon), Text (Name), Button (Select)
             // Or simple setup: Root is Button. Image child.
             
-            Image icon = item.transform.Find("Icon")?.GetComponent<Image>();
+            // NEW HIERARCHY:
+            // Root -> SelectButton(Image) -> Icon
+            // Root -> NameInput
+            
+            Transform selectBtnTr = item.transform.Find("SelectButton");
+            Button btn = selectBtnTr?.GetComponent<Button>();
+            Image bgImage = selectBtnTr?.GetComponent<Image>();
+            
+            // Icon is now inside SelectButton
+            Image icon = selectBtnTr?.Find("Icon")?.GetComponent<Image>();
             if (icon != null && data.previewSprite != null) icon.sprite = data.previewSprite;
             
+            // Setup Name Input
+            InputField input = item.transform.Find("NameInput")?.GetComponent<InputField>();
+            if (input != null)
+            {
+                input.text = data.name;
+                input.onEndEdit.RemoveAllListeners(); // Safety
+                input.onEndEdit.AddListener((val) => {
+                    data.name = val;
+                    // Debug.Log($"Renamed Blueprint {index} to {val}");
+                });
+            }
+            
             // Highlight if selected
-            UpdateItemVisual(item, i == BlueprintManager.Instance.selectedBlueprintIndex);
+            // We pass the BACKGROUND IMAGE directly to helper, not the item logic
+            if (bgImage != null)
+                bgImage.color = (i == BlueprintManager.Instance.selectedBlueprintIndex) ? Color.yellow : Color.white;
             
             // Events
-            Button btn = item.GetComponent<Button>();
+            if (btn != null)
             if (btn != null)
             {
                 btn.onClick.AddListener(() => {
@@ -70,11 +98,15 @@ public class BlueprintUI : MonoBehaviour
             }
             
             // Right Click Logic (Needs specialized component or EventTrigger)
-            BlueprintItemInteract interact = item.GetComponent<BlueprintItemInteract>();
-            if (interact == null) interact = item.AddComponent<BlueprintItemInteract>();
-            interact.onRightClick = () => {
-                BlueprintManager.Instance.DeleteBlueprint(index);
-            };
+            // Attach to the SELECT BUTTON since it blocks raycasts
+            if(selectBtnTr != null)
+            {
+                BlueprintItemInteract interact = selectBtnTr.GetComponent<BlueprintItemInteract>();
+                if (interact == null) interact = selectBtnTr.gameObject.AddComponent<BlueprintItemInteract>();
+                interact.onRightClick = () => {
+                    BlueprintManager.Instance.DeleteBlueprint(index);
+                };
+            }
         }
     }
     
@@ -82,18 +114,15 @@ public class BlueprintUI : MonoBehaviour
     {
         for(int i=0; i<_spawnedItems.Count; i++)
         {
-            UpdateItemVisual(_spawnedItems[i], i == selectedIndex);
+            // Re-find bg image
+            Transform btnTr = _spawnedItems[i].transform.Find("SelectButton");
+            Image bg = btnTr?.GetComponent<Image>();
+            if(bg != null) bg.color = (i == selectedIndex) ? Color.yellow : Color.white;
         }
     }
     
-    private void UpdateItemVisual(GameObject item, bool isSelected)
-    {
-        Image bg = item.GetComponent<Image>();
-        if (bg != null)
-        {
-            bg.color = isSelected ? Color.yellow : Color.white;
-        }
-    }
+    // Legacy helper removed or repurposed
+    // private void UpdateItemVisual...
 }
 
 // Simple helper for Right Click
