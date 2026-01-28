@@ -77,6 +77,17 @@ public class GoalManager : NetworkBehaviour
     {
         OnGoalUpdated?.Invoke();
         OnLevelComplete?.Invoke();
+
+        // Fire local events for everyone (Server & Client) when a goal is officially marked complete
+        if (changeEvent.Type == NetworkListEvent<int>.EventType.Add)
+        {
+            int index = changeEvent.Value;
+            if (levels != null && index >= 0 && index < levels.Length)
+            {
+                Debug.Log($"[GoalManager] Goal {index} Unlocked/Completed Event Fired (Local)");
+                levels[index].onComplete?.Invoke();
+            }
+        }
     }
 
     /// <summary>
@@ -154,10 +165,7 @@ public class GoalManager : NetworkBehaviour
         Debug.Log($"Goal {index} Complete!");
         
         // Invoke Level-specific callback
-        if (levels != null && index < levels.Length)
-        {
-            levels[index].onComplete?.Invoke();
-        }
+
 
         if (!_completedGoalIndices.Contains(index))
             _completedGoalIndices.Add(index);
@@ -206,6 +214,15 @@ public class GoalManager : NetworkBehaviour
         }
 
         Debug.Log($"[GoalManager] State restored. Completed: {_completedGoalIndices.Count}");
+
+        // Re-trigger completion events to restore game state (unlocks, bools, etc.)
+        foreach (int index in _completedGoalIndices)
+        {
+            if (levels != null && index >= 0 && index < levels.Length)
+            {
+                //Debug.Log($"[GoalManager] Restoring completion effect for goal {index}");
+            }
+        }
     }
 
     private NetworkList<int> ComponentsUnlocked = new NetworkList<int>();

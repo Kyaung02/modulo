@@ -187,6 +187,21 @@ namespace Network
         {
             Debug.Log("[LobbyManager] Promoting Local Host to Online Session...");
             
+            // 0. Save Current State (if running)
+            // We save the local progress so it can be restored after Relay restart
+            if (NetworkManager.Singleton.IsServer)
+            {
+                 if (SaveSystem.Instance != null)
+                 {
+                     Debug.Log("[LobbyManager] Saving local state before promotion...");
+                     SaveSystem.Instance.RequestSave(); // Synchronous write on Server
+                     
+                     // Prime the data for the upcoming restart
+                     bool loaded = SaveSystem.LoadSaveFile();
+                     if (loaded) Debug.Log("[LobbyManager] State ready for restoration.");
+                 }
+            }
+            
             // 1. Authenticate if needed
             await Authenticate();
 

@@ -267,6 +267,9 @@ public class ComponentBase : NetworkBehaviour
     
     private void OnGridPositionChanged(Vector2Int oldVal, Vector2Int newVal)
     {
+        // Safety: If manager missing (Client sync order issues), try init
+        if (_assignedManager == null) InitializeManager();
+
         // Re-register at new position
         if (_assignedManager != null)
         {
@@ -449,7 +452,12 @@ public class ComponentBase : NetworkBehaviour
         if (_visualizer != null)
         {
             Vector2Int animDir = IsSpawned ? _netLastInputDir.Value : Vector2Int.zero;
-            _visualizer.UpdateVisual(HeldWord, animDir);
+            
+            // Calculate Output Dir in Local Space
+            Vector2Int worldOut = GetOutputDirection();
+            Vector2Int localOut = WorldToLocalDirection(worldOut);
+
+            _visualizer.UpdateVisual(HeldWord, animDir, localOut);
         }
     }
 

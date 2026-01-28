@@ -105,7 +105,9 @@ public class BalancerComponent : ComponentBase
     {
         if (_visualizer != null)
         {
-            _visualizer.UpdateVisual(HeldWord, LastInputDir);
+            Vector2Int worldOut = GetOutputDirection();
+            Vector2Int localOut = WorldToLocalDirection(worldOut);
+            _visualizer.UpdateVisual(HeldWord, LastInputDir, localOut);
         }
     }
 }

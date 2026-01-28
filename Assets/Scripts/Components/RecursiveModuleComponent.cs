@@ -173,11 +173,29 @@ public class RecursiveModuleComponent : ComponentBase
         // Let's assume user has a "Port" prefab or we use a fallback?
         
         // Load Prefab (Requires NetworkAutoSetup to have run)
+        // Load Prefab (Requires NetworkAutoSetup to have run)
         GameObject prefab = Resources.Load<GameObject>("NetworkPrefabs/PortComponent");
+        
         if (prefab == null)
         {
-            // Debug.LogError("Missing PortComponent prefab! Please run Modulo > Setup Network Prefabs in menu.");
-            return;
+            // Fallback: Check BuildManager
+            if (BuildManager.Instance != null && BuildManager.Instance.availableComponents != null)
+            {
+                foreach(var c in BuildManager.Instance.availableComponents)
+                {
+                    if (c is PortComponent)
+                    {
+                        prefab = c.gameObject;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (prefab == null)
+        {
+             Debug.LogError($"[RecursiveModule] Missing PortComponent prefab! Cannot spawn port for {wallDir}.");
+             return;
         }
 
         GameObject portObj = Instantiate(prefab);
@@ -201,12 +219,13 @@ public class RecursiveModuleComponent : ComponentBase
         // Prepare for Network Spawn (Crucial to avoid (0,0) registration)
         port.PrepareForSpawn(gridPos, facingDir);
         
+        // Manual Link (Set Manager BEFORE Spawn to prevent auto-finding global manager)
+        port.SetManager(innerGrid); 
+        
         var no = portObj.GetComponent<NetworkObject>();
         no.Spawn();
         _spawnedPorts.Add(no);
         
-        // Manual Link (Since we are at root)
-        port.SetManager(innerGrid); // Set on Server immediately
         port.SetParentModule(this); // Share via NetworkVariable for Client
     }
     
@@ -650,7 +669,7 @@ public class RecursiveModuleComponent : ComponentBase
         if (_previewCamera != null) _previewCamera.enabled = false;
     }
 
-    public void EnterModule()
+    public void EnterModule(System.Action onComplete = null)
     {
         // Debug Init Status
         if (innerGrid == null)
@@ -685,6 +704,10 @@ public class RecursiveModuleComponent : ComponentBase
         );
         
         // Safety: Ensure parent link is valid for Exiting
+        if (_assignedManager == null)
+        {
+             _assignedManager = GetComponentInParent<ModuleManager>();
+        }
         if (innerGrid.parentManager == null) innerGrid.parentManager = _assignedManager; 
         
         if (CameraController.Instance != null)
@@ -701,6 +724,8 @@ public class RecursiveModuleComponent : ComponentBase
                 
                 // 3. Disable CCTV Camera (save perf, we see real thing now)
                 if (_previewCamera != null) _previewCamera.enabled = false;
+
+                onComplete?.Invoke();
             }));
         }
         else
@@ -713,6 +738,8 @@ public class RecursiveModuleComponent : ComponentBase
             ToggleOuterPreview(true);
             if (_previewDisplay != null) _previewDisplay.SetActive(false);
             if (_previewCamera != null) _previewCamera.enabled = false;
+
+            onComplete?.Invoke();
         }
     }
 

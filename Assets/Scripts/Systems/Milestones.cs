@@ -22,7 +22,18 @@ public class Milestones : MonoBehaviour
     {
         Debug.Log("System Unlocked");
         if (BuildManager.Instance != null) BuildManager.Instance.canTransformCollector = true;
-        if (GoalUI.Instance != null) GoalUI.Instance.ShowTutorialText("Press E on Collector");
+        
+        if (GoalUI.Instance != null)
+        {
+             if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+             {
+                 GoalUI.Instance.ShowTutorialText("Press E on Collector");
+             }
+             else
+             {
+                 GoalUI.Instance.ShowTutorialText("Wait for Host to Upgrade Collector");
+             }
+        }
     }
 
     public void ModuleUnlocked()
