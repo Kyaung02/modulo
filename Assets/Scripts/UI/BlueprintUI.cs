@@ -32,7 +32,7 @@ public class BlueprintUI : MonoBehaviour
         }
     }
 
-    private void RefreshUI()
+    public void RefreshUI()
     {
         if (contentRoot == null) { Debug.LogError("[BlueprintUI] ContentRoot is null!"); return; }
         if (blueprintItemPrefab == null) { Debug.LogError("[BlueprintUI] BlueprintItemPrefab is null!"); return; }
